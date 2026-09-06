@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">饭点</string>
+    <string name="notification_expiry_title">饭点 · 食材临期提醒</string>
+    <string name="notification_channel_name">临期提醒</string>
+</resources>

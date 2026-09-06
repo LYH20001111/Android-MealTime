@@ -1,0 +1,133 @@
+package com.skyanchor.mealtime.feature.profile
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.domain.repository.SettingsKeys
+import com.skyanchor.mealtime.domain.repository.SettingsRepository
+import com.skyanchor.mealtime.domain.usecase.ExportDataUseCase
+import com.skyanchor.mealtime.domain.usecase.ImportDataUseCase
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+data class SettingsUiState(
+    val notificationEnabled: Boolean = false,
+    val advanceDays: String = SettingsKeys.DEFAULT_NOTIFICATION_ADVANCE_DAYS.toString(),
+    val servings: String = SettingsKeys.DEFAULT_SERVINGS_VALUE.toString(),
+    val nearDays: String = SettingsKeys.DEFAULT_EXPIRY_NEAR_DAYS.toString(),
+    val urgentDays: String = SettingsKeys.DEFAULT_EXPIRY_URGENT_DAYS.toString(),
+    val message: String? = null,
+)
+
+class SettingsViewModel(
+    private val settingsRepository: SettingsRepository,
+    private val exportData: ExportDataUseCase,
+    private val importData: ImportDataUseCase,
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(SettingsUiState())
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val enabled = settingsRepository.getString(SettingsKeys.NOTIFICATION_ENABLED)?.toBoolean() ?: false
+            _uiState.update {
+                it.copy(
+                    notificationEnabled = enabled,
+                    advanceDays = settingsRepository.getString(SettingsKeys.NOTIFICATION_ADVANCE_DAYS)
+                        ?: it.advanceDays,
+                    servings = settingsRepository.getString(SettingsKeys.DEFAULT_SERVINGS) ?: it.servings,
+                    nearDays = settingsRepository.getString(SettingsKeys.EXPIRY_NEAR_DAYS) ?: it.nearDays,
+                    urgentDays = settingsRepository.getString(SettingsKeys.EXPIRY_URGENT_DAYS) ?: it.urgentDays,
+                )
+            }
+        }
+    }
+
+    fun setNotificationEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            settingsRepository.putString(SettingsKeys.NOTIFICATION_ENABLED, enabled.toString())
+            _uiState.update { it.copy(notificationEnabled = enabled) }
+        }
+    }
+
+    fun setAdvanceDays(value: String) = updateNumber(SettingsKeys.NOTIFICATION_ADVANCE_DAYS, value) { s, v -> s.copy(advanceDays = v) }
+
+    fun setServings(value: String) = updateNumber(SettingsKeys.DEFAULT_SERVINGS, value) { s, v -> s.copy(servings = v) }
+
+    fun setNearDays(value: String) = updateNumber(SettingsKeys.EXPIRY_NEAR_DAYS, value) { s, v -> s.copy(nearDays = v) }
+
+    fun setUrgentDays(value: String) = updateNumber(SettingsKeys.EXPIRY_URGENT_DAYS, value) { s, v -> s.copy(urgentDays = v) }
+
+    private fun updateNumber(
+        key: String,
+        value: String,
+        reduce: (SettingsUiState, String) -> SettingsUiState,
+    ) {
+        val cleaned = value.filter { it.isDigit() }.take(3)
+        _uiState.update { reduce(it, cleaned) }
+        viewModelScope.launch {
+            if (cleaned.isNotEmpty()) {
+                settingsRepository.putString(key, cleaned)
+            } else {
+                settingsRepository.remove(key) // 回落到默认值
+            }
+        }
+    }
+
+    fun buildExport(onReady: (String?) -> Unit) {
+        viewModelScope.launch {
+            val json = runCatching { exportData() }.getOrNull()
+            _uiState.update {
+                it.copy(message = if (json != null) null else "✗ 备份生成失败，请重试")
+            }
+            onReady(json)
+        }
+    }
+
+    fun import(json: String) {
+        viewModelScope.launch {
+            val result = runCatching { importData(json) }
+            _uiState.update {
+                it.copy(
+                    message = result.fold(
+                        onSuccess = { s ->
+                            "✓ 恢复完成：菜谱 ${s.recipes}、食材 ${s.ingredients}、库存 ${s.inventoryItems}、记录 ${s.mealRecords}"
+                        },
+                        onFailure = { e -> "✗ 恢复失败：${e.message ?: "文件格式不正确"}" },
+                    ),
+                )
+            }
+        }
+    }
+
+    fun notifyExportDone(success: Boolean) {
+        _uiState.update {
+            it.copy(message = if (success) "✓ 备份已导出" else "✗ 导出失败，请重试")
+        }
+    }
+
+    fun notifyImportDone(success: Boolean, summary: com.skyanchor.mealtime.domain.repository.BackupSummary?) {
+        _uiState.update {
+            it.copy(message = if (success) "✓ 恢复完成" else "✗ 读取备份文件失败")
+        }
+    }
+
+    companion object {
+        fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                SettingsViewModel(
+                    settingsRepository = container.settingsRepository,
+                    exportData = ExportDataUseCase(container.backupRepository),
+                    importData = ImportDataUseCase(container.backupRepository),
+                )
+            }
+        }
+    }
+}
