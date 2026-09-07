@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.Kitchen
+import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +46,7 @@ import com.skyanchor.mealtime.core.model.chineseLabel
 import com.skyanchor.mealtime.core.ui.EmptyState
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodFab
+import com.skyanchor.mealtime.core.ui.FoodSearchField
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.TagChip
 import java.time.LocalDate
@@ -69,6 +71,13 @@ fun InventoryListScreen(
                 .fillMaxSize()
                 .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
         ) {
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+            FoodSearchField(
+                value = state.query,
+                onValueChange = viewModel::setQuery,
+                placeholder = "搜索食材...",
+            )
+
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             if (state.expiringCount > 0) {
                 Text(
@@ -98,6 +107,16 @@ fun InventoryListScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator(color = FoodTheme.colors.primary)
+                    }
+                }
+
+                state.items.isEmpty() && state.query.isNotBlank() -> {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        EmptyState(
+                            icon = Icons.Outlined.SearchOff,
+                            title = "没有找到相关食材",
+                            hint = "换个关键词试试",
+                        )
                     }
                 }
 

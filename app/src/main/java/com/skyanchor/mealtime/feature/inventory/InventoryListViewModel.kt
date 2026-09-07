@@ -33,6 +33,7 @@ data class InventoryListUiState(
     val isLoading: Boolean = true,
     val items: List<InventoryItem> = emptyList(),
     val expiringCount: Int = 0,
+    val query: String = "",
     val tabs: List<InventoryTabUi> = listOf(
         InventoryTabUi(InventoryTabKeys.ALL, "全部"),
         InventoryTabUi(InventoryTabKeys.EXPIRING, "临期"),
@@ -48,13 +49,15 @@ class InventoryListViewModel(
 ) : ViewModel() {
 
     private val selectedTab = MutableStateFlow(InventoryTabKeys.ALL)
+    private val query = MutableStateFlow("")
 
     val uiState: StateFlow<InventoryListUiState> = combine(
         inventoryRepository.observeInventory(null),
         getExpiringInventory(),
         ingredientRepository.observeTypes(),
         selectedTab,
-    ) { all, expiring, types, tab ->
+        query,
+    ) { all, expiring, types, tab, q ->
         // 正在浏览的种类被删除时回落到「全部」
         val effectiveTab = if (tab == InventoryTabKeys.ALL ||
             tab == InventoryTabKeys.EXPIRING ||
@@ -64,15 +67,21 @@ class InventoryListViewModel(
         } else {
             InventoryTabKeys.ALL
         }
-        val items = when (effectiveTab) {
+        val tabItems = when (effectiveTab) {
             InventoryTabKeys.ALL -> all
             InventoryTabKeys.EXPIRING -> expiring
             else -> all.filter { it.ingredient.type == effectiveTab }
+        }
+        val items = if (q.isBlank()) {
+            tabItems
+        } else {
+            tabItems.filter { it.ingredient.name.contains(q, ignoreCase = true) }
         }
         InventoryListUiState(
             isLoading = false,
             items = items,
             expiringCount = expiring.size,
+            query = q,
             tabs = listOf(
                 InventoryTabUi(InventoryTabKeys.ALL, "全部"),
                 InventoryTabUi(InventoryTabKeys.EXPIRING, "临期"),
@@ -87,6 +96,10 @@ class InventoryListViewModel(
 
     fun selectTab(key: String) {
         selectedTab.value = key
+    }
+
+    fun setQuery(value: String) {
+        query.value = value
     }
 
     companion object {
