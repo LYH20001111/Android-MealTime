@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Eco
 import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material.icons.outlined.SearchOff
+import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +44,7 @@ import com.skyanchor.mealtime.core.common.ExpiryStatus
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.QuantityLevel
 import com.skyanchor.mealtime.core.model.chineseLabel
+import com.skyanchor.mealtime.core.model.isEmptyStock
 import com.skyanchor.mealtime.core.ui.EmptyState
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodFab
@@ -126,6 +128,16 @@ fun InventoryListScreen(
                             icon = Icons.Outlined.Eco,
                             title = "没有临期食材",
                             hint = "保质期临近的食材会出现在这里",
+                        )
+                    }
+                }
+
+                state.items.isEmpty() && state.selectedTabKey == InventoryTabKeys.EMPTY -> {
+                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        EmptyState(
+                            icon = Icons.Outlined.ShoppingCart,
+                            title = "没有库存空的食材",
+                            hint = "录入库存时选择「库存空」，可记录需要购买的食材",
                         )
                     }
                 }
@@ -240,11 +252,15 @@ private fun InventoryCard(
                 val amount = item.quantity?.let { q ->
                     val quantityText = q.toString().removeSuffix(".0")
                     item.unit?.let { "$quantityText $it" } ?: quantityText
-                } ?: item.quantityLevel?.chineseLabel ?: "—"
+                } ?: item.quantityLevel?.chineseLabel ?: "库存空"
                 Text(
                     text = amount,
                     style = MaterialTheme.typography.bodySmall,
-                    color = FoodTheme.colors.textSecondary,
+                    color = if (item.isEmptyStock) {
+                        FoodTheme.colors.textTertiary
+                    } else {
+                        FoodTheme.colors.textSecondary
+                    },
                 )
             }
             Text(

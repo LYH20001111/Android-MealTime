@@ -11,6 +11,7 @@ import com.skyanchor.mealtime.core.model.IngredientTypeInfo
 import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.QuantityLevel
+import com.skyanchor.mealtime.core.model.isEmptyStock
 import com.skyanchor.mealtime.domain.repository.IngredientRepository
 import com.skyanchor.mealtime.domain.repository.InventoryRepository
 import com.skyanchor.mealtime.domain.usecase.AddInventoryUseCase
@@ -32,6 +33,8 @@ data class InventoryEditUiState(
     val ingredientType: String = IngredientTypes.INGREDIENT,
     val ingredientTypes: List<IngredientTypeInfo> = emptyList(),
     val imageUri: String? = null,
+    /** 库存空：仅记录食材本身，不含数量/级别/日期等库存信息 */
+    val isEmptyStock: Boolean = false,
     val quantityText: String = "",
     val unit: String = "",
     val quantityLevel: QuantityLevel? = null,
@@ -79,6 +82,7 @@ class InventoryEditViewModel(
                             ingredientType = item.ingredient.type,
                             ingredientTypes = types,
                             imageUri = item.ingredient.imageUri,
+                            isEmptyStock = item.isEmptyStock,
                             quantityText = item.quantity?.toString()?.removeSuffix(".0") ?: "",
                             unit = item.unit ?: "",
                             quantityLevel = item.quantityLevel,
@@ -103,6 +107,10 @@ class InventoryEditViewModel(
         _uiState.update { it.copy(ingredientType = value) }
 
     fun setImageUri(value: String?) = _uiState.update { it.copy(imageUri = value) }
+
+    /** 切换库存空：仅控制表单展示与保存内容；已填字段保留在状态中，切回可恢复 */
+    fun setEmptyStock(value: Boolean) =
+        _uiState.update { it.copy(isEmptyStock = value) }
 
     fun setQuantity(value: String) =
         _uiState.update { it.copy(quantityText = value.filter { c -> c.isDigit() || c == '.' }.take(7)) }
@@ -143,17 +151,19 @@ class InventoryEditViewModel(
                 } else {
                     originalIngredient ?: Ingredient(name = state.ingredientName.trim())
                 }
+                // 库存空：数量/级别/日期/位置/备注一律不落库
+                val empty = state.isEmptyStock
                 val item = InventoryItem(
                     id = itemId ?: 0,
                     ingredient = ingredient,
-                    quantity = state.quantityText.toDoubleOrNull(),
-                    unit = state.unit.trim().takeIf { it.isNotEmpty() },
-                    quantityLevel = state.quantityLevel,
-                    purchaseDate = state.purchaseDate,
-                    productionDate = state.productionDate,
-                    expireDate = state.expireDate,
-                    location = state.location.trim().takeIf { it.isNotEmpty() },
-                    note = state.note.trim().takeIf { it.isNotEmpty() },
+                    quantity = if (empty) null else state.quantityText.toDoubleOrNull(),
+                    unit = if (empty) null else state.unit.trim().takeIf { it.isNotEmpty() },
+                    quantityLevel = if (empty) null else state.quantityLevel,
+                    purchaseDate = if (empty) null else state.purchaseDate,
+                    productionDate = if (empty) null else state.productionDate,
+                    expireDate = if (empty) null else state.expireDate,
+                    location = if (empty) null else state.location.trim().takeIf { it.isNotEmpty() },
+                    note = if (empty) null else state.note.trim().takeIf { it.isNotEmpty() },
                 )
                 val savedId = if (state.isNew) {
                     addInventory(item)

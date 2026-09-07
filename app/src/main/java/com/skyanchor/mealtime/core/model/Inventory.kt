@@ -47,6 +47,10 @@ data class InventoryItem(
     val note: String? = null,
 )
 
+/** 库存空批次：数字数量与数量级别均未记录，列表中归入「库存空」类 */
+val InventoryItem.isEmptyStock: Boolean
+    get() = quantity == null && quantityLevel == null
+
 /**
  * 库存流水：一切库存变化（扣减、补货、人工调整）必须写入（R04、8.5）。
  */

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
 import com.skyanchor.mealtime.core.model.InventoryItem
+import com.skyanchor.mealtime.core.model.isEmptyStock
 import com.skyanchor.mealtime.domain.repository.IngredientRepository
 import com.skyanchor.mealtime.domain.repository.InventoryRepository
 import com.skyanchor.mealtime.domain.usecase.GetExpiringInventoryUseCase
@@ -17,13 +18,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
-/** 固定 Tab 键：全部 / 临期（非种类筛选） */
+/** 固定 Tab 键：全部 / 临期 / 库存空（非种类筛选） */
 object InventoryTabKeys {
     const val ALL = "__all"
     const val EXPIRING = "__expiring"
+    const val EMPTY = "__empty"
 }
 
-/** 库存列表 Tab：全部 / 临期固定，其余为设置里可配置的食材种类 */
+/** 库存列表 Tab：全部 / 临期 / 库存空固定，其余为设置里可配置的食材种类 */
 data class InventoryTabUi(
     val key: String,
     val label: String,
@@ -37,6 +39,7 @@ data class InventoryListUiState(
     val tabs: List<InventoryTabUi> = listOf(
         InventoryTabUi(InventoryTabKeys.ALL, "全部"),
         InventoryTabUi(InventoryTabKeys.EXPIRING, "临期"),
+        InventoryTabUi(InventoryTabKeys.EMPTY, "库存空"),
     ),
     val selectedTabKey: String = InventoryTabKeys.ALL,
 )
@@ -61,6 +64,7 @@ class InventoryListViewModel(
         // 正在浏览的种类被删除时回落到「全部」
         val effectiveTab = if (tab == InventoryTabKeys.ALL ||
             tab == InventoryTabKeys.EXPIRING ||
+            tab == InventoryTabKeys.EMPTY ||
             types.any { it.key == tab }
         ) {
             tab
@@ -70,6 +74,7 @@ class InventoryListViewModel(
         val tabItems = when (effectiveTab) {
             InventoryTabKeys.ALL -> all
             InventoryTabKeys.EXPIRING -> expiring
+            InventoryTabKeys.EMPTY -> all.filter { it.isEmptyStock }
             else -> all.filter { it.ingredient.type == effectiveTab }
         }
         val items = if (q.isBlank()) {
@@ -85,6 +90,7 @@ class InventoryListViewModel(
             tabs = listOf(
                 InventoryTabUi(InventoryTabKeys.ALL, "全部"),
                 InventoryTabUi(InventoryTabKeys.EXPIRING, "临期"),
+                InventoryTabUi(InventoryTabKeys.EMPTY, "库存空"),
             ) + types.map { InventoryTabUi(it.key, it.label) },
             selectedTabKey = effectiveTab,
         )

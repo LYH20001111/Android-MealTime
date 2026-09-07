@@ -166,98 +166,117 @@ fun InventoryEditScreen(
             onClear = { viewModel.setImageUri(null) },
         )
 
-        if (state.isNew) {
+        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+        FormLabel("库存")
+        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+        Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
+            TagChip(
+                text = "有库存",
+                selected = !state.isEmptyStock,
+                onClick = { viewModel.setEmptyStock(false) },
+            )
+            TagChip(
+                text = "库存空",
+                selected = state.isEmptyStock,
+                onClick = { viewModel.setEmptyStock(true) },
+            )
+        }
+
+        // 库存空：仅记录食材本身，隐藏类型/数量/保质期等后续信息
+        if (!state.isEmptyStock) {
+            if (state.isNew) {
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+                FormLabel("类型")
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+                Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
+                    state.ingredientTypes.forEach { type ->
+                        TagChip(
+                            text = type.label,
+                            selected = state.ingredientType == type.key,
+                            onClick = { viewModel.setIngredientType(type.key) },
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-            FormLabel("类型")
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
             Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
-                state.ingredientTypes.forEach { type ->
-                    TagChip(
-                        text = type.label,
-                        selected = state.ingredientType == type.key,
-                        onClick = { viewModel.setIngredientType(type.key) },
+                Column(modifier = Modifier.weight(1f)) {
+                    FormLabel("数量")
+                    FoodTextField(
+                        value = state.quantityText,
+                        onValueChange = viewModel::setQuantity,
+                        placeholder = "如：4",
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                Column(modifier = Modifier.weight(1f)) {
+                    FormLabel("单位")
+                    FoodTextField(
+                        value = state.unit,
+                        onValueChange = viewModel::setUnit,
+                        placeholder = "个 / 把 / g",
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-        Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
-            Column(modifier = Modifier.weight(1f)) {
-                FormLabel("数量")
-                FoodTextField(
-                    value = state.quantityText,
-                    onValueChange = viewModel::setQuantity,
-                    placeholder = "如：4",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    modifier = Modifier.fillMaxWidth(),
-                )
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+            FormLabel("数量级别（不确定具体数量时可选）")
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+            Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
+                QuantityLevel.entries.forEach { level ->
+                    TagChip(
+                        text = level.chineseLabel,
+                        selected = state.quantityLevel == level,
+                        onClick = { viewModel.selectQuantityLevel(level) },
+                    )
+                }
             }
-            Column(modifier = Modifier.weight(1f)) {
-                FormLabel("单位")
-                FoodTextField(
-                    value = state.unit,
-                    onValueChange = viewModel::setUnit,
-                    placeholder = "个 / 把 / g",
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+            SectionTitle(text = "保质期信息")
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
+            DateField(
+                label = "过期日期",
+                value = state.expireDate,
+                highlight = true,
+                onChange = viewModel::setExpireDate,
+            )
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+            DateField(
+                label = "购买日期",
+                value = state.purchaseDate,
+                highlight = false,
+                onChange = viewModel::setPurchaseDate,
+            )
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+            DateField(
+                label = "生产日期",
+                value = state.productionDate,
+                highlight = false,
+                onChange = viewModel::setProductionDate,
+            )
+
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+            FormLabel("存放位置")
+            FoodTextField(
+                value = state.location,
+                onValueChange = viewModel::setLocation,
+                placeholder = "冷藏室 / 冷冻层 / 橱柜…",
+                modifier = Modifier.fillMaxWidth(),
+            )
+
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+            FormLabel("备注")
+            FoodTextField(
+                value = state.note,
+                onValueChange = viewModel::setNote,
+                placeholder = "品牌、开封日期等",
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
-
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-        FormLabel("数量级别（不确定具体数量时可选）")
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-        Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
-            QuantityLevel.entries.forEach { level ->
-                TagChip(
-                    text = level.chineseLabel,
-                    selected = state.quantityLevel == level,
-                    onClick = { viewModel.selectQuantityLevel(level) },
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-        SectionTitle(text = "保质期信息")
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-        DateField(
-            label = "过期日期",
-            value = state.expireDate,
-            highlight = true,
-            onChange = viewModel::setExpireDate,
-        )
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-        DateField(
-            label = "购买日期",
-            value = state.purchaseDate,
-            highlight = false,
-            onChange = viewModel::setPurchaseDate,
-        )
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-        DateField(
-            label = "生产日期",
-            value = state.productionDate,
-            highlight = false,
-            onChange = viewModel::setProductionDate,
-        )
-
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-        FormLabel("存放位置")
-        FoodTextField(
-            value = state.location,
-            onValueChange = viewModel::setLocation,
-            placeholder = "冷藏室 / 冷冻层 / 橱柜…",
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-        FormLabel("备注")
-        FoodTextField(
-            value = state.note,
-            onValueChange = viewModel::setNote,
-            placeholder = "品牌、开封日期等",
-            modifier = Modifier.fillMaxWidth(),
-        )
 
         state.saveError?.let { error ->
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
