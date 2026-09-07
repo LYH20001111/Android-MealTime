@@ -20,10 +20,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.feature.home.HomeScreen
@@ -134,7 +136,7 @@ fun FoodApp(modifier: Modifier = Modifier) {
                     onCompleteMeal = { mealType ->
                         navController.navigate(Routes.consumeConfirm(LocalDate.now(), mealType))
                     },
-                    onOpenRecommend = { navController.navigate(Routes.RECOMMEND) },
+                    onOpenRecommend = { mealType -> navController.navigate(Routes.recommend(mealType)) },
                     onAddRecipe = { navController.navigate(Routes.recipeEdit(-1L)) },
                 )
             }
@@ -213,8 +215,19 @@ fun FoodApp(modifier: Modifier = Modifier) {
                     onCompleted = { navController.popBackStack() },
                 )
             }
-            composable(Routes.RECOMMEND) {
+            composable(
+                route = Routes.RECOMMEND,
+                arguments = listOf(
+                    navArgument("mealType") {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
+            ) { entry ->
+                val targetMeal = entry.arguments?.getString("mealType")
+                    ?.let { runCatching { MealType.valueOf(it) }.getOrNull() }
                 RecommendScreen(
+                    targetMealType = targetMeal,
                     onBack = { navController.popBackStack() },
                     onOpenRecipe = { id -> navController.navigate(Routes.recipeDetail(id)) },
                 )

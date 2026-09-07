@@ -51,10 +51,12 @@ import com.skyanchor.mealtime.core.ui.SecondaryButton
  */
 @Composable
 fun RecommendScreen(
+    targetMealType: MealType? = null,
     onBack: () -> Unit,
     onOpenRecipe: (Long) -> Unit,
     viewModel: RecommendViewModel = viewModel(
-        factory = RecommendViewModel.factory(rememberAppContainer()),
+        key = "recommend_${targetMealType?.name ?: "auto"}",
+        factory = RecommendViewModel.factory(rememberAppContainer(), targetMealType),
     ),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()

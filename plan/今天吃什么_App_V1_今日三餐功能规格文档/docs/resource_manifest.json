@@ -1,0 +1,13 @@
+{
+  "screen_reference": [
+    215,
+    314
+  ],
+  "resources": [
+    "res/drawable-nodpi/bg_meal_empty.png",
+    "res/drawable-nodpi/bg_meal_card.png",
+    "res/drawable-nodpi/bg_meal_primary_cta.png",
+    "res/drawable-nodpi/bg_meal_section.png",
+    "res/values/colors.xml"
+  ]
+}

@@ -38,6 +38,8 @@ data class HomeMealDish(
     val recipeId: Long,
     val name: String,
     val imageUri: String? = null,
+    /** 辅助信息，如 "家常 · 15分钟"（今日三餐规格文档 §4） */
+    val meta: String = "",
     val isCompleted: Boolean,
 )
 
@@ -134,7 +136,9 @@ class HomeViewModel(
         getExpiringInventory(),
         settingsRepository.observe(noteKey(today)),
         recommendationState,
-    ) { plans, expiring, note, recommendation ->
+        recipeRepository.observeCategories(),
+    ) { plans, expiring, note, recommendation, categories ->
+        val categoryNames = categories.associate { it.id to it.name }
         fun dishesOf(type: MealType) = plans
             .filter { it.mealType == type }
             .map { plan ->
@@ -143,6 +147,7 @@ class HomeViewModel(
                     recipeId = plan.recipe.id,
                     name = plan.recipe.name,
                     imageUri = plan.recipe.imageUri,
+                    meta = recommendationMeta(plan.recipe, categoryNames),
                     isCompleted = plan.status == MealStatus.COMPLETED,
                 )
             }

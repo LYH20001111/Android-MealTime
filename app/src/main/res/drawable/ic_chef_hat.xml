@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 厨师帽插画（今日三餐空状态，规格文档 §12）：三球冠 + 分离帽檐，线性风格 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- 帽冠：左、中、右三个圆凸 -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7,16.5 L7,13.2 C5.2,13.0 3.8,11.5 3.8,9.7 C3.8,7.8 5.3,6.3 7.2,6.3 C7.47,6.3 7.74,6.33 8.0,6.4 C8.2,4.5 9.9,3.0 12.0,3.0 C14.1,3.0 15.8,4.5 16.0,6.4 C16.26,6.33 16.53,6.3 16.8,6.3 C18.7,6.3 20.2,7.8 20.2,9.7 C20.2,11.5 18.8,13.0 17.0,13.2 L17.0,16.5 Z" />
+    <!-- 帽檐：圆角横条 -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7.6,17.8 L16.4,17.8 A1.4,1.4 0 0 1 17.8,19.2 A1.4,1.4 0 0 1 16.4,20.6 L7.6,20.6 A1.4,1.4 0 0 1 6.2,19.2 A1.4,1.4 0 0 1 7.6,17.8 Z" />
+</vector>

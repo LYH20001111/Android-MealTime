@@ -31,6 +31,7 @@ data class RecommendUiState(
 class RecommendViewModel(
     private val recommendRecipes: RecommendRecipesUseCase,
     private val createMealPlan: CreateMealPlanUseCase,
+    targetMeal: MealType? = null,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RecommendUiState())
@@ -38,7 +39,8 @@ class RecommendViewModel(
 
     init {
         refresh()
-        _uiState.update { it.copy(nextMeal = nextMealNow()) }
+        // 指定了目标餐次（如今日三餐空态进入）时直接使用，否则按当前时间推算
+        _uiState.update { it.copy(nextMeal = targetMeal ?: nextMealNow()) }
     }
 
     fun refresh() {
@@ -86,7 +88,10 @@ class RecommendViewModel(
     }
 
     companion object {
-        fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
+        fun factory(
+            container: AppContainer,
+            targetMeal: MealType? = null,
+        ): ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 RecommendViewModel(
                     recommendRecipes = RecommendRecipesUseCase(
@@ -96,6 +101,7 @@ class RecommendViewModel(
                         container.settingsRepository,
                     ),
                     createMealPlan = CreateMealPlanUseCase(container.mealRepository),
+                    targetMeal = targetMeal,
                 )
             }
         }

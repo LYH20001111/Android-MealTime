@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,10 +31,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Alarm
 import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.Nightlight
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material.icons.outlined.WbSunny
@@ -58,10 +62,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -73,6 +79,8 @@ import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.ui.EmptyState
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTheme
+import com.skyanchor.mealtime.core.ui.PrimaryButton
+import com.skyanchor.mealtime.core.ui.SecondaryButton
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -89,7 +97,7 @@ fun HomeScreen(
     onOpenMealPlan: (MealType) -> Unit,
     onOpenRecipe: (Long) -> Unit,
     onCompleteMeal: (MealType) -> Unit,
-    onOpenRecommend: () -> Unit,
+    onOpenRecommend: (MealType?) -> Unit,
     onAddRecipe: () -> Unit,
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.factory(rememberAppContainer()),
@@ -148,7 +156,7 @@ fun HomeScreen(
                 ExpiringBanner(
                     items = state.expiring,
                     count = state.expiringCount,
-                    onClick = onOpenRecommend,
+                    onClick = { onOpenRecommend(null) },
                 )
             }
 
@@ -163,42 +171,45 @@ fun HomeScreen(
             )
 
             // === 今日三餐 ===
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
-            TodayMealsSectionTitle()
+//            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
+//            TodayMealsSectionTitle()
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-            MealCard(
+            MealSection(
                 mealType = MealType.BREAKFAST,
                 dishes = state.breakfast,
                 isCurrent = currentMealType == MealType.BREAKFAST,
                 onManage = { onOpenMealPlan(MealType.BREAKFAST) },
                 onComplete = { onCompleteMeal(MealType.BREAKFAST) },
                 onOpenRecipe = onOpenRecipe,
+                onRecommend = { onOpenRecommend(MealType.BREAKFAST) },
             )
 
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-            MealCard(
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
+            MealSection(
                 mealType = MealType.LUNCH,
                 dishes = state.lunch,
                 isCurrent = currentMealType == MealType.LUNCH,
                 onManage = { onOpenMealPlan(MealType.LUNCH) },
                 onComplete = { onCompleteMeal(MealType.LUNCH) },
                 onOpenRecipe = onOpenRecipe,
+                onRecommend = { onOpenRecommend(MealType.LUNCH) },
             )
 
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-            MealCard(
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
+            MealSection(
                 mealType = MealType.DINNER,
                 dishes = state.dinner,
                 isCurrent = currentMealType == MealType.DINNER,
                 onManage = { onOpenMealPlan(MealType.DINNER) },
                 onComplete = { onCompleteMeal(MealType.DINNER) },
                 onOpenRecipe = onOpenRecipe,
+                onRecommend = { onOpenRecommend(MealType.DINNER) },
             )
 
             // === 智能推荐 ===
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
-            SmartRecommendationCard(onClick = onOpenRecommend)
+            SmartRecommendationCard(onClick = { onOpenRecommend(null) })
 
             // === 今日备注 ===
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
@@ -277,8 +288,8 @@ private fun getGreeting(): String {
     val hour = LocalTime.now().hour
     return when {
         hour < 6 -> "夜深了 🌙"
-        hour < 11 -> "早上好 ☀️"
-        hour < 14 -> "中午好 ️"
+        hour < 11 -> "早上好 🌤️"
+        hour < 14 -> "中午好 🍚"
         hour < 18 -> "下午好 🌅"
         else -> "晚上好 👋"
     }
@@ -636,7 +647,7 @@ private fun TodayRecommendationError(onRetry: () -> Unit) {
                 color = FoodTheme.colors.textSecondary,
             )
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-            com.skyanchor.mealtime.core.ui.SecondaryButton(
+            SecondaryButton(
                 text = "重新加载",
                 onClick = onRetry,
             )
@@ -705,8 +716,9 @@ private fun AddToMealDialog(
     )
 }
 
-// ===================== 今日三餐区域 =====================
+// ===================== 今日三餐区域（今日三餐功能规格文档） =====================
 
+/** §19：Section 标题，不增加过多装饰 */
 @Composable
 private fun TodayMealsSectionTitle() {
     Row(
@@ -728,37 +740,22 @@ private fun TodayMealsSectionTitle() {
             fontWeight = FontWeight.SemiBold,
             color = FoodTheme.colors.textPrimary,
         )
-        Spacer(modifier = Modifier.weight(1f))
-        Row(
-            modifier = Modifier.clickable { },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                text = "查看全部",
-                style = MaterialTheme.typography.bodySmall,
-                color = FoodTheme.colors.textTertiary,
-            )
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                contentDescription = null,
-                tint = FoodTheme.colors.textTertiary,
-                modifier = Modifier.size(14.dp),
-            )
-        }
     }
 }
 
+/** §21：单个餐次 = 头部 + 菜品网格/空态 + 操作区；§16 当前餐次轻微视觉强化 */
 @Composable
-private fun MealCard(
+private fun MealSection(
     mealType: MealType,
     dishes: List<HomeMealDish>,
     isCurrent: Boolean,
     onManage: () -> Unit,
     onComplete: () -> Unit,
     onOpenRecipe: (Long) -> Unit,
+    onRecommend: () -> Unit,
 ) {
-    val borderColor = if (isCurrent) FoodTheme.colors.primary else Color.Transparent
-    val cardBg = if (isCurrent) FoodTheme.colors.primarySoft.copy(alpha = 0.3f) else FoodTheme.colors.surface
+    // §25：EMPTY / PLANNED / COMPLETED 三态
+    val allCompleted = dishes.isNotEmpty() && dishes.all { it.isCompleted }
 
     FoodCard(
         modifier = Modifier
@@ -766,176 +763,337 @@ private fun MealCard(
             .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding)
             .border(
                 width = if (isCurrent) 1.5.dp else 0.dp,
-                color = borderColor,
+                color = if (isCurrent) FoodTheme.colors.primary else Color.Transparent,
                 shape = RoundedCornerShape(FoodTheme.dimens.radiusLg),
             ),
-        backgroundColor = cardBg,
+        backgroundColor = if (isCurrent) {
+            FoodTheme.colors.primarySoft.copy(alpha = 0.3f)
+        } else {
+            FoodTheme.colors.surface
+        },
     ) {
         Column(modifier = Modifier.padding(FoodTheme.dimens.spaceLg)) {
-            // 餐次标题行
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(
-                            if (isCurrent) FoodTheme.colors.primary else FoodTheme.colors.primarySoft,
-                        )
-                        .padding(horizontal = 10.dp, vertical = 4.dp),
-                ) {
-                    Text(
-                        text = getMealTypeLabel(mealType),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (isCurrent) Color.White else FoodTheme.colors.primaryDark,
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = getMealTimeLabel(mealType),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FoodTheme.colors.textTertiary,
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                if (isCurrent && dishes.isNotEmpty() && !dishes.all { it.isCompleted }) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(999.dp))
-                            .background(FoodTheme.colors.warning.copy(alpha = 0.15f))
-                            .padding(horizontal = 8.dp, vertical = 3.dp),
-                    ) {
-                        Text(
-                            text = "当前",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = FoodTheme.colors.warning,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
-            }
+            MealHeader(
+                mealType = mealType,
+                isCurrent = isCurrent,
+                allCompleted = allCompleted,
+            )
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
 
             if (dishes.isEmpty()) {
-                // 空状态
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(FoodTheme.colors.primarySoft),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.RestaurantMenu,
-                            contentDescription = null,
-                            tint = FoodTheme.colors.primaryLight,
-                            modifier = Modifier.size(32.dp),
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "还没有安排这一餐",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = FoodTheme.colors.textTertiary,
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "根据你的库存和口味帮你选一道？",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = FoodTheme.colors.textTertiary,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    com.skyanchor.mealtime.core.ui.SecondaryButton(
-                        text = "帮我安排",
-                        onClick = onManage,
-                        modifier = Modifier.fillMaxWidth(0.6f),
-                    )
-                }
+                MealEmptyState(
+                    mealType = mealType,
+                    onRecommend = onRecommend,
+                    onManage = onManage,
+                )
             } else {
-                // 菜品列表 - 大图模式
-                dishes.forEachIndexed { index, dish ->
-                    if (index > 0) {
-                        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-                    }
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(FoodTheme.dimens.radiusImage))
-                            .clickable { onOpenRecipe(dish.recipeId) },
-                    ) {
-                        // 菜品大图
-                        AsyncImage(
-                            model = dish.imageUri,
-                            contentDescription = dish.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(120.dp)
-                                .clip(RoundedCornerShape(FoodTheme.dimens.radiusImage)),
-                            placeholder = painterResource(R.drawable.bg_recommendation),
-                            error = painterResource(R.drawable.bg_recommendation),
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = dish.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
-                                color = FoodTheme.colors.textPrimary,
-                                modifier = Modifier.weight(1f),
-                            )
-                            if (dish.isCompleted) {
-                                Text(
-                                    text = "✓ 已完成",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = FoodTheme.colors.success,
-                                    fontWeight = FontWeight.SemiBold,
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "家常 · 15分钟",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = FoodTheme.colors.textSecondary,
-                        )
-                    }
-                }
+                MealRecipeGrid(dishes = dishes, onOpenRecipe = onOpenRecipe)
 
-                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-
-                // 操作按钮
-                val allCompleted = dishes.all { it.isCompleted }
+                // §25/§26：已完成的餐次不再显示可重复点击的"完成用餐"
                 if (!allCompleted) {
-                    if (isCurrent) {
-                        // 当前餐次：主按钮完成 + 次按钮修改
-                        Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
-                            com.skyanchor.mealtime.core.ui.SecondaryButton(
-                                text = "修改",
-                                onClick = onManage,
-                                modifier = Modifier.weight(1f),
-                            )
-                            com.skyanchor.mealtime.core.ui.PrimaryButton(
-                                text = "完成用餐",
-                                onClick = onComplete,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                    } else {
-                        // 非当前餐次：只有修改按钮
-                        com.skyanchor.mealtime.core.ui.SecondaryButton(
-                            text = "修改菜品",
-                            onClick = onManage,
-                            modifier = Modifier.fillMaxWidth(),
+                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+                    MealActionRow(onManage = onManage, onComplete = onComplete)
+                }
+            }
+        }
+    }
+}
+
+/** §2/§3：图标 + 餐次名称 + 时间，三餐统一结构 */
+@Composable
+private fun MealHeader(
+    mealType: MealType,
+    isCurrent: Boolean,
+    allCompleted: Boolean,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = getMealIcon(mealType),
+            contentDescription = null,
+            tint = FoodTheme.colors.primary,
+            modifier = Modifier.size(24.dp),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = getMealTypeLabel(mealType),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = FoodTheme.colors.textPrimary,
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = getMealTimeLabel(mealType),
+            style = MaterialTheme.typography.bodySmall,
+            color = FoodTheme.colors.textTertiary,
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        when {
+            // §26：完成后的餐次弱化为"✓ 已完成"
+            allCompleted -> MealStatusChip(
+                text = "✓ 已完成",
+                containerColor = FoodTheme.colors.success.copy(alpha = 0.12f),
+                contentColor = FoodTheme.colors.success,
+            )
+
+            // §16：当前餐次轻微强化
+            isCurrent -> MealStatusChip(
+                text = "当前",
+                containerColor = FoodTheme.colors.primaryLight,
+                contentColor = FoodTheme.colors.primary,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MealStatusChip(
+    text: String,
+    containerColor: Color,
+    contentColor: Color,
+) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(FoodTheme.dimens.radiusPill))
+            .background(containerColor)
+            .padding(horizontal = 10.dp, vertical = 4.dp),
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = contentColor,
+        )
+    }
+}
+
+/** §4-§6：一行最多两个菜品；1 道菜占满整行，超过 2 道换行 */
+@Composable
+private fun MealRecipeGrid(
+    dishes: List<HomeMealDish>,
+    onOpenRecipe: (Long) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceMd)) {
+        if (dishes.size == 1) {
+            MealRecipeCard(
+                dish = dishes.first(),
+                imageHeight = 120.dp,
+                onClick = { onOpenRecipe(dishes.first().recipeId) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        } else {
+            dishes.chunked(2).forEach { rowDishes ->
+                Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceMd)) {
+                    MealRecipeCard(
+                        dish = rowDishes[0],
+                        imageHeight = 110.dp,
+                        onClick = { onOpenRecipe(rowDishes[0].recipeId) },
+                        modifier = Modifier.weight(1f),
+                    )
+                    if (rowDishes.size > 1) {
+                        MealRecipeCard(
+                            dish = rowDishes[1],
+                            imageHeight = 110.dp,
+                            onClick = { onOpenRecipe(rowDishes[1].recipeId) },
+                            modifier = Modifier.weight(1f),
                         )
+                    } else {
+                        // 补位占满剩余宽度，保持卡片约 48%
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
             }
+        }
+    }
+}
+
+/** §5：图片 > 菜名 > 辅助信息；图片足够大、清晰可识别 */
+@Composable
+private fun MealRecipeCard(
+    dish: HomeMealDish,
+    imageHeight: Dp,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(FoodTheme.dimens.radiusImage))
+            .clickable(onClick = onClick),
+    ) {
+        Box {
+            AsyncImage(
+                model = dish.imageUri,
+                contentDescription = dish.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(imageHeight)
+                    .clip(RoundedCornerShape(FoodTheme.dimens.radiusImage)),
+                placeholder = painterResource(R.drawable.bg_recommendation),
+                error = painterResource(R.drawable.bg_recommendation),
+            )
+            if (dish.isCompleted) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(FoodTheme.dimens.spaceSm)
+                        .clip(RoundedCornerShape(FoodTheme.dimens.radiusPill))
+                        .background(FoodTheme.colors.success)
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                ) {
+                    Text(
+                        text = "已完成",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+        Text(
+            text = dish.name,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = FoodTheme.colors.textPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (dish.meta.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = dish.meta,
+                style = MaterialTheme.typography.bodySmall,
+                color = FoodTheme.colors.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+/** §7-§10：修改菜品 = Secondary，完成用餐 = Primary，两个按钮样式明显区分 */
+@Composable
+private fun MealActionRow(
+    onManage: () -> Unit,
+    onComplete: () -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
+        EditMealButton(
+            text = "修改菜品",
+            onClick = onManage,
+            modifier = Modifier.weight(1f),
+        )
+        PrimaryButton(
+            text = "✓ 完成用餐",
+            onClick = onComplete,
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+/** §8：浅紫背景 + 品牌紫文字的次级按钮，无强阴影 */
+@Composable
+private fun EditMealButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .heightIn(min = FoodTheme.dimens.buttonHeight)
+            .clip(RoundedCornerShape(FoodTheme.dimens.radiusLg))
+            .background(FoodTheme.colors.primaryLight)
+            .clickable(onClick = onClick)
+            .padding(horizontal = FoodTheme.dimens.spaceLg, vertical = FoodTheme.dimens.spaceMd),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = FoodTheme.colors.primary,
+            maxLines = 1,
+        )
+    }
+}
+
+/** §12-§14：专用 Empty State —— 轻紫渐变背景 + 厨师帽插画 + 醒目的"帮我推荐"Primary CTA */
+@Composable
+private fun MealEmptyState(
+    mealType: MealType,
+    onRecommend: () -> Unit,
+    onManage: () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(FoodTheme.dimens.radiusLg)),
+    ) {
+        Image(
+            painter = painterResource(R.drawable.bg_meal_empty),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.matchParentSize(),
+        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = FoodTheme.dimens.spaceLg, vertical = FoodTheme.dimens.spaceXl),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.75f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_chef_hat),
+                    contentDescription = null,
+                    tint = FoodTheme.colors.primary,
+                    modifier = Modifier.size(30.dp),
+                )
+            }
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
+            Text(
+                text = "还没有安排${getMealTypeLabel(mealType)}哦~",
+                style = MaterialTheme.typography.titleMedium,
+                color = FoodTheme.colors.textPrimary,
+            )
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+            Text(
+                text = "根据你的食材和口味，帮你推荐",
+                style = MaterialTheme.typography.bodySmall,
+                color = FoodTheme.colors.textSecondary,
+            )
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+            // §14：帮我推荐 Primary CTA（44~48dp 高、22~24dp 圆角、140~170dp 宽）
+            Box(
+                modifier = Modifier
+                    .width(160.dp)
+                    .height(46.dp)
+                    .clip(RoundedCornerShape(23.dp))
+                    .background(FoodTheme.colors.primaryGradient)
+                    .clickable(onClick = onRecommend),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = "✨ 帮我推荐",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White,
+                )
+            }
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
+            // 保留手动选菜入口：进入餐次管理页自己挑
+            Text(
+                text = "或自己挑一道 >",
+                style = MaterialTheme.typography.bodySmall,
+                color = FoodTheme.colors.textTertiary,
+                modifier = Modifier.clickable(onClick = onManage),
+            )
         }
     }
 }
@@ -950,6 +1108,13 @@ private fun getMealTimeLabel(type: MealType): String = when (type) {
     MealType.BREAKFAST -> "07:30"
     MealType.LUNCH -> "12:00"
     MealType.DINNER -> "18:30"
+}
+
+/** §2：三餐统一线性时间段语义图标，不用餐具 emoji 代替 */
+private fun getMealIcon(type: MealType): ImageVector = when (type) {
+    MealType.BREAKFAST -> Icons.Outlined.WbSunny
+    MealType.LUNCH -> Icons.Outlined.AccessTime
+    MealType.DINNER -> Icons.Outlined.Nightlight
 }
 
 private fun getCurrentMealType(): MealType {

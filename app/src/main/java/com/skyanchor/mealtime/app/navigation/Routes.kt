@@ -8,7 +8,7 @@ object Routes {
     const val INVENTORY_EDIT = "inventory/edit/{itemId}"
     const val MEAL_PLAN = "meal/{date}/{mealType}"
     const val CONSUME_CONFIRM = "consume-confirm/{date}/{mealType}"
-    const val RECOMMEND = "recommend"
+    const val RECOMMEND = "recommend?mealType={mealType}"
     const val SETTINGS = "settings"
     const val HISTORY = "history"
 
@@ -27,4 +27,8 @@ object Routes {
 
     fun consumeConfirm(date: java.time.LocalDate, mealType: com.skyanchor.mealtime.core.model.MealType): String =
         "consume-confirm/$date/${mealType.name}"
+
+    /** mealType 为空时由推荐页按当前时间推算下一餐 */
+    fun recommend(mealType: com.skyanchor.mealtime.core.model.MealType? = null): String =
+        if (mealType == null) "recommend" else "recommend?mealType=${mealType.name}"
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary">#8068E8</color>
+    <color name="brand_primary_light">#EEE9FF</color>
+    <color name="brand_background">#F8F7FB</color>
+    <color name="brand_surface">#FFFFFF</color>
+
+    <color name="text_primary">#282432</color>
+    <color name="text_secondary">#777181</color>
+    <color name="text_tertiary">#A49FAE</color>
+
+    <color name="meal_breakfast">#8B79E8</color>
+    <color name="meal_lunch">#7D78D7</color>
+    <color name="meal_dinner">#9A7AE7</color>
+
+    <color name="state_warning">#F2A65A</color>
+    <color name="state_success">#70B79B</color>
+</resources>
