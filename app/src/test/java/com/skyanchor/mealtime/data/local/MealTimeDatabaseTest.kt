@@ -105,6 +105,27 @@ class MealTimeDatabaseTest {
     }
 
     @Test
+    fun recipeSearchMatchesIngredientName() = runBlocking {
+        val mapoId = db.recipeDao().insert(recipe("蚂蚁上树"))
+        db.recipeDao().insert(recipe("青椒肉丝"))
+        val noodle = db.ingredientDao().insert(ingredient("粉丝"))
+        db.recipeDao().insertIngredients(
+            listOf(
+                RecipeIngredientEntity(
+                    recipeId = mapoId, ingredientId = noodle,
+                    quantity = 1.0, unit = "把", ingredientType = "INGREDIENT", sortOrder = 0,
+                )
+            )
+        )
+
+        val byIngredient = db.recipeDao().observeRecipes(query = "粉丝", categoryId = null, favoritesOnly = false).first()
+        assertEquals(listOf("蚂蚁上树"), byIngredient.map { it.name })
+
+        val noMatch = db.recipeDao().observeRecipes(query = "豆腐", categoryId = null, favoritesOnly = false).first()
+        assertTrue(noMatch.isEmpty())
+    }
+
+    @Test
     fun expiringInventorySortedAscendingWithinThreshold() = runBlocking {
         val tomato = db.ingredientDao().insert(ingredient("番茄"))
         val today = LocalDate.now().toEpochDay()

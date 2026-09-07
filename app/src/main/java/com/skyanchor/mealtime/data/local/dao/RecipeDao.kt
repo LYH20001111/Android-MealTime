@@ -20,7 +20,13 @@ interface RecipeDao {
         """
         SELECT * FROM recipe
         WHERE isArchived = 0
-          AND (:query IS NULL OR name LIKE '%' || :query || '%')
+          AND (:query IS NULL
+              OR name LIKE '%' || :query || '%'
+              OR id IN (
+                  SELECT ri.recipeId FROM recipe_ingredient AS ri
+                  JOIN ingredient AS i ON i.id = ri.ingredientId
+                  WHERE i.name LIKE '%' || :query || '%'
+              ))
           AND (:categoryId IS NULL OR categoryId = :categoryId)
           AND (:favoritesOnly = 0 OR isFavorite = 1)
         ORDER BY updatedAt DESC

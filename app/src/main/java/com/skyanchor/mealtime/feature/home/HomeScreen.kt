@@ -35,6 +35,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,6 +48,7 @@ import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.SectionTitle
 import com.skyanchor.mealtime.core.ui.SecondaryButton
+import coil3.compose.AsyncImage
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -299,19 +301,30 @@ private fun MealSection(
                             .padding(vertical = FoodTheme.dimens.spaceSm),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(FoodTheme.colors.primarySoft),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.RestaurantMenu,
-                                contentDescription = null,
-                                tint = FoodTheme.colors.primary,
-                                modifier = Modifier.size(18.dp),
+                        if (dish.imageUri != null) {
+                            AsyncImage(
+                                model = dish.imageUri,
+                                contentDescription = dish.name,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape),
                             )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(CircleShape)
+                                    .background(FoodTheme.colors.primarySoft),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.RestaurantMenu,
+                                    contentDescription = null,
+                                    tint = FoodTheme.colors.primary,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            }
                         }
                         Spacer(modifier = Modifier.size(FoodTheme.dimens.spaceMd))
                         Text(

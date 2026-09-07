@@ -24,6 +24,7 @@ data class HomeMealDish(
     val planId: Long,
     val recipeId: Long,
     val name: String,
+    val imageUri: String? = null,
     val isCompleted: Boolean,
 )
 
@@ -58,6 +59,7 @@ class HomeViewModel(
                     planId = plan.id,
                     recipeId = plan.recipe.id,
                     name = plan.recipe.name,
+                    imageUri = plan.recipe.imageUri,
                     isCompleted = plan.status == MealStatus.COMPLETED,
                 )
             }

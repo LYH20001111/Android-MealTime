@@ -76,10 +76,10 @@ fun RecipeListScreen(
             FoodSearchField(
                 value = state.query,
                 onValueChange = viewModel::setQuery,
-                placeholder = "搜索菜谱",
+                placeholder = "搜索菜谱、食材...",
             )
 
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
                 item {
                     TagChip(
