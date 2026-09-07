@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -140,12 +141,24 @@ fun HomeScreen(
         )
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        // ===== 整个首页统一背景 =====
+        // background_home.png 放在 app/src/main/res/drawable/
+        Image(
+            painter = painterResource(R.drawable.background_home_2),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        // ===== 页面内容：避开系统状态栏 =====
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .background(FoodTheme.colors.background),
+                .statusBarsPadding()
+                .verticalScroll(rememberScrollState()),
         ) {
             // === 顶部问候区域 ===
             HomeHeader(date = state.date)
@@ -233,20 +246,11 @@ fun HomeScreen(
 @Composable
 private fun HomeHeader(date: LocalDate) {
     Box(modifier = Modifier.fillMaxWidth()) {
-        Image(
-            painter = painterResource(R.drawable.bg_home_top),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(180.dp),
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding)
-                .padding(top = 24.dp, bottom = 20.dp),
+                .padding(top = 12.dp, bottom = 20.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f)) {
@@ -1053,7 +1057,7 @@ private fun MealEmptyState(
                     painter = painterResource(R.drawable.ic_chef_hat),
                     contentDescription = null,
                     tint = FoodTheme.colors.primary,
-                    modifier = Modifier.size(30.dp),
+                    modifier = Modifier.size(35.dp),
                 )
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
