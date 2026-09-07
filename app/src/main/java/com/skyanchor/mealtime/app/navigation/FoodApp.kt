@@ -1,7 +1,12 @@
 package com.skyanchor.mealtime.app.navigation
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -11,6 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -49,7 +57,10 @@ fun FoodApp(modifier: Modifier = Modifier) {
         containerColor = FoodTheme.colors.background,
         bottomBar = {
             if (showBottomBar) {
-                NavigationBar(containerColor = FoodTheme.colors.surface) {
+                NavigationBar(
+                    containerColor = FoodTheme.colors.surface,
+                    modifier = Modifier.height(64.dp),
+                ) {
                     FoodTab.entries.forEach { tab ->
                         NavigationBarItem(
                             selected = currentRoute == tab.route,
@@ -62,14 +73,44 @@ fun FoodApp(modifier: Modifier = Modifier) {
                                     restoreState = true
                                 }
                             },
-                            icon = { Icon(tab.icon, contentDescription = tab.label) },
-                            label = { Text(tab.label) },
+                            icon = {
+                                if (currentRoute == tab.route) {
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(20.dp))
+                                            .background(FoodTheme.colors.primarySoft)
+                                            .padding(horizontal = 16.dp, vertical = 6.dp),
+                                    ) {
+                                        Icon(
+                                            tab.icon,
+                                            contentDescription = tab.label,
+                                            tint = FoodTheme.colors.primary,
+                                        )
+                                    }
+                                } else {
+                                    Icon(
+                                        tab.icon,
+                                        contentDescription = tab.label,
+                                        tint = FoodTheme.colors.textTertiary,
+                                    )
+                                }
+                            },
+                            label = {
+                                Text(
+                                    tab.label,
+                                    color = if (currentRoute == tab.route) {
+                                        FoodTheme.colors.primary
+                                    } else {
+                                        FoodTheme.colors.textTertiary
+                                    },
+                                )
+                            },
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = FoodTheme.colors.primary,
                                 selectedTextColor = FoodTheme.colors.primary,
                                 unselectedIconColor = FoodTheme.colors.textTertiary,
                                 unselectedTextColor = FoodTheme.colors.textTertiary,
-                                indicatorColor = FoodTheme.colors.primarySoft,
+                                indicatorColor = Color.Transparent,
                             ),
                         )
                     }
@@ -94,6 +135,7 @@ fun FoodApp(modifier: Modifier = Modifier) {
                         navController.navigate(Routes.consumeConfirm(LocalDate.now(), mealType))
                     },
                     onOpenRecommend = { navController.navigate(Routes.RECOMMEND) },
+                    onAddRecipe = { navController.navigate(Routes.recipeEdit(-1L)) },
                 )
             }
             composable(FoodTab.RECIPE.route) {

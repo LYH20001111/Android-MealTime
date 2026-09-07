@@ -1,0 +1,44 @@
+{
+  "colors": {
+    "primary": "#8068E8",
+    "primaryLight": "#EEE9FF",
+    "primarySoft": "#F6F3FF",
+    "background": "#F8F7FB",
+    "surface": "#FFFFFF",
+    "textPrimary": "#282432",
+    "textSecondary": "#777181",
+    "textTertiary": "#A49FAE",
+    "warning": "#F2A65A",
+    "danger": "#E96A7B",
+    "success": "#70B79B",
+    "purpleDeep": "#6F55C9",
+    "lavender": "#A18BEF",
+    "lavenderPale": "#E8E0FF"
+  },
+  "spacing_dp": {
+    "xs": 4,
+    "sm": 8,
+    "md": 12,
+    "lg": 16,
+    "xl": 20,
+    "xxl": 24,
+    "xxxl": 32
+  },
+  "radius_dp": {
+    "small": 10,
+    "button": 14,
+    "card": 20,
+    "hero": 24,
+    "image": 16,
+    "pill": 20
+  },
+  "typography_sp": {
+    "pageTitle": 24,
+    "sectionTitle": 20,
+    "cardTitle": 18,
+    "body": 14,
+    "bodyLarge": 16,
+    "caption": 12,
+    "captionLarge": 13
+  }
+}

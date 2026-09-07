@@ -34,22 +34,22 @@ data class FoodColors(
 
     companion object {
         val Default = FoodColors(
-            primary = Color(0xFF8B7CF6),
-            primaryDark = Color(0xFF7164D9),
-            primaryLight = Color(0xFFB8AFFB),
-            primarySoft = Color(0xFFF0EEFF),
-            background = Color(0xFFFAF9FD),
+            primary = Color(0xFF8068E8),
+            primaryDark = Color(0xFF6F55C9),
+            primaryLight = Color(0xFFEEE9FF),
+            primarySoft = Color(0xFFF6F3FF),
+            background = Color(0xFFF8F7FB),
             surface = Color(0xFFFFFFFF),
-            surfaceSoft = Color(0xFFF5F3FA),
-            textPrimary = Color(0xFF2B2940),
-            textSecondary = Color(0xFF77748A),
-            textTertiary = Color(0xFFA09DAF),
+            surfaceSoft = Color(0xFFF0EBFF),
+            textPrimary = Color(0xFF282432),
+            textSecondary = Color(0xFF777181),
+            textTertiary = Color(0xFFA49FAE),
             divider = Color(0xFFE9E6F0),
-            success = Color(0xFF79BFA7),
-            warning = Color(0xFFE6B56B),
-            danger = Color(0xFFD9828B),
-            gradientStart = Color(0xFFA79AF7),
-            gradientEnd = Color(0xFF7C6BE8),
+            success = Color(0xFF70B79B),
+            warning = Color(0xFFF2A65A),
+            danger = Color(0xFFE96A7B),
+            gradientStart = Color(0xFF8E79E8),
+            gradientEnd = Color(0xFFC5B7F7),
         )
     }
 }

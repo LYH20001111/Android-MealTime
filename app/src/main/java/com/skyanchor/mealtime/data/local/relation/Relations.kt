@@ -2,6 +2,8 @@ package com.skyanchor.mealtime.data.local.relation
 
 import androidx.room.Embedded
 import androidx.room.Relation
+import com.skyanchor.mealtime.data.local.entity.DailyRecommendationEntity
+import com.skyanchor.mealtime.data.local.entity.DailyRecommendationItemEntity
 import com.skyanchor.mealtime.data.local.entity.IngredientEntity
 import com.skyanchor.mealtime.data.local.entity.InventoryItemEntity
 import com.skyanchor.mealtime.data.local.entity.MealPlanEntity
@@ -30,4 +32,13 @@ data class MealPlanWithRecipe(
     @Embedded val plan: MealPlanEntity,
     @Relation(parentColumn = "recipeId", entityColumn = "id")
     val recipe: RecipeEntity,
+)
+
+data class DailyRecommendationWithItems(
+    @Embedded val recommendation: DailyRecommendationEntity,
+    @Relation(
+        parentColumn = "id",
+        entityColumn = "recommendationId",
+    )
+    val items: List<DailyRecommendationItemEntity>,
 )

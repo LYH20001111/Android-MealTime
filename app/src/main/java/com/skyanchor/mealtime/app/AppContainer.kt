@@ -4,11 +4,13 @@ import android.content.Context
 import com.skyanchor.mealtime.data.local.database.DatabaseFactory
 import com.skyanchor.mealtime.data.local.database.MealTimeDatabase
 import com.skyanchor.mealtime.data.repository.RoomBackupRepository
+import com.skyanchor.mealtime.data.repository.RoomDailyRecommendationRepository
 import com.skyanchor.mealtime.data.repository.RoomIngredientRepository
 import com.skyanchor.mealtime.data.repository.RoomInventoryRepository
 import com.skyanchor.mealtime.data.repository.RoomMealRepository
 import com.skyanchor.mealtime.data.repository.RoomRecipeRepository
 import com.skyanchor.mealtime.data.repository.RoomSettingsRepository
+import com.skyanchor.mealtime.domain.repository.DailyRecommendationRepository
 import com.skyanchor.mealtime.domain.repository.IngredientRepository
 import com.skyanchor.mealtime.domain.repository.InventoryRepository
 import com.skyanchor.mealtime.domain.repository.MealRepository
@@ -29,6 +31,9 @@ class AppContainer(appContext: Context) {
     val database: MealTimeDatabase by lazy { DatabaseFactory.create(context) }
 
     val recipeRepository: RecipeRepository by lazy { RoomRecipeRepository(database) }
+    val dailyRecommendationRepository: DailyRecommendationRepository by lazy {
+        RoomDailyRecommendationRepository(database)
+    }
     val ingredientRepository: IngredientRepository by lazy { RoomIngredientRepository(database) }
     val inventoryRepository: InventoryRepository by lazy { RoomInventoryRepository(database) }
     val mealRepository: MealRepository by lazy { RoomMealRepository(database) }

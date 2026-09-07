@@ -9,6 +9,7 @@ import com.skyanchor.mealtime.core.model.FALLBACK_CATEGORY_NAME
 import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.data.local.dao.AppSettingDao
 import com.skyanchor.mealtime.data.local.dao.CategoryDao
+import com.skyanchor.mealtime.data.local.dao.DailyRecommendationDao
 import com.skyanchor.mealtime.data.local.dao.IngredientDao
 import com.skyanchor.mealtime.data.local.dao.IngredientTypeDao
 import com.skyanchor.mealtime.data.local.dao.InventoryItemDao
@@ -19,6 +20,8 @@ import com.skyanchor.mealtime.data.local.dao.RecipeDao
 import com.skyanchor.mealtime.data.local.dao.TagDao
 import com.skyanchor.mealtime.data.local.entity.AppSettingEntity
 import com.skyanchor.mealtime.data.local.entity.CategoryEntity
+import com.skyanchor.mealtime.data.local.entity.DailyRecommendationEntity
+import com.skyanchor.mealtime.data.local.entity.DailyRecommendationItemEntity
 import com.skyanchor.mealtime.data.local.entity.IngredientEntity
 import com.skyanchor.mealtime.data.local.entity.IngredientTypeEntity
 import com.skyanchor.mealtime.data.local.entity.InventoryItemEntity
@@ -44,8 +47,10 @@ import com.skyanchor.mealtime.data.local.entity.TagEntity
         TagEntity::class,
         RecipeTagCrossRef::class,
         AppSettingEntity::class,
+        DailyRecommendationEntity::class,
+        DailyRecommendationItemEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = false,
 )
 abstract class MealTimeDatabase : RoomDatabase() {
@@ -60,6 +65,7 @@ abstract class MealTimeDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun tagDao(): TagDao
     abstract fun appSettingDao(): AppSettingDao
+    abstract fun dailyRecommendationDao(): DailyRecommendationDao
 
     companion object {
         const val DATABASE_NAME = "mealtime.db"
