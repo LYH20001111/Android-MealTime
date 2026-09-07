@@ -37,7 +37,8 @@ data class RecipeIngredientLine(
     val ingredient: Ingredient,
     val quantity: Double? = null,
     val unit: String? = null,
-    val type: IngredientType = IngredientType.INGREDIENT,
+    /** 食材种类键（IngredientTypes 或自定义种类），决定在哪个分区展示 */
+    val type: String = IngredientTypes.INGREDIENT,
     val note: String? = null,
     val sortOrder: Int = 0,
 )

@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.skyanchor.mealtime.data.local.entity.AppSettingEntity
 import com.skyanchor.mealtime.data.local.entity.CategoryEntity
+import com.skyanchor.mealtime.data.local.entity.IngredientTypeEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -14,11 +15,51 @@ interface CategoryDao {
     @Query("SELECT * FROM category ORDER BY sortOrder")
     fun observeAll(): Flow<List<CategoryEntity>>
 
+    @Query("SELECT * FROM category WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): CategoryEntity?
+
+    @Query("SELECT * FROM category WHERE name = :name LIMIT 1")
+    suspend fun getByName(name: String): CategoryEntity?
+
+    @Insert
+    suspend fun insert(category: CategoryEntity): Long
+
+    @Query("DELETE FROM category WHERE id = :id")
+    suspend fun delete(id: Long)
+
+    @Query("SELECT MAX(sortOrder) FROM category")
+    suspend fun maxSortOrder(): Int?
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(categories: List<CategoryEntity>)
 
     @Query("SELECT * FROM category")
     suspend fun exportAll(): List<CategoryEntity>
+}
+
+@Dao
+interface IngredientTypeDao {
+
+    @Query("SELECT * FROM ingredient_type ORDER BY sortOrder")
+    fun observeAll(): Flow<List<IngredientTypeEntity>>
+
+    @Query("SELECT * FROM ingredient_type WHERE `key` = :key LIMIT 1")
+    suspend fun getByKey(key: String): IngredientTypeEntity?
+
+    @Query("SELECT * FROM ingredient_type WHERE label = :label LIMIT 1")
+    suspend fun getByLabel(label: String): IngredientTypeEntity?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(type: IngredientTypeEntity)
+
+    @Query("DELETE FROM ingredient_type WHERE `key` = :key")
+    suspend fun delete(key: String)
+
+    @Query("SELECT MAX(sortOrder) FROM ingredient_type")
+    suspend fun maxSortOrder(): Int?
+
+    @Query("SELECT * FROM ingredient_type")
+    suspend fun exportAll(): List<IngredientTypeEntity>
 }
 
 @Dao

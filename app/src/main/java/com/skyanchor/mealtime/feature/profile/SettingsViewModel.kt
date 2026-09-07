@@ -6,6 +6,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.core.model.Category
+import com.skyanchor.mealtime.core.model.FALLBACK_CATEGORY_NAME
+import com.skyanchor.mealtime.core.model.IngredientTypeInfo
+import com.skyanchor.mealtime.domain.repository.IngredientRepository
+import com.skyanchor.mealtime.domain.repository.RecipeRepository
 import com.skyanchor.mealtime.domain.repository.SettingsKeys
 import com.skyanchor.mealtime.domain.repository.SettingsRepository
 import com.skyanchor.mealtime.domain.usecase.ExportDataUseCase
@@ -22,11 +27,17 @@ data class SettingsUiState(
     val servings: String = SettingsKeys.DEFAULT_SERVINGS_VALUE.toString(),
     val nearDays: String = SettingsKeys.DEFAULT_EXPIRY_NEAR_DAYS.toString(),
     val urgentDays: String = SettingsKeys.DEFAULT_EXPIRY_URGENT_DAYS.toString(),
+    val categories: List<Category> = emptyList(),
+    val ingredientTypes: List<IngredientTypeInfo> = emptyList(),
+    val newCategoryName: String = "",
+    val newTypeName: String = "",
     val message: String? = null,
 )
 
 class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
+    private val recipeRepository: RecipeRepository,
+    private val ingredientRepository: IngredientRepository,
     private val exportData: ExportDataUseCase,
     private val importData: ImportDataUseCase,
 ) : ViewModel() {
@@ -48,6 +59,16 @@ class SettingsViewModel(
                 )
             }
         }
+        viewModelScope.launch {
+            recipeRepository.observeCategories().collect { list ->
+                _uiState.update { it.copy(categories = list) }
+            }
+        }
+        viewModelScope.launch {
+            ingredientRepository.observeTypes().collect { list ->
+                _uiState.update { it.copy(ingredientTypes = list) }
+            }
+        }
     }
 
     fun setNotificationEnabled(enabled: Boolean) {
@@ -64,6 +85,62 @@ class SettingsViewModel(
     fun setNearDays(value: String) = updateNumber(SettingsKeys.EXPIRY_NEAR_DAYS, value) { s, v -> s.copy(nearDays = v) }
 
     fun setUrgentDays(value: String) = updateNumber(SettingsKeys.EXPIRY_URGENT_DAYS, value) { s, v -> s.copy(urgentDays = v) }
+
+    // ---- 分类管理 ----
+
+    fun setNewCategoryName(value: String) = _uiState.update { it.copy(newCategoryName = value) }
+
+    fun addCategory() {
+        val name = _uiState.value.newCategoryName
+        viewModelScope.launch {
+            runCatching { recipeRepository.addCategory(name) }
+                .onSuccess { added ->
+                    _uiState.update { it.copy(newCategoryName = "", message = "✓ 已添加分类「${added.name}」") }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(message = "✗ ${e.message ?: "添加失败"}") }
+                }
+        }
+    }
+
+    fun deleteCategory(id: Long) {
+        viewModelScope.launch {
+            runCatching { recipeRepository.deleteCategory(id) }
+                .onSuccess {
+                    _uiState.update { it.copy(message = "✓ 分类已删除，其中的菜谱已归入「$FALLBACK_CATEGORY_NAME」") }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(message = "✗ ${e.message ?: "删除失败"}") }
+                }
+        }
+    }
+
+    fun setNewTypeName(value: String) = _uiState.update { it.copy(newTypeName = value) }
+
+    fun addIngredientType() {
+        val name = _uiState.value.newTypeName
+        viewModelScope.launch {
+            runCatching { ingredientRepository.addType(name) }
+                .onSuccess { added ->
+                    _uiState.update { it.copy(newTypeName = "", message = "✓ 已添加种类「${added.label}」") }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(message = "✗ ${e.message ?: "添加失败"}") }
+                }
+        }
+    }
+
+    fun deleteIngredientType(key: String) {
+        viewModelScope.launch {
+            runCatching { ingredientRepository.deleteType(key) }
+                .onSuccess {
+                    _uiState.update { it.copy(message = "✓ 种类已删除，其中的食材已归入「其他」") }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(message = "✗ ${e.message ?: "删除失败"}") }
+                }
+        }
+    }
 
     private fun updateNumber(
         key: String,
@@ -124,6 +201,8 @@ class SettingsViewModel(
             initializer {
                 SettingsViewModel(
                     settingsRepository = container.settingsRepository,
+                    recipeRepository = container.recipeRepository,
+                    ingredientRepository = container.ingredientRepository,
                     exportData = ExportDataUseCase(container.backupRepository),
                     importData = ImportDataUseCase(container.backupRepository),
                 )

@@ -1,6 +1,6 @@
 package com.skyanchor.mealtime.domain.usecase
 
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.Recommendation
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.domain.repository.InventoryRepository
@@ -90,7 +90,7 @@ class RecommendRecipesUseCase(
     ): Recommendation {
         val detail = detailProvider()
         val lines = detail?.ingredients
-            ?.filter { it.type == IngredientType.INGREDIENT && it.quantity != null }
+            ?.filter { it.type != IngredientTypes.SEASONING && it.quantity != null }
             ?: emptyList()
 
         val matched = lines.count { it.ingredient.id in stockedIds }

@@ -4,7 +4,7 @@ import com.skyanchor.mealtime.core.model.Category
 import com.skyanchor.mealtime.core.model.ChangeSource
 import com.skyanchor.mealtime.core.model.Difficulty
 import com.skyanchor.mealtime.core.model.Ingredient
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.InventoryChangeType
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.InventoryTransaction
@@ -41,7 +41,7 @@ inline fun <reified T : Enum<T>> String?.toEnumOrDefault(default: T): T =
 fun IngredientEntity.toDomain(): Ingredient = Ingredient(
     id = id,
     name = name,
-    type = type.toEnumOrDefault(IngredientType.INGREDIENT),
+    type = type.ifBlank { IngredientTypes.INGREDIENT },
     defaultUnit = defaultUnit,
     category = category,
     icon = icon,
@@ -70,7 +70,7 @@ fun RecipeIngredientWithIngredient.toDomain(): RecipeIngredientLine = RecipeIngr
     ingredient = ingredient.toDomain(),
     quantity = line.quantity,
     unit = line.unit,
-    type = line.ingredientType.toEnumOrDefault(IngredientType.INGREDIENT),
+    type = line.ingredientType.ifBlank { IngredientTypes.INGREDIENT },
     note = line.note,
     sortOrder = line.sortOrder,
 )
@@ -155,7 +155,7 @@ fun RecipeIngredientLine.toEntity(recipeId: Long): RecipeIngredientEntity = Reci
     ingredientId = ingredient.id,
     quantity = quantity,
     unit = unit,
-    ingredientType = type.name,
+    ingredientType = type,
     note = note,
     sortOrder = sortOrder,
 )

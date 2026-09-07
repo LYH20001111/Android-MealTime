@@ -3,7 +3,7 @@ package com.skyanchor.mealtime.data.local
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.skyanchor.mealtime.core.model.Ingredient
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
@@ -59,7 +59,7 @@ class BackupRoundtripTest {
                     ingredient = Ingredient(name = "番茄"),
                     quantity = 2.0,
                     unit = "个",
-                    type = IngredientType.INGREDIENT,
+                    type = IngredientTypes.INGREDIENT,
                     sortOrder = 0,
                 ),
             ),

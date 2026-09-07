@@ -17,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,6 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.model.Category
+import com.skyanchor.mealtime.core.model.FALLBACK_CATEGORY_NAME
+import com.skyanchor.mealtime.core.model.IngredientTypeInfo
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTextField
 import com.skyanchor.mealtime.core.ui.FoodTheme
@@ -65,6 +70,8 @@ fun SettingsScreen(
     var pendingJson by remember { mutableStateOf<String?>(null) }
     var showImportConfirm by remember { mutableStateOf(false) }
     var importJsonText by remember { mutableStateOf<String?>(null) }
+    var pendingCategoryDelete by remember { mutableStateOf<Category?>(null) }
+    var pendingTypeDelete by remember { mutableStateOf<IngredientTypeInfo?>(null) }
 
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
@@ -112,6 +119,40 @@ fun SettingsScreen(
     ) { granted ->
         viewModel.setNotificationEnabled(granted)
         if (granted) ExpiryNotificationWorker.schedule(context)
+    }
+
+    if (pendingCategoryDelete != null) {
+        AlertDialog(
+            onDismissRequest = { pendingCategoryDelete = null },
+            title = { Text("删除分类") },
+            text = { Text("确定删除分类「${pendingCategoryDelete?.name}」吗？其中的菜谱会自动归入「$FALLBACK_CATEGORY_NAME」。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingCategoryDelete?.let { viewModel.deleteCategory(it.id) }
+                    pendingCategoryDelete = null
+                }) { Text("删除", color = FoodTheme.colors.danger) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingCategoryDelete = null }) { Text("取消") }
+            },
+        )
+    }
+
+    if (pendingTypeDelete != null) {
+        AlertDialog(
+            onDismissRequest = { pendingTypeDelete = null },
+            title = { Text("删除种类") },
+            text = { Text("确定删除食材种类「${pendingTypeDelete?.label}」吗？其中的食材与菜谱配料会自动归入「其他」。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingTypeDelete?.let { viewModel.deleteIngredientType(it.key) }
+                    pendingTypeDelete = null
+                }) { Text("删除", color = FoodTheme.colors.danger) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingTypeDelete = null }) { Text("取消") }
+            },
+        )
     }
 
     if (showImportConfirm) {
@@ -256,6 +297,80 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
+            SectionTitle(text = "分类管理")
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
+            FoodCard {
+                Column(
+                    modifier = Modifier.padding(FoodTheme.dimens.spaceLg),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                ) {
+                    Text(
+                        text = "菜谱分类",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = FoodTheme.colors.textPrimary,
+                    )
+                    state.categories.forEach { category ->
+                        CategoryRow(
+                            name = category.name,
+                            deletable = category.name != FALLBACK_CATEGORY_NAME,
+                            onDelete = { pendingCategoryDelete = category },
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                    ) {
+                        FoodTextField(
+                            value = state.newCategoryName,
+                            onValueChange = viewModel::setNewCategoryName,
+                            placeholder = "新增菜谱分类",
+                            modifier = Modifier.weight(1f),
+                        )
+                        SecondaryButton(text = "添加", onClick = viewModel::addCategory)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+            FoodCard {
+                Column(
+                    modifier = Modifier.padding(FoodTheme.dimens.spaceLg),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                ) {
+                    Text(
+                        text = "食材分类",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = FoodTheme.colors.textPrimary,
+                    )
+                    state.ingredientTypes.forEach { type ->
+                        CategoryRow(
+                            name = type.label,
+                            deletable = type.key != IngredientTypes.OTHER,
+                            onDelete = { pendingTypeDelete = type },
+                        )
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                    ) {
+                        FoodTextField(
+                            value = state.newTypeName,
+                            onValueChange = viewModel::setNewTypeName,
+                            placeholder = "新增食材分类",
+                            modifier = Modifier.weight(1f),
+                        )
+                        SecondaryButton(text = "添加", onClick = viewModel::addIngredientType)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXs))
+            Text(
+                text = "删除分类后，其中的菜谱/食材会自动归入「其他」",
+                style = MaterialTheme.typography.bodySmall,
+                color = FoodTheme.colors.textTertiary,
+                modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceXs),
+            )
+
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
             SectionTitle(text = "数据管理")
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
@@ -297,6 +412,40 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
+        }
+    }
+}
+
+@Composable
+private fun CategoryRow(
+    name: String,
+    deletable: Boolean,
+    onDelete: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyMedium,
+            color = FoodTheme.colors.textPrimary,
+            modifier = Modifier.weight(1f),
+        )
+        if (deletable) {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "删除$name",
+                    tint = FoodTheme.colors.textTertiary,
+                )
+            }
+        } else {
+            Text(
+                text = "不可删除",
+                style = MaterialTheme.typography.labelSmall,
+                color = FoodTheme.colors.textTertiary,
+            )
         }
     }
 }

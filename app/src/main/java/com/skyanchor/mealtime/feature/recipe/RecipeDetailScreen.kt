@@ -52,7 +52,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.model.chineseLabel
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.RecipeDetail
 import com.skyanchor.mealtime.core.ui.FoodCard
@@ -249,37 +249,17 @@ private fun RecipeDetailContent(detail: RecipeDetail) {
             recipe.cookingTimeMin?.let { TagChip(text = "$it 分钟") }
         }
 
-        val ingredientLines = detail.ingredients.filter { it.type == IngredientType.INGREDIENT }
-        if (ingredientLines.isNotEmpty()) {
+        // 按种类分区展示（默认 食材/调料），分区顺序即配料行顺序
+        detail.ingredients.groupBy { it.type }.forEach { (typeKey, lines) ->
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "食材")
+            SectionTitle(text = IngredientTypes.label(typeKey))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Column(
                     modifier = Modifier.padding(FoodTheme.dimens.spaceLg),
                     verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
                 ) {
-                    ingredientLines.forEach { line ->
-                        IngredientRow(
-                            name = line.ingredient.name,
-                            amount = formatAmount(line.quantity, line.unit),
-                        )
-                    }
-                }
-            }
-        }
-
-        val seasoningLines = detail.ingredients.filter { it.type == IngredientType.SEASONING }
-        if (seasoningLines.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "调料")
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-            FoodCard {
-                Column(
-                    modifier = Modifier.padding(FoodTheme.dimens.spaceLg),
-                    verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
-                ) {
-                    seasoningLines.forEach { line ->
+                    lines.forEach { line ->
                         IngredientRow(
                             name = line.ingredient.name,
                             amount = formatAmount(line.quantity, line.unit),

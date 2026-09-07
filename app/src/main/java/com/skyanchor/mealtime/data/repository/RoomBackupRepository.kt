@@ -5,6 +5,7 @@ import com.skyanchor.mealtime.data.local.database.MealTimeDatabase
 import com.skyanchor.mealtime.data.local.entity.AppSettingEntity
 import com.skyanchor.mealtime.data.local.entity.CategoryEntity
 import com.skyanchor.mealtime.data.local.entity.IngredientEntity
+import com.skyanchor.mealtime.data.local.entity.IngredientTypeEntity
 import com.skyanchor.mealtime.data.local.entity.InventoryItemEntity
 import com.skyanchor.mealtime.data.local.entity.InventoryTransactionEntity
 import com.skyanchor.mealtime.data.local.entity.MealPlanEntity
@@ -22,8 +23,9 @@ import org.json.JSONObject
  * JSON 备份实现（org.json，零新增依赖）。
  * 结构：{ version, exportedAt, recipes[], ingredients[], recipeIngredients[],
  *        inventoryItems[], inventoryTransactions[], mealPlans[], mealRecords[],
- *        categories[], tags[], recipeTags[], appSettings[] }
- * 恢复：同一事务内清空业务表 → 按依赖顺序整包写入（保留原 id）。
+ *        categories[], ingredientTypes[], tags[], recipeTags[], appSettings[] }
+ * 恢复：同一事务内清空业务表 → 按依赖顺序整包写入（保留原 id）；
+ *       旧备份缺 ingredientTypes 时保留默认种子种类。
  */
 class RoomBackupRepository(private val db: MealTimeDatabase) : BackupRepository {
 
@@ -35,6 +37,7 @@ class RoomBackupRepository(private val db: MealTimeDatabase) : BackupRepository 
         val plans = db.mealPlanDao().exportAllPlans()
         val records = db.mealRecordDao().exportAllRecords()
         val categories = db.categoryDao().exportAll()
+        val ingredientTypes = db.ingredientTypeDao().exportAll()
         val tags = db.tagDao().exportAll()
         val recipeIngredients = db.recipeDao().exportRecipeIngredients()
         val recipeTags = db.recipeDao().exportRecipeTags()
@@ -51,6 +54,7 @@ class RoomBackupRepository(private val db: MealTimeDatabase) : BackupRepository 
             put("mealPlans", JSONArray().apply { plans.forEach { put(it.toJson()) } })
             put("mealRecords", JSONArray().apply { records.forEach { put(it.toJson()) } })
             put("categories", JSONArray().apply { categories.forEach { put(it.toJson()) } })
+            put("ingredientTypes", JSONArray().apply { ingredientTypes.forEach { put(it.toJson()) } })
             put("tags", JSONArray().apply { tags.forEach { put(it.toJson()) } })
             put("recipeTags", JSONArray().apply { recipeTags.forEach { put(it.toJson()) } })
             put("appSettings", JSONArray().apply { settings.forEach { put(it.toJson()) } })
@@ -64,7 +68,8 @@ class RoomBackupRepository(private val db: MealTimeDatabase) : BackupRepository 
         val sql = db.openHelper.writableDatabase
         listOf(
             "recipe_tag", "recipe_ingredient", "inventory_transaction", "inventory_item",
-            "meal_plan", "meal_record", "tag", "category", "ingredient", "recipe", "app_setting",
+            "meal_plan", "meal_record", "tag", "category", "ingredient", "recipe",
+            "ingredient_type", "app_setting",
         ).forEach { sql.execSQL("DELETE FROM `$it`") }
 
         suspend fun JSONArray.forEachItem(block: suspend (JSONObject) -> Unit) {
@@ -72,6 +77,8 @@ class RoomBackupRepository(private val db: MealTimeDatabase) : BackupRepository 
         }
 
         root.getJSONArray("categories").forEachItem { db.categoryDao().insertAll(listOf(it.toCategory())) }
+        // 旧备份没有 ingredientTypes 字段：保留建库时的默认种子
+        root.optJSONArray("ingredientTypes")?.forEachItem { db.ingredientTypeDao().insert(it.toIngredientType()) }
         root.getJSONArray("tags").forEachItem { db.tagDao().insert(it.toTag()) }
         root.getJSONArray("recipes").forEachItem { db.recipeDao().insert(it.toRecipe()) }
         root.getJSONArray("ingredients").forEachItem { db.ingredientDao().insert(it.toIngredient()) }
@@ -219,6 +226,15 @@ private fun CategoryEntity.toJson() = JSONObject().apply {
 
 private fun JSONObject.toCategory() = CategoryEntity(
     id = getLong("id"), name = stringOr("name"), icon = optStringOrNull("icon"),
+    sortOrder = optIntBoxed("sortOrder") ?: 0,
+)
+
+private fun IngredientTypeEntity.toJson() = JSONObject().apply {
+    put("key", key); put("label", label); put("sortOrder", sortOrder)
+}
+
+private fun JSONObject.toIngredientType() = IngredientTypeEntity(
+    key = stringOr("key"), label = stringOr("label"),
     sortOrder = optIntBoxed("sortOrder") ?: 0,
 )
 

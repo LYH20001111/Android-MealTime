@@ -2,7 +2,6 @@ package com.skyanchor.mealtime.data.repository
 
 import androidx.room.withTransaction
 import com.skyanchor.mealtime.core.model.ChangeSource
-import com.skyanchor.mealtime.core.model.IngredientType
 import com.skyanchor.mealtime.core.model.InventoryChangeType
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.InventoryTransaction
@@ -20,8 +19,8 @@ class RoomInventoryRepository(private val db: MealTimeDatabase) : InventoryRepos
     private val itemDao = db.inventoryItemDao()
     private val transactionDao = db.inventoryTransactionDao()
 
-    override fun observeInventory(type: IngredientType?): Flow<List<InventoryItem>> =
-        itemDao.observeInventory(type?.name).map { list -> list.map { it.toDomain() } }
+    override fun observeInventory(type: String?): Flow<List<InventoryItem>> =
+        itemDao.observeInventory(type).map { list -> list.map { it.toDomain() } }
 
     override fun observeExpiring(withinDays: Int): Flow<List<InventoryItem>> =
         itemDao.observeExpiring(LocalDate.now().toEpochDay() + withinDays)

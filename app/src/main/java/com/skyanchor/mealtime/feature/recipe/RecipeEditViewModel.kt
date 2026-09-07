@@ -9,10 +9,11 @@ import com.skyanchor.mealtime.app.AppContainer
 import com.skyanchor.mealtime.core.model.Category
 import com.skyanchor.mealtime.core.model.Difficulty
 import com.skyanchor.mealtime.core.model.Ingredient
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypeInfo
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
 import com.skyanchor.mealtime.core.model.Tag
+import com.skyanchor.mealtime.domain.repository.IngredientRepository
 import com.skyanchor.mealtime.domain.repository.RecipeRepository
 import com.skyanchor.mealtime.domain.usecase.SaveRecipeUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,6 +30,13 @@ data class IngredientLineInput(
     val unit: String = "",
 )
 
+/** 表单里的一个配料分区：按食材种类动态生成（默认 食材/调料） */
+data class IngredientSectionUi(
+    val typeKey: String,
+    val typeLabel: String,
+    val lines: List<IngredientLineInput>,
+)
+
 data class RecipeEditUiState(
     val isLoading: Boolean = true,
     val isSaving: Boolean = false,
@@ -37,6 +45,7 @@ data class RecipeEditUiState(
     val imageUri: String? = null,
     val categories: List<Category> = emptyList(),
     val selectedCategoryId: Long? = null,
+    val sections: List<IngredientSectionUi> = emptyList(),
     val availableTags: List<Tag> = emptyList(),
     val selectedTagIds: Set<Long> = emptySet(),
     val newTagText: String = "",
@@ -44,8 +53,6 @@ data class RecipeEditUiState(
     val cookingTimeText: String = "",
     val description: String = "",
     val steps: List<String> = listOf(""),
-    val ingredients: List<IngredientLineInput> = listOf(IngredientLineInput()),
-    val seasonings: List<IngredientLineInput> = listOf(IngredientLineInput()),
     val note: String = "",
     val nameError: Boolean = false,
     val saveError: String? = null,
@@ -54,6 +61,7 @@ data class RecipeEditUiState(
 class RecipeEditViewModel(
     private val recipeId: Long?,
     private val recipeRepository: RecipeRepository,
+    private val ingredientRepository: IngredientRepository,
     private val saveRecipeUseCase: SaveRecipeUseCase,
 ) : ViewModel() {
 
@@ -64,6 +72,7 @@ class RecipeEditViewModel(
         viewModelScope.launch {
             val categories = recipeRepository.observeCategories().first()
             val tags = recipeRepository.observeTags().first()
+            val types = ingredientRepository.observeTypes().first()
             _uiState.update { it.copy(categories = categories, availableTags = tags) }
 
             val id = recipeId
@@ -83,37 +92,46 @@ class RecipeEditViewModel(
                             description = recipe.description ?: "",
                             steps = recipe.steps.ifEmpty { listOf("") },
                             note = recipe.note ?: "",
-                            ingredients = detail.ingredients
-                                .filter { it.type == IngredientType.INGREDIENT }
-                                .map { line ->
-                                    IngredientLineInput(
-                                        name = line.ingredient.name,
-                                        quantity = line.quantity?.toString()
-                                            ?.removeSuffix(".0") ?: "",
-                                        unit = line.unit ?: "",
-                                    )
-                                }
-                                .ifEmpty { listOf(IngredientLineInput()) },
-                            seasonings = detail.ingredients
-                                .filter { it.type == IngredientType.SEASONING }
-                                .map { line ->
-                                    IngredientLineInput(
-                                        name = line.ingredient.name,
-                                        quantity = line.quantity?.toString()
-                                            ?.removeSuffix(".0") ?: "",
-                                        unit = line.unit ?: "",
-                                    )
-                                }
-                                .ifEmpty { listOf(IngredientLineInput()) },
+                            sections = buildSections(types, detail.ingredients),
                             selectedTagIds = detail.tags.map { it.id }.toSet(),
                         )
                     }
                     return@launch
                 }
             }
-            _uiState.update { it.copy(isLoading = false) }
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    sections = buildSections(types, emptyList()),
+                )
+            }
         }
     }
+
+    /** 每个已配置种类一个分区；未匹配到当前种类的行（理论上不出现）并入第一分区 */
+    private fun buildSections(
+        types: List<IngredientTypeInfo>,
+        lines: List<RecipeIngredientLine>,
+    ): List<IngredientSectionUi> {
+        val byType = lines.groupBy { it.type }
+        val knownKeys = types.map { it.key }.toSet()
+        val orphans = lines.filter { it.type !in knownKeys }.map(::toLineInput)
+        return types.mapIndexed { index, type ->
+            val sectionLines = (byType[type.key] ?: emptyList()).map(::toLineInput)
+            val merged = if (index == 0) orphans + sectionLines else sectionLines
+            IngredientSectionUi(
+                typeKey = type.key,
+                typeLabel = type.label,
+                lines = merged.ifEmpty { listOf(IngredientLineInput()) },
+            )
+        }
+    }
+
+    private fun toLineInput(line: RecipeIngredientLine) = IngredientLineInput(
+        name = line.ingredient.name,
+        quantity = line.quantity?.toString()?.removeSuffix(".0") ?: "",
+        unit = line.unit ?: "",
+    )
 
     fun setName(value: String) = _uiState.update { it.copy(name = value, nameError = false) }
 
@@ -169,39 +187,23 @@ class RecipeEditViewModel(
         state.copy(steps = remaining.ifEmpty { listOf("") })
     }
 
-    fun updateLine(type: IngredientType, index: Int, value: IngredientLineInput) =
+    fun updateLine(typeKey: String, index: Int, value: IngredientLineInput) =
+        updateSection(typeKey) { lines -> lines.mapIndexed { i, l -> if (i == index) value else l } }
+
+    fun addLine(typeKey: String) = updateSection(typeKey) { it + IngredientLineInput() }
+
+    fun removeLine(typeKey: String, index: Int) = updateSection(typeKey) { lines ->
+        lines.filterIndexed { i, _ -> i != index }.ifEmpty { listOf(IngredientLineInput()) }
+    }
+
+    private fun updateSection(typeKey: String, transform: (List<IngredientLineInput>) -> List<IngredientLineInput>) =
         _uiState.update { state ->
-            when (type) {
-                IngredientType.INGREDIENT -> state.copy(
-                    ingredients = state.ingredients.mapIndexed { i, l -> if (i == index) value else l },
-                )
-
-                IngredientType.SEASONING -> state.copy(
-                    seasonings = state.seasonings.mapIndexed { i, l -> if (i == index) value else l },
-                )
-            }
-        }
-
-    fun addLine(type: IngredientType) = _uiState.update { state ->
-        when (type) {
-            IngredientType.INGREDIENT -> state.copy(ingredients = state.ingredients + IngredientLineInput())
-            IngredientType.SEASONING -> state.copy(seasonings = state.seasonings + IngredientLineInput())
-        }
-    }
-
-    fun removeLine(type: IngredientType, index: Int) = _uiState.update { state ->
-        when (type) {
-            IngredientType.INGREDIENT -> state.copy(
-                ingredients = state.ingredients.filterIndexed { i, _ -> i != index }
-                    .ifEmpty { listOf(IngredientLineInput()) },
-            )
-
-            IngredientType.SEASONING -> state.copy(
-                seasonings = state.seasonings.filterIndexed { i, _ -> i != index }
-                    .ifEmpty { listOf(IngredientLineInput()) },
+            state.copy(
+                sections = state.sections.map { section ->
+                    if (section.typeKey == typeKey) section.copy(lines = transform(section.lines)) else section
+                },
             )
         }
-    }
 
     fun save(onSaved: (Long) -> Unit) {
         val state = _uiState.value
@@ -225,31 +227,22 @@ class RecipeEditViewModel(
                     steps = state.steps.map { it.trim() }.filter { it.isNotEmpty() },
                     note = state.note.takeIf { it.isNotBlank() },
                 )
+                var sortOrder = 0
                 val lines = buildList {
-                    state.ingredients.forEachIndexed { index, input ->
-                        if (input.name.isNotBlank()) {
-                            add(
-                                RecipeIngredientLine(
-                                    ingredient = Ingredient(name = input.name.trim()),
-                                    quantity = parseQuantity(input.quantity),
-                                    unit = input.unit.trim().takeIf { it.isNotEmpty() },
-                                    type = IngredientType.INGREDIENT,
-                                    sortOrder = index,
+                    state.sections.forEach { section ->
+                        section.lines.forEachIndexed { index, input ->
+                            if (input.name.isNotBlank()) {
+                                add(
+                                    RecipeIngredientLine(
+                                        ingredient = Ingredient(name = input.name.trim()),
+                                        quantity = parseQuantity(input.quantity),
+                                        unit = input.unit.trim().takeIf { it.isNotEmpty() },
+                                        type = section.typeKey,
+                                        sortOrder = sortOrder,
+                                    )
                                 )
-                            )
-                        }
-                    }
-                    state.seasonings.forEachIndexed { index, input ->
-                        if (input.name.isNotBlank()) {
-                            add(
-                                RecipeIngredientLine(
-                                    ingredient = Ingredient(name = input.name.trim()),
-                                    quantity = parseQuantity(input.quantity),
-                                    unit = input.unit.trim().takeIf { it.isNotEmpty() },
-                                    type = IngredientType.SEASONING,
-                                    sortOrder = state.ingredients.size + index,
-                                )
-                            )
+                                sortOrder++
+                            }
                         }
                     }
                 }
@@ -273,6 +266,7 @@ class RecipeEditViewModel(
                     RecipeEditViewModel(
                         recipeId = recipeId,
                         recipeRepository = container.recipeRepository,
+                        ingredientRepository = container.ingredientRepository,
                         saveRecipeUseCase = SaveRecipeUseCase(
                             container.recipeRepository,
                             container.ingredientRepository,

@@ -2,7 +2,7 @@ package com.skyanchor.mealtime.data.local
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.data.local.database.DatabaseFactory
 import com.skyanchor.mealtime.data.local.database.MealTimeDatabase
@@ -141,8 +141,8 @@ class MealTimeDatabaseTest {
     @Test
     fun ingredientGetOrCreateReusesSameRow() = runBlocking {
         val repository = RoomIngredientRepository(db)
-        val first = repository.getOrCreate("番茄", IngredientType.INGREDIENT)
-        val second = repository.getOrCreate(" 番茄 ", IngredientType.INGREDIENT)
+        val first = repository.getOrCreate("番茄", IngredientTypes.INGREDIENT)
+        val second = repository.getOrCreate(" 番茄 ", IngredientTypes.INGREDIENT)
         assertEquals(first.id, second.id)
     }
 

@@ -89,13 +89,8 @@ fun HomeScreen(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "今天吃什么",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = FoodTheme.colors.textPrimary,
-                )
-                Text(
                     text = formatDate(state.date),
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyLarge,
                     color = FoodTheme.colors.textTertiary,
                 )
             }

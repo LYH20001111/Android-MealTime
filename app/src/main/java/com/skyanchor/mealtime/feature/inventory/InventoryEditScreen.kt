@@ -55,7 +55,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.common.copyImageToPrivate
-import com.skyanchor.mealtime.core.model.IngredientType
 import com.skyanchor.mealtime.core.model.QuantityLevel
 import com.skyanchor.mealtime.core.model.chineseLabel
 import com.skyanchor.mealtime.core.ui.FoodCard
@@ -172,11 +171,11 @@ fun InventoryEditScreen(
             FormLabel("类型")
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
             Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
-                IngredientType.entries.forEach { type ->
+                state.ingredientTypes.forEach { type ->
                     TagChip(
-                        text = if (type == IngredientType.INGREDIENT) "食材" else "调料",
-                        selected = state.ingredientType == type,
-                        onClick = { viewModel.setIngredientType(type) },
+                        text = type.label,
+                        selected = state.ingredientType == type.key,
+                        onClick = { viewModel.setIngredientType(type.key) },
                     )
                 }
             }

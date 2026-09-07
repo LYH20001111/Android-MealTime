@@ -85,7 +85,7 @@ class ConsumeConfirmViewModel(
                     name = plan.recipe.name,
                     lines = detail?.ingredients
                         ?.filter { it.quantity != null && it.ingredient.name.isNotBlank() }
-                        ?.filter { it.type == com.skyanchor.mealtime.core.model.IngredientType.INGREDIENT }
+                        ?.filter { it.type != com.skyanchor.mealtime.core.model.IngredientTypes.SEASONING }
                         ?.map { line ->
                             ConsumeLineUi(
                                 planId = plan.id,

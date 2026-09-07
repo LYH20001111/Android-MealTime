@@ -50,7 +50,7 @@ import com.skyanchor.mealtime.core.ui.TagChip
 import java.time.LocalDate
 
 /**
- * 食材/库存列表：全部 / 临期 / 食材 / 调料 Tab，临期优先排序（PAGES.md §6）。
+ * 食材/库存列表：全部 / 临期 + 可配置的食材种类 Tab，临期优先排序（PAGES.md §6）。
  */
 @Composable
 fun InventoryListScreen(
@@ -69,12 +69,6 @@ fun InventoryListScreen(
                 .fillMaxSize()
                 .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
         ) {
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            Text(
-                text = "食材",
-                style = MaterialTheme.typography.titleLarge,
-                color = FoodTheme.colors.textPrimary,
-            )
             if (state.expiringCount > 0) {
                 Text(
                     text = "有 ${state.expiringCount} 批食材临近保质期，优先吃掉它们",
@@ -85,11 +79,11 @@ fun InventoryListScreen(
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
-                items(InventoryTab.entries.toList()) { tab ->
+                items(state.tabs, key = { it.key }) { tab ->
                     TagChip(
                         text = tab.label,
-                        selected = state.tab == tab,
-                        onClick = { viewModel.selectTab(tab) },
+                        selected = state.selectedTabKey == tab.key,
+                        onClick = { viewModel.selectTab(tab.key) },
                     )
                 }
             }
@@ -106,7 +100,7 @@ fun InventoryListScreen(
                     }
                 }
 
-                state.items.isEmpty() && state.tab == InventoryTab.EXPIRING -> {
+                state.items.isEmpty() && state.selectedTabKey == InventoryTabKeys.EXPIRING -> {
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         EmptyState(
                             icon = Icons.Outlined.Eco,
@@ -198,12 +192,12 @@ private fun InventoryCard(
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
-                    Icon(
-                        imageVector = if (item.ingredient.type == com.skyanchor.mealtime.core.model.IngredientType.INGREDIENT) {
-                            Icons.Outlined.Eco
-                        } else {
-                            Icons.Outlined.Kitchen
-                        },
+                Icon(
+                    imageVector = if (item.ingredient.type == com.skyanchor.mealtime.core.model.IngredientTypes.SEASONING) {
+                        Icons.Outlined.Kitchen
+                    } else {
+                        Icons.Outlined.Eco
+                    },
                         contentDescription = null,
                         tint = FoodTheme.colors.primary,
                         modifier = Modifier.size(24.dp),

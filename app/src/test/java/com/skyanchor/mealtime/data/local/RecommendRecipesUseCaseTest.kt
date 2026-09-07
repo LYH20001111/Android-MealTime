@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.skyanchor.mealtime.core.model.Difficulty
 import com.skyanchor.mealtime.core.model.Ingredient
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
 import com.skyanchor.mealtime.data.local.database.DatabaseFactory
@@ -84,7 +84,7 @@ class RecommendRecipesUseCaseTest {
                     ingredientId = ingredientId(ingredient),
                     quantity = quantity,
                     unit = unit,
-                    ingredientType = IngredientType.INGREDIENT.name,
+                    ingredientType = IngredientTypes.INGREDIENT,
                     sortOrder = index,
                 )
             },

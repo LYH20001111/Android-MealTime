@@ -1,6 +1,5 @@
 package com.skyanchor.mealtime.domain.usecase
 
-import com.skyanchor.mealtime.core.model.IngredientType
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine

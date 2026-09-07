@@ -217,7 +217,7 @@ fun InventoryDetailScreen(
                                     ?: item.quantityLevel?.chineseLabel
                                     ?: "未设置"
                                 DetailRow("数量", if (item.unit != null) "$quantityText ${item.unit}" else quantityText)
-                                DetailRow("类型", if (item.ingredient.type == com.skyanchor.mealtime.core.model.IngredientType.INGREDIENT) "食材" else "调料")
+                                DetailRow("类型", com.skyanchor.mealtime.core.model.IngredientTypes.label(item.ingredient.type))
                                 item.purchaseDate?.let { DetailRow("购买日期", formatDate(it)) }
                                 item.productionDate?.let { DetailRow("生产日期", formatDate(it)) }
                                 item.expireDate?.let { expire ->

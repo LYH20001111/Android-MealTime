@@ -36,6 +36,10 @@ interface IngredientDao {
     @Query("UPDATE ingredient SET isDeleted = 1 WHERE id = :id")
     suspend fun softDelete(id: Long)
 
+    /** 食材种类删除时，把该种类的食材移入兜底种类 */
+    @Query("UPDATE ingredient SET type = :toType WHERE type = :fromType")
+    suspend fun reassignType(fromType: String, toType: String)
+
     @Query("UPDATE ingredient SET imageUri = :imageUri WHERE id = :id")
     suspend fun updateImage(id: Long, imageUri: String?)
 

@@ -1,7 +1,7 @@
 package com.skyanchor.mealtime.domain.usecase
 
 import com.skyanchor.mealtime.core.model.ConsumptionDeduction
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealStatus
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.domain.repository.MealRepository
@@ -37,7 +37,7 @@ class CompleteMealUseCase(
         for (plan in pending) {
             val detail = recipeRepository.getRecipeDetail(plan.recipe.id) ?: continue
             detail.ingredients
-                .filter { it.type == IngredientType.INGREDIENT && it.quantity != null }
+                .filter { it.type != IngredientTypes.SEASONING && it.quantity != null }
                 .forEach { line ->
                     val actual = adjustments["${plan.id}:${line.ingredient.id}"] ?: line.quantity!!
                     val existing = aggregated[line.ingredient.id]

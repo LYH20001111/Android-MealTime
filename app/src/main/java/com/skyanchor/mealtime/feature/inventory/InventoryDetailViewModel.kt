@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
-import com.skyanchor.mealtime.core.model.IngredientType
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.domain.repository.InventoryRepository
 import kotlinx.coroutines.flow.MutableStateFlow

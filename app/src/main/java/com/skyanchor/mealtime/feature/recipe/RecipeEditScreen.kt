@@ -52,7 +52,6 @@ import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.common.copyImageToPrivate
 import com.skyanchor.mealtime.core.model.Difficulty
 import com.skyanchor.mealtime.core.model.chineseLabel
-import com.skyanchor.mealtime.core.model.IngredientType
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTextField
 import com.skyanchor.mealtime.core.ui.FoodTheme
@@ -202,21 +201,15 @@ fun RecipeEditScreen(
             modifier = Modifier.fillMaxWidth(),
         )
 
-        IngredientSection(
-            title = "食材",
-            lines = state.ingredients,
-            onUpdate = { index, value -> viewModel.updateLine(IngredientType.INGREDIENT, index, value) },
-            onAdd = { viewModel.addLine(IngredientType.INGREDIENT) },
-            onRemove = { index -> viewModel.removeLine(IngredientType.INGREDIENT, index) },
-        )
-
-        IngredientSection(
-            title = "调料",
-            lines = state.seasonings,
-            onUpdate = { index, value -> viewModel.updateLine(IngredientType.SEASONING, index, value) },
-            onAdd = { viewModel.addLine(IngredientType.SEASONING) },
-            onRemove = { index -> viewModel.removeLine(IngredientType.SEASONING, index) },
-        )
+        state.sections.forEach { section ->
+            IngredientSection(
+                title = section.typeLabel,
+                lines = section.lines,
+                onUpdate = { index, value -> viewModel.updateLine(section.typeKey, index, value) },
+                onAdd = { viewModel.addLine(section.typeKey) },
+                onRemove = { index -> viewModel.removeLine(section.typeKey, index) },
+            )
+        }
 
         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
         SectionTitle(text = "做法步骤")

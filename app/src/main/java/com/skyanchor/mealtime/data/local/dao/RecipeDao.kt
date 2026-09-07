@@ -63,6 +63,14 @@ interface RecipeDao {
     @Query("UPDATE recipe SET isFavorite = :favorite, updatedAt = :now WHERE id = :id")
     suspend fun setFavorite(id: Long, favorite: Boolean, now: Long)
 
+    /** 分类删除时，把该分类下的菜谱移入兜底分类 */
+    @Query("UPDATE recipe SET categoryId = :toCategoryId WHERE categoryId = :fromCategoryId")
+    suspend fun reassignCategory(fromCategoryId: Long, toCategoryId: Long)
+
+    /** 食材种类删除时，把该种类的配料行移入兜底种类 */
+    @Query("UPDATE recipe_ingredient SET ingredientType = :toType WHERE ingredientType = :fromType")
+    suspend fun reassignIngredientType(fromType: String, toType: String)
+
     @Query("DELETE FROM recipe_ingredient WHERE recipeId = :recipeId")
     suspend fun clearIngredients(recipeId: Long)
 

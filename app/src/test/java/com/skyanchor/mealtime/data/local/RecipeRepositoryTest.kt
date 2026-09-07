@@ -2,7 +2,7 @@ package com.skyanchor.mealtime.data.local
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
 import com.skyanchor.mealtime.data.local.database.DatabaseFactory
@@ -57,14 +57,14 @@ class RecipeRepositoryTest {
                     ingredient = com.skyanchor.mealtime.core.model.Ingredient(name = "番茄"),
                     quantity = 2.0,
                     unit = "个",
-                    type = IngredientType.INGREDIENT,
+                    type = IngredientTypes.INGREDIENT,
                     sortOrder = 0,
                 ),
                 RecipeIngredientLine(
                     ingredient = com.skyanchor.mealtime.core.model.Ingredient(name = "盐"),
                     quantity = 2.0,
                     unit = "g",
-                    type = IngredientType.SEASONING,
+                    type = IngredientTypes.SEASONING,
                     sortOrder = 1,
                 ),
             ),
@@ -75,7 +75,7 @@ class RecipeRepositoryTest {
         assertNotNull(detail)
         assertEquals("番茄炒蛋", detail!!.recipe.name)
         assertEquals(listOf("番茄", "盐"), detail.ingredients.map { it.ingredient.name })
-        assertEquals(IngredientType.SEASONING, detail.ingredients[1].type)
+        assertEquals(IngredientTypes.SEASONING, detail.ingredients[1].type)
         assertEquals(listOf("快手"), detail.tags.map { it.name })
 
         // 食材字典应为"选择或创建"落库的两条
@@ -101,7 +101,7 @@ class RecipeRepositoryTest {
                     ingredient = com.skyanchor.mealtime.core.model.Ingredient(name = "土豆"),
                     quantity = 1.0,
                     unit = "个",
-                    type = IngredientType.INGREDIENT,
+                    type = IngredientTypes.INGREDIENT,
                     sortOrder = 0,
                 ),
             ),
@@ -116,7 +116,7 @@ class RecipeRepositoryTest {
                     ingredient = com.skyanchor.mealtime.core.model.Ingredient(name = "青椒"),
                     quantity = 2.0,
                     unit = "个",
-                    type = IngredientType.INGREDIENT,
+                    type = IngredientTypes.INGREDIENT,
                     sortOrder = 0,
                 ),
             ),

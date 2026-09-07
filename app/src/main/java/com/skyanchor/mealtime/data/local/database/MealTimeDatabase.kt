@@ -5,9 +5,12 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.skyanchor.mealtime.core.model.FALLBACK_CATEGORY_NAME
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.data.local.dao.AppSettingDao
 import com.skyanchor.mealtime.data.local.dao.CategoryDao
 import com.skyanchor.mealtime.data.local.dao.IngredientDao
+import com.skyanchor.mealtime.data.local.dao.IngredientTypeDao
 import com.skyanchor.mealtime.data.local.dao.InventoryItemDao
 import com.skyanchor.mealtime.data.local.dao.InventoryTransactionDao
 import com.skyanchor.mealtime.data.local.dao.MealPlanDao
@@ -17,6 +20,7 @@ import com.skyanchor.mealtime.data.local.dao.TagDao
 import com.skyanchor.mealtime.data.local.entity.AppSettingEntity
 import com.skyanchor.mealtime.data.local.entity.CategoryEntity
 import com.skyanchor.mealtime.data.local.entity.IngredientEntity
+import com.skyanchor.mealtime.data.local.entity.IngredientTypeEntity
 import com.skyanchor.mealtime.data.local.entity.InventoryItemEntity
 import com.skyanchor.mealtime.data.local.entity.InventoryTransactionEntity
 import com.skyanchor.mealtime.data.local.entity.MealPlanEntity
@@ -30,6 +34,7 @@ import com.skyanchor.mealtime.data.local.entity.TagEntity
     entities = [
         RecipeEntity::class,
         IngredientEntity::class,
+        IngredientTypeEntity::class,
         RecipeIngredientEntity::class,
         InventoryItemEntity::class,
         InventoryTransactionEntity::class,
@@ -40,13 +45,14 @@ import com.skyanchor.mealtime.data.local.entity.TagEntity
         RecipeTagCrossRef::class,
         AppSettingEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class MealTimeDatabase : RoomDatabase() {
 
     abstract fun recipeDao(): RecipeDao
     abstract fun ingredientDao(): IngredientDao
+    abstract fun ingredientTypeDao(): IngredientTypeDao
     abstract fun inventoryItemDao(): InventoryItemDao
     abstract fun inventoryTransactionDao(): InventoryTransactionDao
     abstract fun mealPlanDao(): MealPlanDao
@@ -59,7 +65,13 @@ abstract class MealTimeDatabase : RoomDatabase() {
         const val DATABASE_NAME = "mealtime.db"
 
         /** 首次启动预置的菜谱分类 */
-        val DEFAULT_CATEGORIES = listOf("家常菜", "汤羹", "主食", "凉菜", "甜点", "其他")
+        val DEFAULT_CATEGORIES = listOf("家常菜", "汤羹", "主食", "凉菜", "甜点", FALLBACK_CATEGORY_NAME)
+
+        /** 首次启动预置的食材种类（键, 展示名）；「其他」仅在被删种类兜底时按需创建 */
+        val DEFAULT_INGREDIENT_TYPES = listOf(
+            IngredientTypes.INGREDIENT to "食材",
+            IngredientTypes.SEASONING to "调料",
+        )
     }
 }
 
@@ -78,7 +90,7 @@ object DatabaseFactory {
             .build()
     }
 
-    /** 首次建库时预置默认分类（测试可用 inMemory 复用同一逻辑） */
+    /** 首次建库时预置默认分类与食材种类（测试可用 inMemory 复用同一逻辑） */
     private object SeedCallback : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
@@ -86,6 +98,12 @@ object DatabaseFactory {
                 db.execSQL(
                     "INSERT OR IGNORE INTO category (name, icon, sortOrder) VALUES (?, NULL, ?)",
                     arrayOf<Any>(name, index),
+                )
+            }
+            MealTimeDatabase.DEFAULT_INGREDIENT_TYPES.forEachIndexed { index, (key, label) ->
+                db.execSQL(
+                    "INSERT OR IGNORE INTO ingredient_type (`key`, label, sortOrder) VALUES (?, ?, ?)",
+                    arrayOf<Any>(key, label, index),
                 )
             }
         }

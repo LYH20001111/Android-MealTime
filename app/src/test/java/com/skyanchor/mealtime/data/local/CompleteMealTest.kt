@@ -3,7 +3,7 @@ package com.skyanchor.mealtime.data.local
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.skyanchor.mealtime.core.model.Ingredient
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealStatus
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
@@ -80,7 +80,7 @@ class CompleteMealTest {
                     ingredientId = ingredientId(line.ingredient.name),
                     quantity = line.quantity,
                     unit = line.unit,
-                    ingredientType = line.type.name,
+                    ingredientType = line.type,
                     sortOrder = line.sortOrder,
                 )
             },
@@ -109,14 +109,14 @@ class CompleteMealTest {
         newRecipe(
             "番茄炒蛋",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientType.INGREDIENT, sortOrder = 0),
-                RecipeIngredientLine(ingredient = Ingredient(name = "鸡蛋"), quantity = 3.0, unit = "个", type = IngredientType.INGREDIENT, sortOrder = 1),
+                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(ingredient = Ingredient(name = "鸡蛋"), quantity = 3.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 1),
             ),
         )
         newRecipe(
             "番茄汤",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 1.0, unit = "个", type = IngredientType.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 1.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         val earlyBatch = newBatch("番茄", 1.0, expireInDays = 1) // 先过期，先扣
@@ -166,7 +166,7 @@ class CompleteMealTest {
         newRecipe(
             "需要很多鸡蛋",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "鸡蛋"), quantity = 3.0, unit = "个", type = IngredientType.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(ingredient = Ingredient(name = "鸡蛋"), quantity = 3.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         val batch = newBatch("鸡蛋", 1.0, expireInDays = 2)
@@ -203,7 +203,7 @@ class CompleteMealTest {
         newRecipe(
             "番茄炒蛋",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientType.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         val batch = newBatch("番茄", 5.0, expireInDays = 3)
@@ -222,7 +222,7 @@ class CompleteMealTest {
         newRecipe(
             "番茄炒蛋",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientType.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         newBatch("番茄", 5.0, expireInDays = 4)
@@ -244,7 +244,7 @@ class CompleteMealTest {
         newRecipe(
             "会被归档的菜",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "豆腐"), quantity = 1.0, unit = "块", type = IngredientType.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(ingredient = Ingredient(name = "豆腐"), quantity = 1.0, unit = "块", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         newBatch("豆腐", 5.0, expireInDays = 6)

@@ -17,3 +17,12 @@ data class IngredientEntity(
     val isDeleted: Boolean = false,
     val createdAt: Long,
 )
+
+/** 食材种类注册表（可在设置中增删）；key 为 ingredient.type 的存储值 */
+@Entity(tableName = "ingredient_type")
+data class IngredientTypeEntity(
+    @PrimaryKey
+    val key: String,
+    val label: String,
+    val sortOrder: Int = 0,
+)

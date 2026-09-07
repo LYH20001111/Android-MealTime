@@ -1,9 +1,22 @@
 package com.skyanchor.mealtime.core.model
 
-/** 标准食材字典中的类型：食材 / 调料 */
-enum class IngredientType {
-    INGREDIENT,
-    SEASONING,
+/**
+ * 食材种类的稳定存储键（ingredient.type / recipe_ingredient.ingredientType）。
+ * 种类列表本身可在设置中增删，内置两类沿用历史键以兼容旧数据与备份；
+ * 自定义种类的键即用户输入的名称。
+ */
+object IngredientTypes {
+    const val INGREDIENT = "INGREDIENT"
+    const val SEASONING = "SEASONING"
+    const val OTHER = "OTHER"
+
+    /** 兜底展示名：查不到注册表时（如详情页单条数据）也能给出中文名 */
+    fun label(key: String): String = when (key) {
+        INGREDIENT -> "食材"
+        SEASONING -> "调料"
+        OTHER -> "其他"
+        else -> key
+    }
 }
 
 /**
@@ -13,7 +26,7 @@ enum class IngredientType {
 data class Ingredient(
     val id: Long = 0,
     val name: String,
-    val type: IngredientType = IngredientType.INGREDIENT,
+    val type: String = IngredientTypes.INGREDIENT,
     val defaultUnit: String? = null,
     val category: String? = null,
     val icon: String? = null,

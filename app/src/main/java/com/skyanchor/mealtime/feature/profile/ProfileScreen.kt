@@ -70,13 +70,6 @@ fun ProfileScreen(
             .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
     ) {
         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-        Text(
-            text = "我的",
-            style = MaterialTheme.typography.titleLarge,
-            color = FoodTheme.colors.textPrimary,
-        )
-
-        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
         FoodCard {
             Row(
                 modifier = Modifier

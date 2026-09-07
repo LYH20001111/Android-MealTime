@@ -1,14 +1,13 @@
 package com.skyanchor.mealtime.domain.repository
 
-import com.skyanchor.mealtime.core.model.IngredientType
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.InventoryTransaction
 import kotlinx.coroutines.flow.Flow
 
 interface InventoryRepository {
 
-    /** 全部有效库存，临期优先（无过期日期排最后） */
-    fun observeInventory(type: IngredientType? = null): Flow<List<InventoryItem>>
+    /** 全部有效库存，临期优先（无过期日期排最后）；@param type 食材种类键，null 表示全部 */
+    fun observeInventory(type: String? = null): Flow<List<InventoryItem>>
 
     /** 未来 withinDays 天内到期的库存，按到期日升序 */
     fun observeExpiring(withinDays: Int): Flow<List<InventoryItem>>

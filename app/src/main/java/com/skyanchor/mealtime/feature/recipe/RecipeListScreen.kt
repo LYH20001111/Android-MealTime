@@ -72,13 +72,6 @@ fun RecipeListScreen(
                 .fillMaxSize()
                 .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
         ) {
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            Text(
-                text = "菜谱",
-                style = MaterialTheme.typography.titleLarge,
-                color = FoodTheme.colors.textPrimary,
-            )
-
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             FoodSearchField(
                 value = state.query,

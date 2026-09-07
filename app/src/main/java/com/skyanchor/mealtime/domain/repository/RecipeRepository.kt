@@ -44,6 +44,15 @@ interface RecipeRepository {
 
     fun observeCategories(): Flow<List<Category>>
 
+    /** 新增菜谱分类（重名或空名抛 IllegalArgumentException） */
+    suspend fun addCategory(name: String): Category
+
+    /**
+     * 删除菜谱分类，其中已有的菜谱自动归入「其他」（不存在时自动创建）。
+     * 删除「其他」本身抛 IllegalArgumentException。
+     */
+    suspend fun deleteCategory(id: Long)
+
     fun observeTags(): Flow<List<Tag>>
 
     /** 选择或创建标签：存在同名标签则直接返回 */

@@ -7,7 +7,8 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
 import com.skyanchor.mealtime.core.model.Ingredient
-import com.skyanchor.mealtime.core.model.IngredientType
+import com.skyanchor.mealtime.core.model.IngredientTypeInfo
+import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.QuantityLevel
 import com.skyanchor.mealtime.domain.repository.IngredientRepository
@@ -17,6 +18,7 @@ import com.skyanchor.mealtime.domain.usecase.UpdateInventoryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -26,7 +28,9 @@ data class InventoryEditUiState(
     val isSaving: Boolean = false,
     val isNew: Boolean = true,
     val ingredientName: String = "",
-    val ingredientType: IngredientType = IngredientType.INGREDIENT,
+    /** 食材种类键（设置里可配置） */
+    val ingredientType: String = IngredientTypes.INGREDIENT,
+    val ingredientTypes: List<IngredientTypeInfo> = emptyList(),
     val imageUri: String? = null,
     val quantityText: String = "",
     val unit: String = "",
@@ -57,11 +61,12 @@ class InventoryEditViewModel(
     private var originalIngredient: Ingredient? = null
 
     init {
-        val id = itemId
-        if (id == null) {
-            _uiState.update { it.copy(isLoading = false) }
-        } else {
-            viewModelScope.launch {
+        viewModelScope.launch {
+            val types = ingredientRepository.observeTypes().first()
+            val id = itemId
+            if (id == null) {
+                _uiState.update { it.copy(isLoading = false, ingredientTypes = types) }
+            } else {
                 val item = inventoryRepository.getItem(id)
                 if (item != null) {
                     previousQuantity = item.quantity
@@ -72,6 +77,7 @@ class InventoryEditViewModel(
                             isNew = false,
                             ingredientName = item.ingredient.name,
                             ingredientType = item.ingredient.type,
+                            ingredientTypes = types,
                             imageUri = item.ingredient.imageUri,
                             quantityText = item.quantity?.toString()?.removeSuffix(".0") ?: "",
                             unit = item.unit ?: "",
@@ -84,7 +90,7 @@ class InventoryEditViewModel(
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoading = false, saveError = "库存不存在或已删除") }
+                    _uiState.update { it.copy(isLoading = false, saveError = "库存不存在或已删除", ingredientTypes = types) }
                 }
             }
         }
@@ -93,7 +99,7 @@ class InventoryEditViewModel(
     fun setIngredientName(value: String) =
         _uiState.update { it.copy(ingredientName = value, nameError = false) }
 
-    fun setIngredientType(value: IngredientType) =
+    fun setIngredientType(value: String) =
         _uiState.update { it.copy(ingredientType = value) }
 
     fun setImageUri(value: String?) = _uiState.update { it.copy(imageUri = value) }
