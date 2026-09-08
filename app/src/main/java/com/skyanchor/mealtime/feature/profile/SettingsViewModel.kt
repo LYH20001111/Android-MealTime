@@ -13,8 +13,6 @@ import com.skyanchor.mealtime.domain.repository.IngredientRepository
 import com.skyanchor.mealtime.domain.repository.RecipeRepository
 import com.skyanchor.mealtime.domain.repository.SettingsKeys
 import com.skyanchor.mealtime.domain.repository.SettingsRepository
-import com.skyanchor.mealtime.domain.usecase.ExportDataUseCase
-import com.skyanchor.mealtime.domain.usecase.ImportDataUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,8 +36,6 @@ class SettingsViewModel(
     private val settingsRepository: SettingsRepository,
     private val recipeRepository: RecipeRepository,
     private val ingredientRepository: IngredientRepository,
-    private val exportData: ExportDataUseCase,
-    private val importData: ImportDataUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -158,44 +154,6 @@ class SettingsViewModel(
         }
     }
 
-    fun buildExport(onReady: (String?) -> Unit) {
-        viewModelScope.launch {
-            val json = runCatching { exportData() }.getOrNull()
-            _uiState.update {
-                it.copy(message = if (json != null) null else "✗ 备份生成失败，请重试")
-            }
-            onReady(json)
-        }
-    }
-
-    fun import(json: String) {
-        viewModelScope.launch {
-            val result = runCatching { importData(json) }
-            _uiState.update {
-                it.copy(
-                    message = result.fold(
-                        onSuccess = { s ->
-                            "✓ 恢复完成：菜谱 ${s.recipes}、食材 ${s.ingredients}、库存 ${s.inventoryItems}、记录 ${s.mealRecords}"
-                        },
-                        onFailure = { e -> "✗ 恢复失败：${e.message ?: "文件格式不正确"}" },
-                    ),
-                )
-            }
-        }
-    }
-
-    fun notifyExportDone(success: Boolean) {
-        _uiState.update {
-            it.copy(message = if (success) "✓ 备份已导出" else "✗ 导出失败，请重试")
-        }
-    }
-
-    fun notifyImportDone(success: Boolean, summary: com.skyanchor.mealtime.domain.repository.BackupSummary?) {
-        _uiState.update {
-            it.copy(message = if (success) "✓ 恢复完成" else "✗ 读取备份文件失败")
-        }
-    }
-
     companion object {
         fun factory(container: AppContainer): ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -203,8 +161,6 @@ class SettingsViewModel(
                     settingsRepository = container.settingsRepository,
                     recipeRepository = container.recipeRepository,
                     ingredientRepository = container.ingredientRepository,
-                    exportData = ExportDataUseCase(container.backupRepository),
-                    importData = ImportDataUseCase(container.backupRepository),
                 )
             }
         }

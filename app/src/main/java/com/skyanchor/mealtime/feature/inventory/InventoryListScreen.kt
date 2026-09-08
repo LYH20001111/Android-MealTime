@@ -80,8 +80,8 @@ fun InventoryListScreen(
                 placeholder = "搜索食材...",
             )
 
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             if (state.expiringCount > 0) {
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
                 Text(
                     text = "有 ${state.expiringCount} 批食材临近保质期，优先吃掉它们",
                     style = MaterialTheme.typography.bodySmall,

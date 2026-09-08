@@ -312,7 +312,7 @@ private fun getGreeting(): String {
         hour < 6 -> "夜深了 🌙"
         hour < 11 -> "早上好 🌤️"
         hour < 14 -> "中午好 🍚"
-        hour < 18 -> "下午好 🌅"
+        hour < 18 -> "下午好 ☀️"
         else -> "晚上好 👋"
     }
 }
@@ -1003,7 +1003,7 @@ private fun MealActionRow(
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
         EditMealButton(
-            text = "修改菜品",
+            text = "✎ 修改菜品",
             onClick = onManage,
             modifier = Modifier.weight(1f),
         )

@@ -1,0 +1,14 @@
+{
+  "format": "MEALTIME_BACKUP",
+  "backupVersion": 1,
+  "appVersion": "1.0.0",
+  "databaseVersion": 1,
+  "createdAt": "2026-09-08T15:12:00+08:00",
+  "files": {
+    "data": "data.json",
+    "imageDirectory": "images/",
+    "recipeImageCount": 12,
+    "ingredientImageCount": 3,
+    "totalImageCount": 15
+  }
+}

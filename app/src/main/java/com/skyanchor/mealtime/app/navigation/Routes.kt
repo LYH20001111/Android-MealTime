@@ -11,6 +11,7 @@ object Routes {
     const val RECOMMEND = "recommend?mealType={mealType}"
     const val SETTINGS = "settings"
     const val HISTORY = "history"
+    const val DATA_MANAGEMENT = "data-management"
 
     fun recipeDetail(id: Long): String = "recipe/$id"
 

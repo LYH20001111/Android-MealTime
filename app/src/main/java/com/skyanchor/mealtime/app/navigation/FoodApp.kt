@@ -34,6 +34,7 @@ import com.skyanchor.mealtime.feature.home.MealPlanScreen
 import com.skyanchor.mealtime.feature.inventory.InventoryDetailScreen
 import com.skyanchor.mealtime.feature.inventory.InventoryEditScreen
 import com.skyanchor.mealtime.feature.inventory.InventoryListScreen
+import com.skyanchor.mealtime.feature.profile.DataManagementScreen
 import com.skyanchor.mealtime.feature.profile.HistoryScreen
 import com.skyanchor.mealtime.feature.profile.ProfileScreen
 import com.skyanchor.mealtime.feature.profile.SettingsScreen
@@ -156,6 +157,7 @@ fun FoodApp(modifier: Modifier = Modifier) {
                 ProfileScreen(
                     onOpenHistory = { navController.navigate(Routes.HISTORY) },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenDataManagement = { navController.navigate(Routes.DATA_MANAGEMENT) },
                 )
             }
 
@@ -234,6 +236,9 @@ fun FoodApp(modifier: Modifier = Modifier) {
             }
             composable(Routes.SETTINGS) {
                 SettingsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Routes.DATA_MANAGEMENT) {
+                DataManagementScreen(onBack = { navController.popBackStack() })
             }
             composable(Routes.HISTORY) {
                 HistoryScreen(onBack = { navController.popBackStack() })

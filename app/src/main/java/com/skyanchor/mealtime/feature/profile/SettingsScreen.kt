@@ -1,7 +1,6 @@
 package com.skyanchor.mealtime.feature.profile
 
 import android.Manifest
-import android.content.Context
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,12 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -50,12 +47,10 @@ import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.SectionTitle
 import com.skyanchor.mealtime.core.ui.SecondaryButton
 import com.skyanchor.mealtime.notification.ExpiryNotificationWorker
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 /**
- * 设置：临期通知（开关 + 提前天数 + 立即测试）、默认值、数据导出/恢复、关于。
+ * 设置：临期通知（开关 + 提前天数 + 立即测试）、默认值、分类管理、关于。
+ * 数据备份/恢复已独立为「我的 → 数据管理」（DataManagementScreen）。
  */
 @Composable
 fun SettingsScreen(
@@ -66,53 +61,8 @@ fun SettingsScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var pendingJson by remember { mutableStateOf<String?>(null) }
-    var showImportConfirm by remember { mutableStateOf(false) }
-    var importJsonText by remember { mutableStateOf<String?>(null) }
     var pendingCategoryDelete by remember { mutableStateOf<Category?>(null) }
     var pendingTypeDelete by remember { mutableStateOf<IngredientTypeInfo?>(null) }
-
-    val exportLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/json"),
-    ) { uri ->
-        val json = pendingJson
-        if (uri != null && json != null) {
-            scope.launch {
-                val ok = withContext(Dispatchers.IO) {
-                    runCatching {
-                        context.contentResolver.openOutputStream(uri)?.use { output ->
-                            output.write(json.toByteArray(Charsets.UTF_8))
-                        } != null
-                    }.getOrDefault(false)
-                }
-                viewModel.notifyExportDone(ok)
-            }
-        }
-        pendingJson = null
-    }
-
-    val importLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        if (uri != null) {
-            scope.launch {
-                val text = withContext(Dispatchers.IO) {
-                    runCatching {
-                        context.contentResolver.openInputStream(uri)?.use { input ->
-                            input.readBytes().toString(Charsets.UTF_8)
-                        }
-                    }.getOrNull()
-                }
-                if (text != null) {
-                    importJsonText = text
-                    showImportConfirm = true
-                } else {
-                    viewModel.notifyImportDone(success = false, summary = null)
-                }
-            }
-        }
-    }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -151,30 +101,6 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { pendingTypeDelete = null }) { Text("取消") }
-            },
-        )
-    }
-
-    if (showImportConfirm) {
-        AlertDialog(
-            onDismissRequest = {
-                showImportConfirm = false
-                importJsonText = null
-            },
-            title = { Text("恢复备份") },
-            text = { Text("恢复会覆盖当前全部数据（菜谱、库存、计划、记录、设置）。确定继续吗？") },
-            confirmButton = {
-                TextButton(onClick = {
-                    showImportConfirm = false
-                    importJsonText?.let { viewModel.import(it) }
-                    importJsonText = null
-                }) { Text("覆盖恢复", color = FoodTheme.colors.danger) }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    showImportConfirm = false
-                    importJsonText = null
-                }) { Text("取消") }
             },
         )
     }
@@ -369,38 +295,6 @@ fun SettingsScreen(
                 color = FoodTheme.colors.textTertiary,
                 modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceXs),
             )
-
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "数据管理")
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-            FoodCard {
-                Column(
-                    modifier = Modifier.padding(FoodTheme.dimens.spaceMd),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
-                ) {
-                    Text(
-                        text = "导出为 JSON 备份；恢复会覆盖当前全部数据。",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = FoodTheme.colors.textTertiary,
-                        modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceXs),
-                    )
-                    SecondaryButton(
-                        text = "导出数据",
-                        onClick = {
-                            viewModel.buildExport { json ->
-                                pendingJson = json
-                                exportLauncher.launch("fandian-backup.json")
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    SecondaryButton(
-                        text = "恢复数据",
-                        onClick = { importLauncher.launch(arrayOf("application/json", "text/*")) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
 
             state.message?.let { message ->
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))

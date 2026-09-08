@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -35,11 +36,12 @@ import androidx.compose.ui.unit.dp
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTheme
 
-/** 我的：本地身份 + 历史 / 设置 / 关于（PAGES.md §10）。V1 不做账号。 */
+/** 我的：本地身份 + 历史 / 设置 / 数据管理 / 关于（PAGES.md §10）。V1 不做账号。 */
 @Composable
 fun ProfileScreen(
     onOpenHistory: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenDataManagement: () -> Unit,
 ) {
     val context = LocalContext.current
     var showAbout by remember { mutableStateOf(false) }
@@ -54,7 +56,7 @@ fun ProfileScreen(
             text = {
                 Text(
                     "饭点 v$version\n\n帮助决定\"今天吃什么\"，并优先把家里的食材吃掉。\n\n" +
-                        "V1 为本地应用，所有数据仅保存在本机，可在\"设置 → 数据管理\"中导出备份。",
+                        "V1 为本地应用，所有数据仅保存在本机，可在\"数据管理\"中备份。",
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
@@ -115,8 +117,11 @@ fun ProfileScreen(
                 EntryRow(icon = Icons.Outlined.History, title = "历史记录", subtitle = "吃过什么，一目了然") {
                     onOpenHistory()
                 }
-                EntryRow(icon = Icons.Outlined.Settings, title = "设置", subtitle = "通知、默认值与数据管理") {
+                EntryRow(icon = Icons.Outlined.Settings, title = "设置", subtitle = "通知、默认值与分类管理") {
                     onOpenSettings()
+                }
+                EntryRow(icon = Icons.Outlined.Storage, title = "数据管理", subtitle = "备份、恢复与导出") {
+                    onOpenDataManagement()
                 }
                 EntryRow(icon = Icons.Outlined.Info, title = "关于", subtitle = "版本与说明") {
                     showAbout = true

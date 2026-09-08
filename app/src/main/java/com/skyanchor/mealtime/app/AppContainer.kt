@@ -39,7 +39,7 @@ class AppContainer(appContext: Context) {
     val mealRepository: MealRepository by lazy { RoomMealRepository(database) }
     val settingsRepository: SettingsRepository by lazy { RoomSettingsRepository(database.appSettingDao()) }
     val backupRepository: com.skyanchor.mealtime.domain.repository.BackupRepository by lazy {
-        RoomBackupRepository(database)
+        RoomBackupRepository(database, context)
     }
 
     val applicationScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
