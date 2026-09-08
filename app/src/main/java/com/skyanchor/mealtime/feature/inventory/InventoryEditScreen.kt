@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -284,6 +285,7 @@ fun InventoryEditScreen(
                     SectionHeader(title = "其他信息 · 可选")
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                     FormLabel("备注")
+                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     FoodTextField(
                         value = state.note,
                         onValueChange = viewModel::setNote,
@@ -615,7 +617,7 @@ private fun UnitDropdown(
     }
 }
 
-/** 食材照片选择：160dp 圆角块，点击换图，右上角可移除（规范文档 §37）。 */
+/** 食材照片选择：与新增食谱封面框同规格（16:9 圆角通栏），点击换图，右上角可移除。 */
 @Composable
 private fun IngredientImagePicker(
     imageUri: String?,
@@ -624,8 +626,9 @@ private fun IngredientImagePicker(
 ) {
     Box(
         modifier = Modifier
-            .size(160.dp)
-            .clip(RoundedCornerShape(FoodTheme.dimens.radiusLg))
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f)
+            .clip(RoundedCornerShape(FoodTheme.dimens.radiusXl))
             .background(FoodTheme.colors.surfaceSoft)
             .clickable(onClick = onPick),
         contentAlignment = Alignment.Center,
@@ -637,29 +640,41 @@ private fun IngredientImagePicker(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
-            Box(
+            IconButton(
+                onClick = onClear,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(FoodTheme.dimens.spaceXs)
+                    .padding(FoodTheme.dimens.spaceSm)
                     .clip(CircleShape)
-                    .background(FoodTheme.colors.surface)
-                    .clickable(onClick = onClear)
-                    .padding(FoodTheme.dimens.spaceXs),
+                    .background(FoodTheme.colors.surface),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
                     contentDescription = "移除图片",
                     tint = FoodTheme.colors.textSecondary,
-                    modifier = Modifier.size(14.dp),
                 )
             }
         } else {
-            Icon(
-                imageVector = Icons.Outlined.AddPhotoAlternate,
-                contentDescription = "添加食材图片",
-                tint = FoodTheme.colors.primary,
-                modifier = Modifier.size(28.dp),
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(
+                    imageVector = Icons.Outlined.AddPhotoAlternate,
+                    contentDescription = null,
+                    tint = FoodTheme.colors.primary,
+                    modifier = Modifier.size(32.dp),
+                )
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+                Text(
+                    text = "添加食材图片",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = FoodTheme.colors.textSecondary,
+                )
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXs))
+                Text(
+                    text = "一张清晰的图片更好认",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FoodTheme.colors.textTertiary,
+                )
+            }
         }
     }
 }
