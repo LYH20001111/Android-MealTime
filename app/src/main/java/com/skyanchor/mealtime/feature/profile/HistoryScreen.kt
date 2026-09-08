@@ -44,13 +44,11 @@ fun HistoryScreen(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
+            .fillMaxSize(),
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = FoodTheme.dimens.spaceMd),
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
@@ -60,7 +58,7 @@ fun HistoryScreen(
                     tint = FoodTheme.colors.textPrimary,
                 )
             }
-            Spacer(modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceXs))
+            Spacer(modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceSm))
             Text(
                 text = "历史记录",
                 style = MaterialTheme.typography.titleLarge,

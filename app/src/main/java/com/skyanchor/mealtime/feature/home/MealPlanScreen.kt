@@ -74,7 +74,6 @@ fun MealPlanScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
         ) {
             Row(

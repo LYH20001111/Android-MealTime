@@ -161,7 +161,7 @@ fun HomeScreen(
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .fillMaxWidth()
-                .requiredHeight(maxHeight + statusBarTop)
+                .requiredHeight(this.maxHeight + statusBarTop)
                 .offset(y = -statusBarTop),
         )
 
@@ -173,7 +173,10 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             // === 顶部问候区域 ===
-            HomeHeader(date = state.date)
+            HomeHeader(
+                date = state.date,
+                modifier = Modifier.offset(y = (-16).dp),
+            )
 
             // === 临期食材提醒 ===
             if (state.expiringCount > 0) {
@@ -256,8 +259,11 @@ fun HomeScreen(
 // ===================== 顶部问候区域 =====================
 
 @Composable
-private fun HomeHeader(date: LocalDate) {
-    Box(modifier = Modifier.fillMaxWidth()) {
+private fun HomeHeader(
+    date: LocalDate,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -293,7 +299,7 @@ private fun HomeHeader(date: LocalDate) {
                         .size(40.dp)
                         .clip(CircleShape)
                         .clickable { }
-                        .padding(8.dp),
+                        .padding(8.dp, 0.dp, 8.dp, 8.dp),
                 )
             }
         }

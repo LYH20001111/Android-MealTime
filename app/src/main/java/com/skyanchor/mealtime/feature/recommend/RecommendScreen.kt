@@ -75,13 +75,11 @@ fun RecommendScreen(
     ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding),
+                .fillMaxSize(),
         ) {
             Row(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = FoodTheme.dimens.spaceSm),
+                    .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack) {
@@ -91,7 +89,7 @@ fun RecommendScreen(
                         tint = FoodTheme.colors.textPrimary,
                     )
                 }
-                Spacer(modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceXs))
+                Spacer(modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceSm))
                 Text(
                     text = if (state.isRandom) "随机一道" else "为你推荐",
                     style = MaterialTheme.typography.titleLarge,

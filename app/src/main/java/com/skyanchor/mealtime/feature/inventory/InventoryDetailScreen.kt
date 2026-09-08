@@ -121,7 +121,6 @@ fun InventoryDetailScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
             Row(

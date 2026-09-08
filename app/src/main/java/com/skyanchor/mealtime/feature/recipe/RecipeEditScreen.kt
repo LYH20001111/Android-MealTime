@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -101,7 +102,7 @@ fun RecipeEditScreen(
             .padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().offset(x = (-20).dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onDone) {

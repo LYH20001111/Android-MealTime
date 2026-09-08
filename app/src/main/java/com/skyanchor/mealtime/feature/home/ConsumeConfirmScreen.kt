@@ -59,7 +59,6 @@ fun ConsumeConfirmScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
                 .verticalScroll(rememberScrollState()),
         ) {
             Row(
