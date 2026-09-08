@@ -28,8 +28,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.ArrowDropDown
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
@@ -82,7 +84,10 @@ import com.skyanchor.mealtime.core.ui.TagChip
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /** 常用单位（规范文档 §15），用户已有自定义单位时置顶补充 */
 private val CommonUnits = listOf("个", "克", "千克", "毫升", "升", "包", "瓶", "罐", "盒", "根", "颗", "把", "份")
@@ -679,68 +684,176 @@ private fun IngredientImagePicker(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateField(
+fun DateField(
     label: String,
     value: LocalDate?,
-    highlight: Boolean,
+    highlight: Boolean = false,
     onChange: (LocalDate?) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    var showPicker by remember { mutableStateOf(false) }
+    var showDatePicker by remember {
+        mutableStateOf(false)
+    }
 
-    FoodCard {
+    val formatter = remember {
+        DateTimeFormatter.ofPattern(
+            "yyyy年M月d日",
+            Locale.CHINA
+        )
+    }
+
+    val primaryColor = FoodTheme.colors.primary
+    val backgroundColor = Color.White
+    val borderColor = if (highlight) {
+        primaryColor.copy(alpha = 0.18f)
+    } else {
+        Color.Transparent
+    }
+
+    /*
+     * 截图对应的日期选择条：
+     * - 高度约 48dp
+     * - 白色背景
+     * - 轻紫色边框
+     * - 左侧日历 Icon
+     * - 中间日期/Placeholder
+     * - 右侧箭头
+     */
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .clip(
+                RoundedCornerShape(16.dp)
+            )
+            .background(backgroundColor)
+            .border(
+                width = if (highlight) 1.dp else 0.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable {
+                showDatePicker = true
+            },
+        contentAlignment = Alignment.CenterStart
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { showPicker = true }
-                .padding(horizontal = FoodTheme.dimens.spaceLg, vertical = FoodTheme.dimens.spaceMd),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(
+                    horizontal = 14.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = if (highlight) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (highlight) FoodTheme.colors.textPrimary else FoodTheme.colors.textSecondary,
+
+            // 左侧日历图标
+            Icon(
+                imageVector = Icons.Outlined.CalendarMonth,
+                contentDescription = "选择$label",
+                tint = primaryColor.copy(alpha = 0.75f),
+                modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = value?.let { formatDate(it) } ?: "选择日期",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (value != null) FoodTheme.colors.primaryDark else FoodTheme.colors.textTertiary,
+
+            Spacer(
+                modifier = Modifier.width(10.dp)
             )
-            if (value != null) {
-                Icon(
-                    imageVector = Icons.Outlined.Close,
-                    contentDescription = "清除",
-                    tint = FoodTheme.colors.textTertiary,
-                    modifier = Modifier
-                        .padding(start = FoodTheme.dimens.spaceSm)
-                        .clickable { onChange(null) },
-                )
-            }
+
+            // 日期文本
+            Text(
+                text = value?.format(formatter) ?: "请选择$label",
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (value != null) {
+                    FoodTheme.colors.textPrimary
+                } else {
+                    FoodTheme.colors.textTertiary
+                },
+                modifier = Modifier.weight(1f)
+            )
+
+            // 右侧箭头
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                contentDescription = "选择日期",
+                tint = primaryColor.copy(alpha = 0.65f),
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 
-    if (showPicker) {
-        val pickerState = rememberDatePickerState(
-            initialSelectedDateMillis = value?.toEpochMilli(),
+    // 日期选择弹窗
+    if (showDatePicker) {
+        val initialMillis = value?.toPickerMillis()
+
+        val datePickerState = rememberDatePickerState(
+            initialSelectedDateMillis = initialMillis
         )
+
         DatePickerDialog(
-            onDismissRequest = { showPicker = false },
+            onDismissRequest = {
+                showDatePicker = false
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        onChange(pickerState.selectedDateMillis?.toLocalDate())
-                        showPicker = false
-                    },
-                ) { Text("确定") }
+                        val selectedMillis =
+                            datePickerState.selectedDateMillis
+
+                        if (selectedMillis != null) {
+                            onChange(
+                                selectedMillis.toLocalDate()
+                            )
+                        }
+
+                        showDatePicker = false
+                    }
+                ) {
+                    Text(
+                        text = "确定",
+                        color = primaryColor
+                    )
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showPicker = false }) { Text("取消") }
-            },
+                TextButton(
+                    onClick = {
+                        showDatePicker = false
+                    }
+                ) {
+                    Text(
+                        text = "取消",
+                        color = FoodTheme.colors.textSecondary
+                    )
+                }
+            }
         ) {
-            DatePicker(state = pickerState)
+            DatePicker(
+                state = datePickerState,
+                title = {
+                    Text(
+                        text = "",
+                        color = FoodTheme.colors.textPrimary
+                    )
+                },
+                headline = {
+                    Text(
+                        text = datePickerState
+                            .selectedDateMillis
+                            ?.toLocalDate()
+                            ?.format(formatter)
+                            ?: "请选择日期",
+                        color = primaryColor
+                    )
+                }
+            )
         }
     }
+}
+
+private fun LocalDate.toPickerMillis(): Long {
+    return this
+        .atStartOfDay(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
 }
 
 private fun formatDate(date: LocalDate): String =
