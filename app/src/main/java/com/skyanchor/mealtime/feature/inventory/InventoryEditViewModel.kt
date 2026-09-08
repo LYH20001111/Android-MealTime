@@ -45,8 +45,6 @@ data class InventoryEditUiState(
     val note: String = "",
     val nameError: Boolean = false,
     val imageError: Boolean = false,
-    val quantityError: Boolean = false,
-    val unitError: Boolean = false,
     /** 已填写库存详情时切换为无库存：先弹确认，确认后清空库存字段（规范文档 §27） */
     val pendingEmptyStock: Boolean = false,
     val saveError: String? = null,
@@ -154,13 +152,10 @@ class InventoryEditViewModel(
 
     fun setQuantity(value: String) =
         _uiState.update {
-            it.copy(
-                quantityText = value.filter { c -> c.isDigit() || c == '.' }.take(7),
-                quantityError = false,
-            )
+            it.copy(quantityText = value.filter { c -> c.isDigit() || c == '.' }.take(7))
         }
 
-    fun setUnit(value: String) = _uiState.update { it.copy(unit = value, unitError = false) }
+    fun setUnit(value: String) = _uiState.update { it.copy(unit = value) }
 
     /** 数量级别三态切换：再次点击同级别取消 */
     fun selectQuantityLevel(value: QuantityLevel?) =
@@ -179,18 +174,14 @@ class InventoryEditViewModel(
     fun save(onSaved: (Long) -> Unit) {
         val state = _uiState.value
         if (state.isSaving) return
-        // 必填：名称 / 图片；有库存时数量、单位必填（规范文档 §4/§43）
+        // 必填：名称 / 图片；数量、单位改为可选，未填写时不落库（规范文档 §4 调整）
         val nameError = state.ingredientName.isBlank()
         val imageError = state.imageUri == null
-        val quantityError = !state.isEmptyStock && state.quantityText.toDoubleOrNull() == null
-        val unitError = !state.isEmptyStock && state.unit.isBlank()
-        if (nameError || imageError || quantityError || unitError) {
+        if (nameError || imageError) {
             _uiState.update {
                 it.copy(
                     nameError = nameError,
                     imageError = imageError,
-                    quantityError = quantityError,
-                    unitError = unitError,
                 )
             }
             return

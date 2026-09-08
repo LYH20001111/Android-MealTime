@@ -198,7 +198,7 @@ fun InventoryEditScreen(
             // ① 基本信息 · 必填：名称 / 图片 / 类型
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
-                SectionHeader(title = "基本信息", badge = "必填 4 项")
+                SectionHeader(title = "基本信息", badge = "必填 3 项")
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                 FormLabel("食材名称", true)
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
@@ -303,7 +303,7 @@ fun InventoryEditScreen(
                         horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            FormLabel("数量", true)
+                            FormLabel("数量")
                             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                             FoodTextField(
                                 value = state.quantityText,
@@ -312,17 +312,15 @@ fun InventoryEditScreen(
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier.fillMaxWidth(),
                             )
-                            if (state.quantityError) ErrorText("请填写数量")
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            FormLabel("单位", true)
+                            FormLabel("单位")
                             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                             UnitDropdown(
                                 value = state.unit,
                                 options = unitOptions,
                                 onValueChange = viewModel::setUnit,
                             )
-                            if (state.unitError) ErrorText("请选择单位")
                         }
                     }
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
@@ -455,7 +453,7 @@ private fun ErrorText(text: String) {
     )
 }
 
-/** 分组标题，可带淡紫色小标签（如"必填 4 项"） */
+/** 分组标题，可带淡紫色小标签（如"必填 3 项"） */
 @Composable
 private fun SectionHeader(title: String, badge: String? = null) {
     Row(verticalAlignment = Alignment.CenterVertically) {
