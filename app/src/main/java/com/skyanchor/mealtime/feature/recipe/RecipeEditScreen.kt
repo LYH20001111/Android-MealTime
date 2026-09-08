@@ -162,7 +162,11 @@ fun RecipeEditScreen(
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = FoodTheme.dimens.pageHorizontalPadding),
+            contentPadding = PaddingValues(
+                start = FoodTheme.dimens.pageHorizontalPadding,
+                end = FoodTheme.dimens.pageHorizontalPadding,
+                bottom = innerPadding.calculateBottomPadding(),
+            ),
         ) {
             item {
                 Row(modifier = Modifier.fillMaxWidth().offset(x = (-20).dp),
