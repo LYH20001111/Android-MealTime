@@ -30,6 +30,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
@@ -53,12 +54,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -188,6 +192,13 @@ fun RecipeEditScreen(
                 }
             }
 
+            if (state.isNew) {
+                item {
+                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+                    GuideBanner()
+                }
+            }
+
             // ① 基本信息：菜名 / 封面 / 分类（必填 3 项）
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
@@ -263,6 +274,7 @@ fun RecipeEditScreen(
                     placeholder = "如：15",
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = Icons.Outlined.AccessTime
                 )
             }
 
@@ -287,8 +299,10 @@ fun RecipeEditScreen(
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
                 SectionTitle(text = "做法步骤")
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
             }
             itemsIndexed(state.steps) { index, step ->
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
@@ -361,6 +375,7 @@ fun RecipeEditScreen(
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
                     FormLabel("简介")
+                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     FoodTextField(
                         value = state.description,
                         onValueChange = viewModel::setDescription,
@@ -373,6 +388,7 @@ fun RecipeEditScreen(
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
                     FormLabel("备注")
+                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     FoodTextField(
                         value = state.note,
                         onValueChange = viewModel::setNote,
@@ -511,6 +527,75 @@ private fun SectionHeader(title: String, badge: String? = null) {
                     color = FoodTheme.colors.primaryDark,
                 )
             }
+        }
+    }
+}
+
+/** 轻量引导 Banner：淡紫渐变，不加重插画（规范文档 §36） */
+@Composable
+private fun GuideBanner(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(84.dp)
+            .clip(
+                RoundedCornerShape(
+                    FoodTheme.dimens.radiusLg
+                )
+            )
+            .background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        Color(0xFFE1D8FF),
+                        Color(0xFFC3B0F8),
+                    )
+                )
+            )
+    ) {
+
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFFF2EEFF),
+                            Color(0xFFF2EEFF).copy(alpha = 0.95f),
+                            Color(0xFFF2EEFF).copy(alpha = 0.25f),
+                            Color.Transparent,
+                        ),
+                    )
+                )
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(
+                    start = 16.dp,
+                    end = 100.dp,
+                )
+        ) {
+            Text(
+                text = "记录每一道",
+                style = MaterialTheme.typography.bodySmall,
+                color = FoodTheme.colors.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
+            Text(
+                text = "让你心动的味道",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = FoodTheme.colors.primary,
+            )
         }
     }
 }
@@ -694,6 +779,7 @@ private fun IngredientSection(
         )
         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
         lines.forEachIndexed { index, line ->
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),

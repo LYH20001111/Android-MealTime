@@ -34,6 +34,7 @@ import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
@@ -66,6 +67,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -75,7 +77,6 @@ import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.common.copyImageToPrivate
 import com.skyanchor.mealtime.core.model.QuantityLevel
 import com.skyanchor.mealtime.core.model.chineseLabel
-import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTextField
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.PrimaryButton
@@ -345,14 +346,16 @@ fun InventoryEditScreen(
                 // ④ 保质期信息：过期 / 购买 / 生产日期
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    SectionTitle(text = "保质期信息")
+                    SectionTitle(text = "保质期")
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                     DateField(
-                        label = "过期日期",
+                        label = "保质期",
                         value = state.expireDate,
                         highlight = true,
                         onChange = viewModel::setExpireDate,
                     )
+                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
+                    SectionTitle(text = "购买日期")
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     DateField(
                         label = "购买日期",
@@ -360,6 +363,8 @@ fun InventoryEditScreen(
                         highlight = false,
                         onChange = viewModel::setPurchaseDate,
                     )
+                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
+                    SectionTitle(text = "生产日期")
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     DateField(
                         label = "生产日期",
@@ -379,6 +384,7 @@ fun InventoryEditScreen(
                         value = state.location,
                         onValueChange = viewModel::setLocation,
                         placeholder = "冷藏室 / 冷冻层 / 橱柜…",
+                        leadingIcon = Icons.Outlined.LocationOn,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
@@ -488,30 +494,68 @@ private fun SectionHeader(title: String, badge: String? = null) {
 
 /** 轻量引导 Banner：淡紫渐变，不加重插画（规范文档 §36） */
 @Composable
-private fun GuideBanner() {
+private fun GuideBanner(
+    modifier: Modifier = Modifier,
+) {
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(FoodTheme.dimens.radiusLg))
+            .height(84.dp)
+            .clip(
+                RoundedCornerShape(
+                    FoodTheme.dimens.radiusLg
+                )
+            )
             .background(
                 Brush.horizontalGradient(
-                    listOf(FoodTheme.colors.surfaceSoft, FoodTheme.colors.primarySoft),
-                ),
+                    colors = listOf(
+                        Color(0xFFE1D8FF),
+                        Color(0xFFC3B0F8),
+                    )
+                )
             )
-            .padding(horizontal = FoodTheme.dimens.spaceLg, vertical = FoodTheme.dimens.spaceMd),
     ) {
-        Column {
+
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            Color(0xFFF2EEFF),
+                            Color(0xFFF2EEFF).copy(alpha = 0.95f),
+                            Color(0xFFF2EEFF).copy(alpha = 0.25f),
+                            Color.Transparent,
+                        ),
+                    )
+                )
+        )
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(
+                    start = 16.dp,
+                    end = 100.dp,
+                )
+        ) {
             Text(
                 text = "添加食材",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = FoodTheme.colors.textPrimary,
+                color = FoodTheme.colors.primary,
             )
-            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXs))
+
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
             Text(
-                text = "记录手边库存，让管理更轻松",
+                text = "记录食材信息，方便管理和使用",
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textSecondary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

@@ -298,6 +298,7 @@ fun FoodTextField(
     singleLine: Boolean = true,
     minLines: Int = 1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    leadingIcon: ImageVector? = null,
 ) {
     TextField(
         value = value,
@@ -312,6 +313,20 @@ fun FoodTextField(
                 )
             }
         },
+
+        leadingIcon = leadingIcon?.let { icon ->
+            {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = FoodTheme.colors.primary.copy(
+                        alpha = 0.75f
+                    ),
+                    modifier = Modifier.size(20.dp),
+                )
+            }
+        },
+
         singleLine = singleLine,
         minLines = minLines,
         shape = RoundedCornerShape(FoodTheme.dimens.radiusMd),
