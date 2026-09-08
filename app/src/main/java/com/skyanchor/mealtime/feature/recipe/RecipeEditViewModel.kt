@@ -55,7 +55,23 @@ data class RecipeEditUiState(
     val steps: List<String> = listOf(""),
     val note: String = "",
     val nameError: Boolean = false,
+    val imageError: Boolean = false,
+    val categoryError: Boolean = false,
     val saveError: String? = null,
+)
+
+/** 加载完成时的表单快照，用于"未保存修改"离开保护（规范文档 §40） */
+private data class RecipeEditSnapshot(
+    val name: String,
+    val imageUri: String?,
+    val categoryId: Long?,
+    val difficulty: Difficulty,
+    val cookingTimeText: String,
+    val description: String,
+    val steps: List<String>,
+    val note: String,
+    val sections: List<IngredientSectionUi>,
+    val selectedTagIds: Set<Long>,
 )
 
 class RecipeEditViewModel(
@@ -67,6 +83,24 @@ class RecipeEditViewModel(
 
     private val _uiState = MutableStateFlow(RecipeEditUiState(isNew = recipeId == null))
     val uiState: StateFlow<RecipeEditUiState> = _uiState.asStateFlow()
+
+    private var snapshot: RecipeEditSnapshot? = null
+
+    /** 是否存在未保存修改（返回键离开前确认，规范文档 §40） */
+    fun isDirty(): Boolean = snapshot?.let { it != snapshotOf(_uiState.value) } ?: false
+
+    private fun snapshotOf(state: RecipeEditUiState) = RecipeEditSnapshot(
+        name = state.name,
+        imageUri = state.imageUri,
+        categoryId = state.selectedCategoryId,
+        difficulty = state.difficulty,
+        cookingTimeText = state.cookingTimeText,
+        description = state.description,
+        steps = state.steps,
+        note = state.note,
+        sections = state.sections,
+        selectedTagIds = state.selectedTagIds,
+    )
 
     init {
         viewModelScope.launch {
@@ -96,6 +130,7 @@ class RecipeEditViewModel(
                             selectedTagIds = detail.tags.map { it.id }.toSet(),
                         )
                     }
+                    snapshot = snapshotOf(_uiState.value)
                     return@launch
                 }
             }
@@ -105,6 +140,7 @@ class RecipeEditViewModel(
                     sections = buildSections(types, emptyList()),
                 )
             }
+            snapshot = snapshotOf(_uiState.value)
         }
     }
 
@@ -135,10 +171,15 @@ class RecipeEditViewModel(
 
     fun setName(value: String) = _uiState.update { it.copy(name = value, nameError = false) }
 
-    fun setImageUri(uri: String?) = _uiState.update { it.copy(imageUri = uri) }
+    fun setImageUri(uri: String?) = _uiState.update { it.copy(imageUri = uri, imageError = false) }
 
     fun selectCategory(id: Long?) =
-        _uiState.update { it.copy(selectedCategoryId = if (it.selectedCategoryId == id) null else id) }
+        _uiState.update {
+            it.copy(
+                selectedCategoryId = if (it.selectedCategoryId == id) null else id,
+                categoryError = false,
+            )
+        }
 
     fun toggleTag(tag: Tag) = _uiState.update { state ->
         val ids = state.selectedTagIds.toMutableSet()
@@ -208,8 +249,14 @@ class RecipeEditViewModel(
     fun save(onSaved: (Long) -> Unit) {
         val state = _uiState.value
         if (state.isSaving) return
-        if (state.name.isBlank()) {
-            _uiState.update { it.copy(nameError = true) }
+        // 必填三项：菜名 / 封面 / 分类（规范文档 §2.1、§59）
+        val nameError = state.name.isBlank()
+        val imageError = state.imageUri == null
+        val categoryError = state.selectedCategoryId == null
+        if (nameError || imageError || categoryError) {
+            _uiState.update {
+                it.copy(nameError = nameError, imageError = imageError, categoryError = categoryError)
+            }
             return
         }
         _uiState.update { it.copy(isSaving = true, saveError = null) }

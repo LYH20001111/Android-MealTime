@@ -44,6 +44,11 @@ data class InventoryEditUiState(
     val location: String = "",
     val note: String = "",
     val nameError: Boolean = false,
+    val imageError: Boolean = false,
+    val quantityError: Boolean = false,
+    val unitError: Boolean = false,
+    /** 已填写库存详情时切换为无库存：先弹确认，确认后清空库存字段（规范文档 §27） */
+    val pendingEmptyStock: Boolean = false,
     val saveError: String? = null,
 )
 
@@ -106,16 +111,56 @@ class InventoryEditViewModel(
     fun setIngredientType(value: String) =
         _uiState.update { it.copy(ingredientType = value) }
 
-    fun setImageUri(value: String?) = _uiState.update { it.copy(imageUri = value) }
+    fun setImageUri(value: String?) = _uiState.update { it.copy(imageUri = value, imageError = false) }
 
-    /** 切换库存空：仅控制表单展示与保存内容；已填字段保留在状态中，切回可恢复 */
-    fun setEmptyStock(value: Boolean) =
-        _uiState.update { it.copy(isEmptyStock = value) }
+    /**
+     * 切换库存状态。切换为无库存且已填写库存详情时先弹确认（规范文档 §27）；
+     * 确认后清空数量/级别/日期/位置，备注保留；切回有库存需重新填写（§28）。
+     */
+    fun requestEmptyStock(value: Boolean) = _uiState.update { state ->
+        if (!value || state.isEmptyStock || !hasStockDetails(state)) {
+            state.copy(isEmptyStock = value)
+        } else {
+            state.copy(pendingEmptyStock = true)
+        }
+    }
+
+    fun confirmEmptyStock() {
+        _uiState.update {
+            it.copy(
+                isEmptyStock = true,
+                pendingEmptyStock = false,
+                quantityText = "",
+                unit = "",
+                quantityLevel = null,
+                purchaseDate = null,
+                productionDate = null,
+                expireDate = null,
+                location = "",
+            )
+        }
+    }
+
+    fun dismissEmptyStock() = _uiState.update { it.copy(pendingEmptyStock = false) }
+
+    private fun hasStockDetails(state: InventoryEditUiState): Boolean =
+        state.quantityText.isNotBlank() ||
+            state.unit.isNotBlank() ||
+            state.quantityLevel != null ||
+            state.purchaseDate != null ||
+            state.productionDate != null ||
+            state.expireDate != null ||
+            state.location.isNotBlank()
 
     fun setQuantity(value: String) =
-        _uiState.update { it.copy(quantityText = value.filter { c -> c.isDigit() || c == '.' }.take(7)) }
+        _uiState.update {
+            it.copy(
+                quantityText = value.filter { c -> c.isDigit() || c == '.' }.take(7),
+                quantityError = false,
+            )
+        }
 
-    fun setUnit(value: String) = _uiState.update { it.copy(unit = value) }
+    fun setUnit(value: String) = _uiState.update { it.copy(unit = value, unitError = false) }
 
     /** 数量级别三态切换：再次点击同级别取消 */
     fun selectQuantityLevel(value: QuantityLevel?) =
@@ -134,8 +179,24 @@ class InventoryEditViewModel(
     fun save(onSaved: (Long) -> Unit) {
         val state = _uiState.value
         if (state.isSaving) return
-        if (state.ingredientName.isBlank()) {
-            _uiState.update { it.copy(nameError = true) }
+        // 必填：名称 / 图片；有库存时数量、单位必填（规范文档 §4/§43）
+        val nameError = state.ingredientName.isBlank()
+        val imageError = state.imageUri == null
+        val quantityError = !state.isEmptyStock && state.quantityText.toDoubleOrNull() == null
+        val unitError = !state.isEmptyStock && state.unit.isBlank()
+        if (nameError || imageError || quantityError || unitError) {
+            _uiState.update {
+                it.copy(
+                    nameError = nameError,
+                    imageError = imageError,
+                    quantityError = quantityError,
+                    unitError = unitError,
+                )
+            }
+            return
+        }
+        if (!isValidDateOrder(state)) {
+            _uiState.update { it.copy(saveError = "日期需满足：生产日期 ≤ 购买日期 ≤ 过期日期") }
             return
         }
         _uiState.update { it.copy(isSaving = true, saveError = null) }
@@ -151,7 +212,7 @@ class InventoryEditViewModel(
                 } else {
                     originalIngredient ?: Ingredient(name = state.ingredientName.trim())
                 }
-                // 库存空：数量/级别/日期/位置/备注一律不落库
+                // 无库存：数量/级别/日期/位置不落库；备注两种状态都保留（规范文档 §20/§26）
                 val empty = state.isEmptyStock
                 val item = InventoryItem(
                     id = itemId ?: 0,
@@ -163,7 +224,7 @@ class InventoryEditViewModel(
                     productionDate = if (empty) null else state.productionDate,
                     expireDate = if (empty) null else state.expireDate,
                     location = if (empty) null else state.location.trim().takeIf { it.isNotEmpty() },
-                    note = if (empty) null else state.note.trim().takeIf { it.isNotEmpty() },
+                    note = state.note.trim().takeIf { it.isNotEmpty() },
                 )
                 val savedId = if (state.isNew) {
                     addInventory(item)
@@ -183,6 +244,17 @@ class InventoryEditViewModel(
                 _uiState.update { it.copy(isSaving = false, saveError = "保存失败，请重试") }
             }
         }
+    }
+
+    /** 日期顺序校验：生产日期 ≤ 购买日期 ≤ 过期日期，未填写的日期不参与比较（规范文档 §18） */
+    private fun isValidDateOrder(state: InventoryEditUiState): Boolean {
+        val production = state.productionDate
+        val purchase = state.purchaseDate
+        val expire = state.expireDate
+        if (production != null && purchase != null && production > purchase) return false
+        if (purchase != null && expire != null && purchase > expire) return false
+        if (production != null && expire != null && production > expire) return false
+        return true
     }
 
     companion object {
