@@ -890,40 +890,31 @@ private fun MealStatusChip(
     }
 }
 
-/** §4-§6：一行最多两个菜品；1 道菜占满整行，超过 2 道换行 */
+/** §4-§6：一行最多两个菜品；1 道菜占一半宽度，超过 2 道换行 */
 @Composable
 private fun MealRecipeGrid(
     dishes: List<HomeMealDish>,
     onOpenRecipe: (Long) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceMd)) {
-        if (dishes.size == 1) {
-            MealRecipeCard(
-                dish = dishes.first(),
-                imageHeight = 120.dp,
-                onClick = { onOpenRecipe(dishes.first().recipeId) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        } else {
-            dishes.chunked(2).forEach { rowDishes ->
-                Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceMd)) {
+        dishes.chunked(2).forEach { rowDishes ->
+            Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceMd)) {
+                MealRecipeCard(
+                    dish = rowDishes[0],
+                    imageHeight = 110.dp,
+                    onClick = { onOpenRecipe(rowDishes[0].recipeId) },
+                    modifier = Modifier.weight(1f),
+                )
+                if (rowDishes.size > 1) {
                     MealRecipeCard(
-                        dish = rowDishes[0],
+                        dish = rowDishes[1],
                         imageHeight = 110.dp,
-                        onClick = { onOpenRecipe(rowDishes[0].recipeId) },
+                        onClick = { onOpenRecipe(rowDishes[1].recipeId) },
                         modifier = Modifier.weight(1f),
                     )
-                    if (rowDishes.size > 1) {
-                        MealRecipeCard(
-                            dish = rowDishes[1],
-                            imageHeight = 110.dp,
-                            onClick = { onOpenRecipe(rowDishes[1].recipeId) },
-                            modifier = Modifier.weight(1f),
-                        )
-                    } else {
-                        // 补位占满剩余宽度，保持卡片约 48%
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
+                } else {
+                    // 补位占满剩余宽度，保持单菜卡片只占一半
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -981,6 +972,7 @@ private fun MealRecipeCard(
             color = FoodTheme.colors.textPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(start = 6.dp)
         )
         if (dish.meta.isNotEmpty()) {
             Spacer(modifier = Modifier.height(2.dp))
@@ -990,6 +982,7 @@ private fun MealRecipeCard(
                 color = FoodTheme.colors.textSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(start = 6.dp)
             )
         }
     }
