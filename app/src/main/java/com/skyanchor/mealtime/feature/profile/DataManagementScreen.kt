@@ -48,10 +48,10 @@ import com.skyanchor.mealtime.core.ui.SectionTitle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import androidx.compose.runtime.rememberCoroutineScope
+import java.time.LocalDateTime
 
 /**
  * 数据管理（规格文档 §3/§33）：数据备份（ZIP 完整备份）、恢复数据（ZIP，预览后确认）、
@@ -171,7 +171,7 @@ fun DataManagementScreen(
                         subtitle = "备份菜谱、图片、食材和用餐记录",
                         enabled = !state.busy,
                     ) {
-                        backupLauncher.launch("饭点_backup_${LocalDate.now()}.zip")
+                        backupLauncher.launch("饭点_backup_${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"))}.zip")
                     }
                     ActionRow(
                         icon = Icons.Outlined.Restore,

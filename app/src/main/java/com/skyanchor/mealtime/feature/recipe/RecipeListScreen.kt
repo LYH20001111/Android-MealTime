@@ -76,7 +76,7 @@ fun RecipeListScreen(
             FoodSearchField(
                 value = state.query,
                 onValueChange = viewModel::setQuery,
-                placeholder = "搜索菜谱、食材...",
+                placeholder = "搜索菜谱、食材、调料...",
             )
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
