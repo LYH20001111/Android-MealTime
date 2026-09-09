@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.Casino
 import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,8 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.skyanchor.mealtime.app.rememberAppContainer
@@ -180,51 +184,84 @@ private fun RecommendCard(
                 .fillMaxWidth()
                 .padding(FoodTheme.dimens.spaceLg),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = item.recipe.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = FoodTheme.colors.textPrimary,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(FoodTheme.dimens.radiusSm))
-                        .clickable(onClick = onOpen),
-                )
+            Row(
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceMd),
+            ) {
+                // 菜谱图片：圆形头像，无图时回退到菜单图标
                 Box(
                     modifier = Modifier
-                        .clip(CircleShape)
+                        .size(72.dp)
+                        .clip(RoundedCornerShape(16.dp))
                         .background(FoodTheme.colors.primarySoft)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                        .clickable(onClick = onOpen),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = "${item.score}分",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = FoodTheme.colors.primaryDark,
-                        fontWeight = FontWeight.Bold,
-                    )
+                    val imageUri = item.recipe.imageUri
+                    if (imageUri != null) {
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = item.recipe.name,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.RestaurantMenu,
+                            contentDescription = null,
+                            tint = FoodTheme.colors.primary,
+                            modifier = Modifier.size(32.dp),
+                        )
+                    }
                 }
-            }
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = item.recipe.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = FoodTheme.colors.textPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(FoodTheme.dimens.radiusSm))
+                                .clickable(onClick = onOpen),
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(FoodTheme.colors.primarySoft)
+                                .padding(horizontal = 12.dp, vertical = 6.dp),
+                        ) {
+                            Text(
+                                text = "${item.score}分",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = FoodTheme.colors.primaryDark,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
 
-            if (item.reasons.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-                item.reasons.forEach { reason ->
-                    Text(
-                        text = reason,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = FoodTheme.colors.textSecondary,
-                        modifier = Modifier.padding(vertical = FoodTheme.dimens.spaceXs),
-                    )
+                    if (item.reasons.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
+                        item.reasons.forEach { reason ->
+                            Text(
+                                text = reason,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = FoodTheme.colors.textSecondary,
+                                modifier = Modifier.padding(vertical = FoodTheme.dimens.spaceXs),
+                            )
+                        }
+                    }
+
+                    if (item.totalIngredients > 0) {
+                        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+                        Text(
+                            text = "库存匹配 ${item.matchedCount}/${item.totalIngredients} 种食材",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = FoodTheme.colors.textTertiary,
+                        )
+                    }
                 }
-            }
-
-            if (item.totalIngredients > 0) {
-                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-                Text(
-                    text = "库存匹配 ${item.matchedCount}/${item.totalIngredients} 种食材",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = FoodTheme.colors.textTertiary,
-                )
             }
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
