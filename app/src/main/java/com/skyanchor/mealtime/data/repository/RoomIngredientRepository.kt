@@ -115,5 +115,19 @@ class RoomIngredientRepository(private val db: MealTimeDatabase) : IngredientRep
         }
     }
 
+    override suspend fun renameType(key: String, newLabel: String): IngredientTypeInfo = db.withTransaction {
+        val type = typeDao.getByKey(key) ?: throw IllegalArgumentException("种类不存在")
+        val trimmed = newLabel.trim()
+        require(trimmed.isNotEmpty()) { "种类名称不能为空" }
+        require(key != IngredientTypes.OTHER) { "「其他」种类不能重命名" }
+        require(trimmed != IngredientTypes.label(IngredientTypes.OTHER)) {
+            "「${IngredientTypes.label(IngredientTypes.OTHER)}」为内置保留名称"
+        }
+        val existing = typeDao.getByLabel(trimmed)
+        require(existing == null || existing.key == key) { "种类「$trimmed」已存在" }
+        typeDao.renameLabel(key, trimmed)
+        IngredientTypeInfo(key = key, label = trimmed, sortOrder = type.sortOrder)
+    }
+
     private fun IngredientTypeEntity.toInfo() = IngredientTypeInfo(key = key, label = label, sortOrder = sortOrder)
 }

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -65,6 +66,8 @@ fun SettingsScreen(
     val context = LocalContext.current
     var pendingCategoryDelete by remember { mutableStateOf<Category?>(null) }
     var pendingTypeDelete by remember { mutableStateOf<IngredientTypeInfo?>(null) }
+    var renamingCategory by remember { mutableStateOf<Category?>(null) }
+    var renamingType by remember { mutableStateOf<IngredientTypeInfo?>(null) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -104,6 +107,30 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { pendingTypeDelete = null }) { Text("取消") }
             },
+        )
+    }
+
+    renamingCategory?.let { pending ->
+        RenameDialog(
+            title = "重命名分类",
+            initialName = pending.name,
+            onConfirm = { newName ->
+                viewModel.renameCategory(pending.id, newName)
+                renamingCategory = null
+            },
+            onDismiss = { renamingCategory = null },
+        )
+    }
+
+    renamingType?.let { pending ->
+        RenameDialog(
+            title = "重命名食材种类",
+            initialName = pending.label,
+            onConfirm = { newName ->
+                viewModel.renameIngredientType(pending.key, newName)
+                renamingType = null
+            },
+            onDismiss = { renamingType = null },
         )
     }
 
@@ -238,13 +265,16 @@ fun SettingsScreen(
                         color = FoodTheme.colors.textPrimary,
                     )
                     state.categories.forEachIndexed { index, category ->
+                        val isFallback = category.name == FALLBACK_CATEGORY_NAME
                         CategoryRow(
                             name = category.name,
-                            deletable = category.name != FALLBACK_CATEGORY_NAME,
+                            deletable = !isFallback,
+                            renamable = !isFallback,
                             canMoveUp = index > 0,
                             canMoveDown = index < state.categories.lastIndex,
                             onMoveUp = { viewModel.moveCategory(category.id, up = true) },
                             onMoveDown = { viewModel.moveCategory(category.id, up = false) },
+                            onRename = { renamingCategory = category },
                             onDelete = { pendingCategoryDelete = category },
                         )
                     }
@@ -274,13 +304,16 @@ fun SettingsScreen(
                         color = FoodTheme.colors.textPrimary,
                     )
                     state.ingredientTypes.forEachIndexed { index, type ->
+                        val isBuiltinOther = type.key == IngredientTypes.OTHER
                         CategoryRow(
                             name = type.label,
-                            deletable = type.key != IngredientTypes.OTHER,
+                            deletable = !isBuiltinOther,
+                            renamable = !isBuiltinOther,
                             canMoveUp = index > 0,
                             canMoveDown = index < state.ingredientTypes.lastIndex,
                             onMoveUp = { viewModel.moveIngredientType(type.key, up = true) },
                             onMoveDown = { viewModel.moveIngredientType(type.key, up = false) },
+                            onRename = { renamingType = type },
                             onDelete = { pendingTypeDelete = type },
                         )
                     }
@@ -300,7 +333,7 @@ fun SettingsScreen(
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXs))
             Text(
-                text = "通过 ↑↓ 调整分类顺序，同步应用于菜谱筛选、食材分组等处的显示顺序；删除分类后，其中的菜谱/食材会自动归入「其他」",
+                text = "重命名或调整顺序后，菜谱筛选、食材分组等处同步生效；删除分类后，其中的菜谱/食材会自动归入「其他」",
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textTertiary,
                 modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceXs),
@@ -324,10 +357,12 @@ fun SettingsScreen(
 private fun CategoryRow(
     name: String,
     deletable: Boolean,
+    renamable: Boolean,
     canMoveUp: Boolean,
     canMoveDown: Boolean,
     onMoveUp: () -> Unit,
     onMoveDown: () -> Unit,
+    onRename: () -> Unit,
     onDelete: () -> Unit,
 ) {
     Row(
@@ -354,6 +389,15 @@ private fun CategoryRow(
                 tint = if (canMoveDown) FoodTheme.colors.textTertiary else FoodTheme.colors.textTertiary.copy(alpha = 0.3f),
             )
         }
+        if (renamable) {
+            IconButton(onClick = onRename) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "重命名$name",
+                    tint = FoodTheme.colors.textTertiary,
+                )
+            }
+        }
         if (deletable) {
             IconButton(onClick = onDelete) {
                 Icon(
@@ -370,6 +414,33 @@ private fun CategoryRow(
             )
         }
     }
+}
+
+@Composable
+private fun RenameDialog(
+    title: String,
+    initialName: String,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var text by remember { mutableStateOf(initialName) }
+    val changed = text.trim().isNotEmpty() && text.trim() != initialName
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            FoodTextField(
+                value = text,
+                onValueChange = { text = it },
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(text) }, enabled = changed) { Text("保存") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("取消") }
+        },
+    )
 }
 
 @Composable

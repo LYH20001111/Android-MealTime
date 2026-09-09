@@ -120,6 +120,18 @@ class SettingsViewModel(
         }
     }
 
+    fun renameCategory(id: Long, newName: String) {
+        viewModelScope.launch {
+            runCatching { recipeRepository.renameCategory(id, newName) }
+                .onSuccess { renamed ->
+                    _uiState.update { it.copy(message = "✓ 分类已重命名为「${renamed.name}」") }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(message = "✗ ${e.message ?: "重命名失败"}") }
+                }
+        }
+    }
+
     fun setNewTypeName(value: String) = _uiState.update { it.copy(newTypeName = value) }
 
     fun addIngredientType() {
@@ -152,6 +164,18 @@ class SettingsViewModel(
             runCatching { ingredientRepository.moveType(key, up) }
                 .onFailure { e ->
                     _uiState.update { it.copy(message = "✗ ${e.message ?: "排序失败"}") }
+                }
+        }
+    }
+
+    fun renameIngredientType(key: String, newLabel: String) {
+        viewModelScope.launch {
+            runCatching { ingredientRepository.renameType(key, newLabel) }
+                .onSuccess { renamed ->
+                    _uiState.update { it.copy(message = "✓ 种类已重命名为「${renamed.label}」") }
+                }
+                .onFailure { e ->
+                    _uiState.update { it.copy(message = "✗ ${e.message ?: "重命名失败"}") }
                 }
         }
     }

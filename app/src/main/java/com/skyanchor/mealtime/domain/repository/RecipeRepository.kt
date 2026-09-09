@@ -59,6 +59,12 @@ interface RecipeRepository {
     /** 上移/下移分类；已处于边界时静默忽略 */
     suspend fun moveCategory(id: Long, up: Boolean)
 
+    /**
+     * 重命名菜谱分类：菜谱按 categoryId 关联，重命名后自动跟随新名称。
+     * 空名、与其他分类重名抛 IllegalArgumentException；「其他」不可重命名。
+     */
+    suspend fun renameCategory(id: Long, newName: String): Category
+
     fun observeTags(): Flow<List<Tag>>
 
     /** 选择或创建标签：存在同名标签则直接返回 */

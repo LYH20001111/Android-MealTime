@@ -44,4 +44,10 @@ interface IngredientRepository {
 
     /** 上移/下移食材种类；已处于边界时静默忽略 */
     suspend fun moveType(key: String, up: Boolean)
+
+    /**
+     * 重命名食材种类展示名：键不变，食材与菜谱配料行按 key 关联，重命名后自动跟随新展示名。
+     * 空名、与其他种类展示名重名抛 IllegalArgumentException；「其他」不可重命名。
+     */
+    suspend fun renameType(key: String, newLabel: String): IngredientTypeInfo
 }

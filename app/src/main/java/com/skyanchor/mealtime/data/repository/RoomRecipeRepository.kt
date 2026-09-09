@@ -133,6 +133,18 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
         }
     }
 
+    override suspend fun renameCategory(id: Long, newName: String): Category = db.withTransaction {
+        val dao = db.categoryDao()
+        val category = dao.getById(id) ?: throw IllegalArgumentException("分类不存在")
+        val trimmed = newName.trim()
+        require(trimmed.isNotEmpty()) { "分类名不能为空" }
+        require(category.name != FALLBACK_CATEGORY_NAME) { "「${FALLBACK_CATEGORY_NAME}」分类不能重命名" }
+        val existing = dao.getByName(trimmed)
+        require(existing == null || existing.id == id) { "分类「$trimmed」已存在" }
+        dao.rename(id, trimmed)
+        category.copy(name = trimmed).toDomain()
+    }
+
     override fun observeTags(): Flow<List<Tag>> =
         tagDao.observeAll().map { list -> list.map { it.toDomain() } }
 

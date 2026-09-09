@@ -24,6 +24,9 @@ interface CategoryDao {
     @Query("UPDATE category SET sortOrder = :sortOrder WHERE id = :id")
     suspend fun updateSortOrder(id: Long, sortOrder: Int)
 
+    @Query("UPDATE category SET name = :name WHERE id = :id")
+    suspend fun rename(id: Long, name: String)
+
     @Query("SELECT * FROM category WHERE name = :name LIMIT 1")
     suspend fun getByName(name: String): CategoryEntity?
 
@@ -57,6 +60,9 @@ interface IngredientTypeDao {
 
     @Query("UPDATE ingredient_type SET sortOrder = :sortOrder WHERE `key` = :key")
     suspend fun updateSortOrder(key: String, sortOrder: Int)
+
+    @Query("UPDATE ingredient_type SET label = :label WHERE `key` = :key")
+    suspend fun renameLabel(key: String, label: String)
 
     @Query("SELECT * FROM ingredient_type WHERE label = :label LIMIT 1")
     suspend fun getByLabel(label: String): IngredientTypeEntity?
