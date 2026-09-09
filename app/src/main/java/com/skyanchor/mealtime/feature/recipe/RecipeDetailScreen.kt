@@ -80,9 +80,15 @@ fun RecipeDetailScreen(
     var showArchiveDialog by remember { mutableStateOf(false) }
     var showImagePreview by remember { mutableStateOf(false) }
 
-    LaunchedEffect(state.addedMealType) {
-        state.addedMealType?.let { type ->
-            snackbarHostState.showSnackbar("已加入今日${mealLabel(type)}")
+    LaunchedEffect(state.addResult) {
+        state.addResult?.let { result ->
+            snackbarHostState.showSnackbar(
+                if (result.isDuplicate) {
+                    "该菜品已在今日${mealLabel(result.mealType)}菜单中"
+                } else {
+                    "已加入今日${mealLabel(result.mealType)}"
+                }
+            )
             viewModel.consumeAddResult()
         }
     }

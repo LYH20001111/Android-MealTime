@@ -46,14 +46,15 @@ class ArchiveRecipeUseCase(
     suspend operator fun invoke(recipeId: Long) = recipeRepository.archiveRecipe(recipeId)
 }
 
-/** 把菜谱加入某天某餐次（详情页快捷入口与首页点菜共用） */
+/** 把菜谱加入某天某餐次（详情页快捷入口与首页点菜共用）；同一餐次不允许重复 */
 class CreateMealPlanUseCase(
     private val mealRepository: MealRepository,
 ) {
+    /** @return 新计划 id；该菜品已在此餐次时返回 null */
     suspend operator fun invoke(
         date: LocalDate = LocalDate.now(),
         mealType: MealType,
         recipeId: Long,
         servings: Int? = null,
-    ): Long = mealRepository.addPlan(date, mealType, recipeId, servings)
+    ): Long? = mealRepository.addPlan(date, mealType, recipeId, servings)
 }

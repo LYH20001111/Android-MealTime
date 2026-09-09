@@ -18,12 +18,18 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/** 加入餐次的一次性反馈：餐次 + 是否因重复被拒绝 */
+data class AddMealResult(
+    val mealType: MealType,
+    val isDuplicate: Boolean,
+)
+
 data class RecipeDetailUiState(
     val isLoading: Boolean = true,
     /** null 且 !isLoading 表示菜谱不存在或已归档 */
     val detail: RecipeDetail? = null,
-    /** 最近一次成功加入的餐次，用于 Snackbar 提示 */
-    val addedMealType: MealType? = null,
+    /** 最近一次加入餐次的结果，用于 Snackbar 提示 */
+    val addResult: AddMealResult? = null,
 )
 
 class RecipeDetailViewModel(
@@ -33,13 +39,13 @@ class RecipeDetailViewModel(
     private val archiveRecipe: ArchiveRecipeUseCase,
 ) : ViewModel() {
 
-    private val addResult = MutableStateFlow<MealType?>(null)
+    private val addResult = MutableStateFlow<AddMealResult?>(null)
 
     val uiState: StateFlow<RecipeDetailUiState> = combine(
         recipeRepository.observeRecipeDetail(recipeId),
         addResult,
     ) { detail, added ->
-        RecipeDetailUiState(isLoading = false, detail = detail, addedMealType = added)
+        RecipeDetailUiState(isLoading = false, detail = detail, addResult = added)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -55,8 +61,8 @@ class RecipeDetailViewModel(
 
     fun addToMeal(mealType: MealType) {
         viewModelScope.launch {
-            createMealPlan(mealType = mealType, recipeId = recipeId)
-            addResult.value = mealType
+            val added = createMealPlan(mealType = mealType, recipeId = recipeId)
+            addResult.value = AddMealResult(mealType = mealType, isDuplicate = added == null)
         }
     }
 

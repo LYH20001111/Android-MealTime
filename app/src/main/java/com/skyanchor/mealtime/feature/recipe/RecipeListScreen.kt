@@ -106,6 +106,7 @@ fun RecipeListScreen(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
 
             when {
                 state.isLoading -> {

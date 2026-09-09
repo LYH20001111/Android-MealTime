@@ -179,8 +179,12 @@ class HomeViewModel(
         viewModelScope.launch {
             val name = (uiState.value.recommendation as? RecommendationUiState.Ready)
                 ?.items?.firstOrNull { it.recipeId == recipeId }?.name.orEmpty()
-            createMealPlan(date = today, mealType = mealType, recipeId = recipeId)
-            _addedNotice.value = "已把「$name」加入今天${mealLabel(mealType)}"
+            val added = createMealPlan(date = today, mealType = mealType, recipeId = recipeId)
+            _addedNotice.value = if (added == null) {
+                "「$name」已经在今天${mealLabel(mealType)}菜单中"
+            } else {
+                "已把「$name」加入今天${mealLabel(mealType)}"
+            }
         }
     }
 

@@ -101,9 +101,16 @@ class RoomMealRepository(private val db: MealTimeDatabase) : MealRepository {
         mealType: MealType,
         recipeId: Long,
         servings: Int?,
-    ): Long {
+    ): Long? = db.withTransaction {
+        // 同一餐次内不允许重复点同一道菜
+        val duplicated = planDao
+            .getByDateAndMeal(date.toString(), mealType.name, MealStatus.PLANNED.name)
+            .any { it.recipeId == recipeId }
+        if (duplicated) {
+            return@withTransaction null
+        }
         val now = System.currentTimeMillis()
-        return planDao.insert(
+        planDao.insert(
             com.skyanchor.mealtime.data.local.entity.MealPlanEntity(
                 date = date.toString(),
                 mealType = mealType.name,
@@ -116,9 +123,16 @@ class RoomMealRepository(private val db: MealTimeDatabase) : MealRepository {
         )
     }
 
-    override suspend fun replacePlan(planId: Long, newRecipeId: Long) {
-        val existing = planDao.getById(planId) ?: return
+    override suspend fun replacePlan(planId: Long, newRecipeId: Long): Boolean {
+        val existing = planDao.getById(planId) ?: return false
+        val duplicated = planDao
+            .getByDateAndMeal(existing.date, existing.mealType, MealStatus.PLANNED.name)
+            .any { it.recipeId == newRecipeId && it.id != planId }
+        if (duplicated) {
+            return false
+        }
         planDao.update(existing.copy(recipeId = newRecipeId, updatedAt = System.currentTimeMillis()))
+        return true
     }
 
     override suspend fun removePlan(planId: Long) {

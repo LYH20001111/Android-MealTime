@@ -28,6 +28,8 @@ data class MealPlanUiState(
     /** 选择器里的候选菜谱（按搜索词过滤） */
     val pickerRecipes: List<Recipe> = emptyList(),
     val pickerQuery: String = "",
+    /** 一次性提示（如菜品重复），显示后由 [MealPlanViewModel.consumeNotice] 清空 */
+    val notice: String? = null,
 )
 
 /**
@@ -43,12 +45,14 @@ class MealPlanViewModel(
 ) : ViewModel() {
 
     private val pickerQuery = MutableStateFlow("")
+    private val notice = MutableStateFlow<String?>(null)
 
     val uiState: StateFlow<MealPlanUiState> = combine(
         mealRepository.observeMeals(date),
         recipeRepository.observeRecipes(),
         pickerQuery,
-    ) { plans, recipes, query ->
+        notice,
+    ) { plans, recipes, query, notice ->
         MealPlanUiState(
             isLoading = false,
             date = date,
@@ -67,6 +71,7 @@ class MealPlanViewModel(
                 query.isBlank() || it.name.contains(query.trim(), ignoreCase = true)
             },
             pickerQuery = query,
+            notice = notice,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -80,15 +85,30 @@ class MealPlanViewModel(
 
     fun addDish(recipeId: Long) {
         viewModelScope.launch {
-            createMealPlan(date = date, mealType = mealType, recipeId = recipeId)
+            val added = createMealPlan(date = date, mealType = mealType, recipeId = recipeId)
+            if (added == null) {
+                notice.value = "「${recipeNameOf(recipeId)}」已在本餐菜单中"
+            }
         }
     }
 
     fun replaceDish(planId: Long, newRecipeId: Long) {
         viewModelScope.launch {
-            mealRepository.replacePlan(planId, newRecipeId)
+            val replaced = mealRepository.replacePlan(planId, newRecipeId)
+            if (!replaced) {
+                notice.value = "「${recipeNameOf(newRecipeId)}」已在本餐菜单中"
+            }
         }
     }
+
+    fun consumeNotice() {
+        notice.value = null
+    }
+
+    private fun recipeNameOf(recipeId: Long): String =
+        uiState.value.pickerRecipes.firstOrNull { it.id == recipeId }?.name
+            ?: uiState.value.dishes.firstOrNull { it.recipeId == recipeId }?.name
+            ?: "该菜品"
 
     fun removeDish(planId: Long) {
         viewModelScope.launch {

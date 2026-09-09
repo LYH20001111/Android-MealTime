@@ -27,11 +27,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,6 +52,7 @@ import com.skyanchor.mealtime.core.ui.FoodSearchField
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.PrimaryButton
 import com.skyanchor.mealtime.core.ui.SecondaryButton
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -70,8 +75,28 @@ fun MealPlanScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     var showPicker by remember { mutableStateOf(false) }
     var replacingPlanId by remember { mutableStateOf<Long?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val alreadyAddedRecipeIds = remember(state.dishes) {
+        state.dishes.map { it.recipeId }.toSet()
+    }
 
-    Scaffold(containerColor = FoodTheme.colors.background) { padding ->
+    /** 已在本餐菜单中的菜不可再选：提示已存在，且不关闭选菜面板 */
+    fun notifyAlreadyAdded(name: String) {
+        scope.launch { snackbarHostState.showSnackbar("「$name」已在本餐菜单中") }
+    }
+
+    LaunchedEffect(state.notice) {
+        state.notice?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.consumeNotice()
+        }
+    }
+
+    Scaffold(
+        containerColor = FoodTheme.colors.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -240,10 +265,15 @@ fun MealPlanScreen(
                 } else {
                     LazyColumn {
                         items(state.pickerRecipes, key = { it.id }) { recipe ->
+                            val alreadyAdded = recipe.id in alreadyAddedRecipeIds
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
+                                        if (alreadyAdded) {
+                                            notifyAlreadyAdded(recipe.name)
+                                            return@clickable
+                                        }
                                         val replacing = replacingPlanId
                                         if (replacing != null) {
                                             viewModel.replaceDish(replacing, recipe.id)
@@ -255,12 +285,17 @@ fun MealPlanScreen(
                                         viewModel.setPickerQuery("")
                                     }
                                     .padding(vertical = FoodTheme.dimens.spaceMd),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Column {
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
                                         text = recipe.name,
                                         style = MaterialTheme.typography.bodyLarge,
-                                        color = FoodTheme.colors.textPrimary,
+                                        color = if (alreadyAdded) {
+                                            FoodTheme.colors.textTertiary
+                                        } else {
+                                            FoodTheme.colors.textPrimary
+                                        },
                                     )
                                     val meta = listOfNotNull(
                                         recipe.difficulty.chineseLabel,
@@ -273,6 +308,13 @@ fun MealPlanScreen(
                                             color = FoodTheme.colors.textTertiary,
                                         )
                                     }
+                                }
+                                if (alreadyAdded) {
+                                    Text(
+                                        text = "已添加",
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = FoodTheme.colors.textTertiary,
+                                    )
                                 }
                             }
                         }

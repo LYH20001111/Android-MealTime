@@ -62,9 +62,9 @@ fun RecommendScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(state.addedName) {
-        state.addedName?.let { name ->
-            snackbarHostState.showSnackbar("已把「$name」加入今天${mealLabel(state.nextMeal)}")
+    LaunchedEffect(state.addedNotice) {
+        state.addedNotice?.let { message ->
+            snackbarHostState.showSnackbar(message)
             viewModel.consumeAdded()
         }
     }

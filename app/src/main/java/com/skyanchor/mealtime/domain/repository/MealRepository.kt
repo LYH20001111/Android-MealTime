@@ -19,15 +19,16 @@ interface MealRepository {
 
     suspend fun getPlan(id: Long): MealPlan?
 
+    /** @return 新计划 id；同一餐次已存在该菜品（PLANNED）时返回 null，不重复插入 */
     suspend fun addPlan(
         date: LocalDate,
         mealType: MealType,
         recipeId: Long,
         servings: Int? = null,
-    ): Long
+    ): Long?
 
-    /** 换菜 */
-    suspend fun replacePlan(planId: Long, newRecipeId: Long)
+    /** 换菜；@return false 表示目标菜品已在该餐次（含换成自己），未替换 */
+    suspend fun replacePlan(planId: Long, newRecipeId: Long): Boolean
 
     suspend fun removePlan(planId: Long)
 

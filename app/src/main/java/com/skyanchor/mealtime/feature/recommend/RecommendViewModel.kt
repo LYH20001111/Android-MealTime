@@ -23,8 +23,8 @@ data class RecommendUiState(
     val items: List<Recommendation> = emptyList(),
     /** 建议加入的下一餐（按当前时间推算） */
     val nextMeal: MealType = MealType.LUNCH,
-    /** 最近一次成功加入的提示 */
-    val addedName: String? = null,
+    /** 最近一次加入结果提示（成功或已在菜单中） */
+    val addedNotice: String? = null,
     val isRandom: Boolean = false,
 )
 
@@ -67,15 +67,29 @@ class RecommendViewModel(
 
     fun addToMeal(recipeId: Long, mealType: MealType) {
         viewModelScope.launch {
-            createMealPlan(mealType = mealType, recipeId = recipeId)
+            val added = createMealPlan(mealType = mealType, recipeId = recipeId)
             val name = _uiState.value.items
                 .firstOrNull { it.recipe.id == recipeId }?.recipe?.name ?: ""
-            _uiState.update { it.copy(addedName = name) }
+            _uiState.update {
+                it.copy(
+                    addedNotice = if (added == null) {
+                        "「$name」已经在今天${mealLabel(mealType)}菜单中"
+                    } else {
+                        "已把「$name」加入今天${mealLabel(mealType)}"
+                    }
+                )
+            }
         }
     }
 
     fun consumeAdded() {
-        _uiState.update { it.copy(addedName = null) }
+        _uiState.update { it.copy(addedNotice = null) }
+    }
+
+    private fun mealLabel(type: MealType): String = when (type) {
+        MealType.BREAKFAST -> "早餐"
+        MealType.LUNCH -> "午餐"
+        MealType.DINNER -> "晚餐"
     }
 
     private fun nextMealNow(): MealType {
