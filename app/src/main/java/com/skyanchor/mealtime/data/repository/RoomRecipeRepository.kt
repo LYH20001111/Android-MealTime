@@ -119,6 +119,20 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
         dao.delete(id)
     }
 
+    override suspend fun moveCategory(id: Long, up: Boolean) = db.withTransaction {
+        val dao = db.categoryDao()
+        val all = dao.getAllSorted()
+        val index = all.indexOfFirst { it.id == id }
+        if (index < 0) return@withTransaction
+        val targetIndex = if (up) index - 1 else index + 1
+        if (targetIndex < 0 || targetIndex >= all.size) return@withTransaction
+        val reordered = all.toMutableList().apply { add(targetIndex, removeAt(index)) }
+        // 顺带把排序值规范化为 0..n-1，消除历史脏数据中的并列排序值
+        reordered.forEachIndexed { position, entity ->
+            if (entity.sortOrder != position) dao.updateSortOrder(entity.id, position)
+        }
+    }
+
     override fun observeTags(): Flow<List<Tag>> =
         tagDao.observeAll().map { list -> list.map { it.toDomain() } }
 

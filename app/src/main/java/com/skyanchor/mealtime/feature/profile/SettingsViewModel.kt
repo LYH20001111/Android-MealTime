@@ -111,6 +111,15 @@ class SettingsViewModel(
         }
     }
 
+    fun moveCategory(id: Long, up: Boolean) {
+        viewModelScope.launch {
+            runCatching { recipeRepository.moveCategory(id, up) }
+                .onFailure { e ->
+                    _uiState.update { it.copy(message = "✗ ${e.message ?: "排序失败"}") }
+                }
+        }
+    }
+
     fun setNewTypeName(value: String) = _uiState.update { it.copy(newTypeName = value) }
 
     fun addIngredientType() {
@@ -134,6 +143,15 @@ class SettingsViewModel(
                 }
                 .onFailure { e ->
                     _uiState.update { it.copy(message = "✗ ${e.message ?: "删除失败"}") }
+                }
+        }
+    }
+
+    fun moveIngredientType(key: String, up: Boolean) {
+        viewModelScope.launch {
+            runCatching { ingredientRepository.moveType(key, up) }
+                .onFailure { e ->
+                    _uiState.update { it.copy(message = "✗ ${e.message ?: "排序失败"}") }
                 }
         }
     }

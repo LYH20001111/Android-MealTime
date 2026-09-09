@@ -71,7 +71,7 @@ abstract class MealTimeDatabase : RoomDatabase() {
         const val DATABASE_NAME = "mealtime.db"
 
         /** 首次启动预置的菜谱分类 */
-        val DEFAULT_CATEGORIES = listOf("家常菜", "汤羹", "主食", "凉菜", "甜点", FALLBACK_CATEGORY_NAME)
+        val DEFAULT_CATEGORIES = listOf("家常菜(荤)", "家常菜(素)", "汤羹", "主食", "凉菜", "甜点", "水果", FALLBACK_CATEGORY_NAME)
 
         /** 首次启动预置的食材种类（键, 展示名）；「其他」仅在被删种类兜底时按需创建 */
         val DEFAULT_INGREDIENT_TYPES = listOf(

@@ -41,4 +41,7 @@ interface IngredientRepository {
      * 删除「其他」本身抛 IllegalArgumentException。
      */
     suspend fun deleteType(key: String)
+
+    /** 上移/下移食材种类；已处于边界时静默忽略 */
+    suspend fun moveType(key: String, up: Boolean)
 }

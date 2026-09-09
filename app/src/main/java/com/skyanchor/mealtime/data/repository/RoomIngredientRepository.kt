@@ -102,5 +102,18 @@ class RoomIngredientRepository(private val db: MealTimeDatabase) : IngredientRep
         typeDao.delete(key)
     }
 
+    override suspend fun moveType(key: String, up: Boolean) = db.withTransaction {
+        val all = typeDao.getAllSorted()
+        val index = all.indexOfFirst { it.key == key }
+        if (index < 0) return@withTransaction
+        val targetIndex = if (up) index - 1 else index + 1
+        if (targetIndex < 0 || targetIndex >= all.size) return@withTransaction
+        val reordered = all.toMutableList().apply { add(targetIndex, removeAt(index)) }
+        // 顺带把排序值规范化为 0..n-1，消除历史脏数据中的并列排序值
+        reordered.forEachIndexed { position, entity ->
+            if (entity.sortOrder != position) typeDao.updateSortOrder(entity.key, position)
+        }
+    }
+
     private fun IngredientTypeEntity.toInfo() = IngredientTypeInfo(key = key, label = label, sortOrder = sortOrder)
 }

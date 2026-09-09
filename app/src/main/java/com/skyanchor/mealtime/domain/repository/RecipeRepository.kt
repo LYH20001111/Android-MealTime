@@ -56,6 +56,9 @@ interface RecipeRepository {
      */
     suspend fun deleteCategory(id: Long)
 
+    /** 上移/下移分类；已处于边界时静默忽略 */
+    suspend fun moveCategory(id: Long, up: Boolean)
+
     fun observeTags(): Flow<List<Tag>>
 
     /** 选择或创建标签：存在同名标签则直接返回 */

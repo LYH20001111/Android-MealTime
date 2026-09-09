@@ -16,6 +16,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -235,10 +237,14 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleSmall,
                         color = FoodTheme.colors.textPrimary,
                     )
-                    state.categories.forEach { category ->
+                    state.categories.forEachIndexed { index, category ->
                         CategoryRow(
                             name = category.name,
                             deletable = category.name != FALLBACK_CATEGORY_NAME,
+                            canMoveUp = index > 0,
+                            canMoveDown = index < state.categories.lastIndex,
+                            onMoveUp = { viewModel.moveCategory(category.id, up = true) },
+                            onMoveDown = { viewModel.moveCategory(category.id, up = false) },
                             onDelete = { pendingCategoryDelete = category },
                         )
                     }
@@ -267,10 +273,14 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleSmall,
                         color = FoodTheme.colors.textPrimary,
                     )
-                    state.ingredientTypes.forEach { type ->
+                    state.ingredientTypes.forEachIndexed { index, type ->
                         CategoryRow(
                             name = type.label,
                             deletable = type.key != IngredientTypes.OTHER,
+                            canMoveUp = index > 0,
+                            canMoveDown = index < state.ingredientTypes.lastIndex,
+                            onMoveUp = { viewModel.moveIngredientType(type.key, up = true) },
+                            onMoveDown = { viewModel.moveIngredientType(type.key, up = false) },
                             onDelete = { pendingTypeDelete = type },
                         )
                     }
@@ -290,7 +300,7 @@ fun SettingsScreen(
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXs))
             Text(
-                text = "删除分类后，其中的菜谱/食材会自动归入「其他」",
+                text = "通过 ↑↓ 调整分类顺序，同步应用于菜谱筛选、食材分组等处的显示顺序；删除分类后，其中的菜谱/食材会自动归入「其他」",
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textTertiary,
                 modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceXs),
@@ -314,6 +324,10 @@ fun SettingsScreen(
 private fun CategoryRow(
     name: String,
     deletable: Boolean,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
     onDelete: () -> Unit,
 ) {
     Row(
@@ -326,6 +340,20 @@ private fun CategoryRow(
             color = FoodTheme.colors.textPrimary,
             modifier = Modifier.weight(1f),
         )
+        IconButton(onClick = onMoveUp, enabled = canMoveUp) {
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowUp,
+                contentDescription = "上移$name",
+                tint = if (canMoveUp) FoodTheme.colors.textTertiary else FoodTheme.colors.textTertiary.copy(alpha = 0.3f),
+            )
+        }
+        IconButton(onClick = onMoveDown, enabled = canMoveDown) {
+            Icon(
+                imageVector = Icons.Filled.KeyboardArrowDown,
+                contentDescription = "下移$name",
+                tint = if (canMoveDown) FoodTheme.colors.textTertiary else FoodTheme.colors.textTertiary.copy(alpha = 0.3f),
+            )
+        }
         if (deletable) {
             IconButton(onClick = onDelete) {
                 Icon(
