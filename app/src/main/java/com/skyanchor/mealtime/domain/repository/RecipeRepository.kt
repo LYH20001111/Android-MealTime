@@ -19,6 +19,9 @@ interface RecipeRepository {
 
     suspend fun getRecipe(id: Long): Recipe?
 
+    /** 按名称查有效（未归档）菜谱，录入页重名提示用 */
+    suspend fun getRecipeByName(name: String): Recipe?
+
     suspend fun getRecipeDetail(id: Long): RecipeDetail?
 
     /** 详情页实时流：菜谱、配料、标签任一变化都会重新发射 */

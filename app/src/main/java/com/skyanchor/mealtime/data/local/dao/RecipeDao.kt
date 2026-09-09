@@ -37,6 +37,10 @@ interface RecipeDao {
     @Query("SELECT * FROM recipe WHERE id = :id")
     suspend fun getById(id: Long): RecipeEntity?
 
+    /** 按名称查有效（未归档）菜谱；新增/编辑时重名校验用 */
+    @Query("SELECT * FROM recipe WHERE name = :name AND isArchived = 0 LIMIT 1")
+    suspend fun getByName(name: String): RecipeEntity?
+
     @Query("SELECT * FROM recipe WHERE id = :id")
     fun observeById(id: Long): Flow<RecipeEntity?>
 

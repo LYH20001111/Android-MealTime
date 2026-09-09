@@ -213,6 +213,7 @@ fun RecipeEditScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 if (state.nameError) ErrorText("请输入菜名")
+                if (state.nameDuplicate) ErrorText("该菜谱已存在")
             }
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
@@ -463,6 +464,18 @@ fun RecipeEditScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showLeaveDialog = false }) { Text("继续编辑") }
+            },
+        )
+    }
+
+    // 保存时命中重名：弹窗提示且不落库
+    if (state.showNameDuplicateDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissNameDuplicateDialog,
+            title = { Text("菜谱已存在") },
+            text = { Text("已存在同名菜谱「${state.name.trim()}」，请换一个名称后再保存。") },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissNameDuplicateDialog) { Text("好的") }
             },
         )
     }

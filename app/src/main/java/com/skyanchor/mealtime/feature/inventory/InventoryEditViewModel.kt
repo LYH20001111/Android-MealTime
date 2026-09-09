@@ -16,6 +16,8 @@ import com.skyanchor.mealtime.domain.repository.IngredientRepository
 import com.skyanchor.mealtime.domain.repository.InventoryRepository
 import com.skyanchor.mealtime.domain.usecase.AddInventoryUseCase
 import com.skyanchor.mealtime.domain.usecase.UpdateInventoryUseCase
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +25,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+
+/** 食材名查重防抖：停止输入后再查库，避免每个按键都查询 */
+private const val NAME_DUPLICATE_CHECK_DELAY_MS = 300L
 
 data class InventoryEditUiState(
     val isLoading: Boolean = true,
@@ -44,6 +49,10 @@ data class InventoryEditUiState(
     val location: String = "",
     val note: String = "",
     val nameError: Boolean = false,
+    /** 食材名与字典中已有食材重名（输入时实时提示；新增保存时弹窗拦截） */
+    val nameDuplicate: Boolean = false,
+    /** 保存时命中重名，弹窗提示且不落库 */
+    val showNameDuplicateDialog: Boolean = false,
     val imageError: Boolean = false,
     /** 已填写库存详情时切换为无库存：先弹确认，确认后清空库存字段（规范文档 §27） */
     val pendingEmptyStock: Boolean = false,
@@ -62,6 +71,7 @@ class InventoryEditViewModel(
     val uiState: StateFlow<InventoryEditUiState> = _uiState.asStateFlow()
 
     private var previousQuantity: Double? = null
+    private var nameCheckJob: Job? = null
 
     /** 编辑时保留原食材关联（食材变更不在库存编辑范围内） */
     private var originalIngredient: Ingredient? = null
@@ -103,8 +113,30 @@ class InventoryEditViewModel(
         }
     }
 
-    fun setIngredientName(value: String) =
-        _uiState.update { it.copy(ingredientName = value, nameError = false) }
+    fun setIngredientName(value: String) {
+        _uiState.update { it.copy(ingredientName = value, nameError = false, nameDuplicate = false) }
+        // 编辑批次时食材名称不在修改范围（保存沿用原食材），无需查重
+        if (!_uiState.value.isNew) return
+        scheduleNameDuplicateCheck(value)
+    }
+
+    /** 停止输入后查重：食材字典中已有同名有效食材时提示 */
+    private fun scheduleNameDuplicateCheck(raw: String) {
+        nameCheckJob?.cancel()
+        val name = raw.trim()
+        if (name.isEmpty()) return
+        nameCheckJob = viewModelScope.launch {
+            delay(NAME_DUPLICATE_CHECK_DELAY_MS)
+            val existing = ingredientRepository.getIngredientByName(name)
+            _uiState.update { state ->
+                if (state.ingredientName.trim() == name) {
+                    state.copy(nameDuplicate = existing != null)
+                } else {
+                    state
+                }
+            }
+        }
+    }
 
     fun setIngredientType(value: String) =
         _uiState.update { it.copy(ingredientType = value) }
@@ -171,6 +203,10 @@ class InventoryEditViewModel(
 
     fun setNote(value: String) = _uiState.update { it.copy(note = value) }
 
+    /** 关闭重名弹窗；名称未改时输入框下方的重名提示保持显示 */
+    fun dismissNameDuplicateDialog() =
+        _uiState.update { it.copy(showNameDuplicateDialog = false) }
+
     fun save(onSaved: (Long) -> Unit) {
         val state = _uiState.value
         if (state.isSaving) return
@@ -186,6 +222,11 @@ class InventoryEditViewModel(
             }
             return
         }
+        // 新增时重名：弹窗提示，不保存（编辑批次不修改食材名称，无需查重）
+        if (state.isNew && state.nameDuplicate) {
+            _uiState.update { it.copy(showNameDuplicateDialog = true) }
+            return
+        }
         if (!isValidDateOrder(state)) {
             _uiState.update { it.copy(saveError = "日期需满足：生产日期 ≤ 购买日期 ≤ 过期日期") }
             return
@@ -194,6 +235,16 @@ class InventoryEditViewModel(
 
         viewModelScope.launch {
             try {
+                // 新增保存前最终查重：输入防抖可能尚未完成，或期间新增了同名食材
+                if (state.isNew) {
+                    val existing = ingredientRepository.getIngredientByName(state.ingredientName.trim())
+                    if (existing != null) {
+                        _uiState.update {
+                            it.copy(isSaving = false, nameDuplicate = true, showNameDuplicateDialog = true)
+                        }
+                        return@launch
+                    }
+                }
                 val ingredient = if (state.isNew) {
                     Ingredient(
                         name = state.ingredientName.trim(),

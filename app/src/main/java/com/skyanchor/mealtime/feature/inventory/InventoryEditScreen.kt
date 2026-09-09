@@ -215,6 +215,7 @@ fun InventoryEditScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 if (state.nameError) ErrorText("请填写食材名称")
+                if (state.nameDuplicate) ErrorText("该食材已存在")
             }
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
@@ -424,6 +425,18 @@ fun InventoryEditScreen(
             },
             dismissButton = {
                 TextButton(onClick = viewModel::dismissEmptyStock) { Text("取消") }
+            },
+        )
+    }
+
+    // 保存时命中重名：弹窗提示且不落库
+    if (state.showNameDuplicateDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissNameDuplicateDialog,
+            title = { Text("食材已存在") },
+            text = { Text("已存在同名食材「${state.ingredientName.trim()}」，请换一个名称后再保存。") },
+            confirmButton = {
+                TextButton(onClick = viewModel::dismissNameDuplicateDialog) { Text("好的") }
             },
         )
     }

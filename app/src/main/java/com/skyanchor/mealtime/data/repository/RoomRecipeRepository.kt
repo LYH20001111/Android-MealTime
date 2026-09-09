@@ -38,6 +38,9 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
 
     override suspend fun getRecipe(id: Long): Recipe? = recipeDao.getById(id)?.toDomain()
 
+    override suspend fun getRecipeByName(name: String): Recipe? =
+        recipeDao.getByName(name.trim())?.toDomain()
+
     override suspend fun getRecipeDetail(id: Long): RecipeDetail? = db.withTransaction {
         val withIngredients = recipeDao.getWithIngredients(id) ?: return@withTransaction null
         val tags = recipeDao.getTagsForRecipe(id).map { it.toDomain() }

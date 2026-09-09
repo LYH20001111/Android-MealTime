@@ -16,12 +16,17 @@ import com.skyanchor.mealtime.core.model.Tag
 import com.skyanchor.mealtime.domain.repository.IngredientRepository
 import com.skyanchor.mealtime.domain.repository.RecipeRepository
 import com.skyanchor.mealtime.domain.usecase.SaveRecipeUseCase
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+/** 菜名查重防抖：停止输入后再查库，避免每个按键都查询 */
+private const val NAME_DUPLICATE_CHECK_DELAY_MS = 300L
 
 /** 表单里的一行配料/调料输入 */
 data class IngredientLineInput(
@@ -55,6 +60,10 @@ data class RecipeEditUiState(
     val steps: List<String> = listOf(""),
     val note: String = "",
     val nameError: Boolean = false,
+    /** 菜名与已有菜谱重名（输入时实时提示；保存时弹窗拦截） */
+    val nameDuplicate: Boolean = false,
+    /** 保存时命中重名，弹窗提示且不落库 */
+    val showNameDuplicateDialog: Boolean = false,
     val imageError: Boolean = false,
     val categoryError: Boolean = false,
     val saveError: String? = null,
@@ -85,6 +94,7 @@ class RecipeEditViewModel(
     val uiState: StateFlow<RecipeEditUiState> = _uiState.asStateFlow()
 
     private var snapshot: RecipeEditSnapshot? = null
+    private var nameCheckJob: Job? = null
 
     /** 是否存在未保存修改（返回键离开前确认，规范文档 §40） */
     fun isDirty(): Boolean = snapshot?.let { it != snapshotOf(_uiState.value) } ?: false
@@ -169,7 +179,28 @@ class RecipeEditViewModel(
         unit = line.unit ?: "",
     )
 
-    fun setName(value: String) = _uiState.update { it.copy(name = value, nameError = false) }
+    fun setName(value: String) {
+        _uiState.update { it.copy(name = value, nameError = false, nameDuplicate = false) }
+        scheduleNameDuplicateCheck(value)
+    }
+
+    /** 停止输入后查重：已有同名（未归档）菜谱且不是当前编辑的这条时提示 */
+    private fun scheduleNameDuplicateCheck(raw: String) {
+        nameCheckJob?.cancel()
+        val name = raw.trim()
+        if (name.isEmpty()) return
+        nameCheckJob = viewModelScope.launch {
+            delay(NAME_DUPLICATE_CHECK_DELAY_MS)
+            val existing = recipeRepository.getRecipeByName(name)
+            _uiState.update { state ->
+                if (state.name.trim() == name) {
+                    state.copy(nameDuplicate = existing != null && existing.id != recipeId)
+                } else {
+                    state
+                }
+            }
+        }
+    }
 
     fun setImageUri(uri: String?) = _uiState.update { it.copy(imageUri = uri, imageError = false) }
 
@@ -246,6 +277,10 @@ class RecipeEditViewModel(
             )
         }
 
+    /** 关闭重名弹窗；名称未改时输入框下方的重名提示保持显示 */
+    fun dismissNameDuplicateDialog() =
+        _uiState.update { it.copy(showNameDuplicateDialog = false) }
+
     fun save(onSaved: (Long) -> Unit) {
         val state = _uiState.value
         if (state.isSaving) return
@@ -259,10 +294,24 @@ class RecipeEditViewModel(
             }
             return
         }
+        // 重名：弹窗提示，不保存
+        if (state.nameDuplicate) {
+            _uiState.update { it.copy(showNameDuplicateDialog = true) }
+            return
+        }
         _uiState.update { it.copy(isSaving = true, saveError = null) }
 
         viewModelScope.launch {
             try {
+                // 保存前最终查重：输入防抖可能尚未完成，或期间新增了同名菜谱
+                val name = state.name.trim()
+                val existing = recipeRepository.getRecipeByName(name)
+                if (existing != null && existing.id != recipeId) {
+                    _uiState.update {
+                        it.copy(isSaving = false, nameDuplicate = true, showNameDuplicateDialog = true)
+                    }
+                    return@launch
+                }
                 val recipe = Recipe(
                     id = recipeId ?: 0,
                     name = state.name,
