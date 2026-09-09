@@ -48,6 +48,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -450,6 +451,7 @@ fun RecipeEditScreen(
             onToggleTag = viewModel::toggleTag,
             onNewTagTextChange = viewModel::setNewTagText,
             onAddNewTag = viewModel::addNewTag,
+            onDeleteTag = viewModel::deleteTag,
             onDismiss = { showTagSheet = false },
         )
     }
@@ -640,7 +642,7 @@ private fun RemovableTagChip(text: String, onRemove: () -> Unit) {
     }
 }
 
-/** 添加标签底部弹层：系统标签点选 + 自定义标签输入（规范文档 §34/§35） */
+/** 添加标签底部弹层：系统标签点选/删除 + 自定义标签输入（规范文档 §34/§35） */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddTagSheet(
@@ -650,8 +652,28 @@ private fun AddTagSheet(
     onToggleTag: (Tag) -> Unit,
     onNewTagTextChange: (String) -> Unit,
     onAddNewTag: () -> Unit,
+    onDeleteTag: (Tag) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    var pendingDelete by remember { mutableStateOf<Tag?>(null) }
+
+    if (pendingDelete != null) {
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("删除标签") },
+            text = { Text("确定删除标签「${pendingDelete?.name}」吗？所有选用该标签的菜谱都会移除该标签。") },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingDelete?.let(onDeleteTag)
+                    pendingDelete = null
+                }) { Text("删除", color = FoodTheme.colors.danger) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) { Text("取消") }
+            },
+        )
+    }
+
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -670,21 +692,38 @@ private fun AddTagSheet(
                 TextButton(onClick = onDismiss) { Text("完成") }
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-            Text(
-                text = "系统标签",
-                style = MaterialTheme.typography.bodyMedium,
-                color = FoodTheme.colors.textSecondary,
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "系统标签",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = FoodTheme.colors.textSecondary,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "点选使用，点 × 删除",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FoodTheme.colors.textTertiary,
+                )
+            }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
-            ) {
-                availableTags.forEach { tag ->
-                    TagChip(
-                        text = tag.name,
-                        selected = tag.id in selectedTagIds,
-                        onClick = { onToggleTag(tag) },
-                    )
+            if (availableTags.isEmpty()) {
+                Text(
+                    text = "暂无系统标签，可在下方添加",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FoodTheme.colors.textTertiary,
+                )
+            } else {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                ) {
+                    availableTags.forEach { tag ->
+                        DeletableTagChip(
+                            text = tag.name,
+                            selected = tag.id in selectedTagIds,
+                            onToggle = { onToggleTag(tag) },
+                            onDelete = { pendingDelete = tag },
+                        )
+                    }
                 }
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
@@ -709,7 +748,48 @@ private fun AddTagSheet(
                     onClick = onAddNewTag,
                 )
             }
+            Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+            Text(
+                text = "添加后将成为系统标签，可供所有菜谱选用",
+                style = MaterialTheme.typography.bodySmall,
+                color = FoodTheme.colors.textTertiary,
+            )
         }
+    }
+}
+
+/** 系统标签 Chip：点名称选/取消，点 × 从系统标签中删除 */
+@Composable
+private fun DeletableTagChip(
+    text: String,
+    selected: Boolean,
+    onToggle: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    val contentColor = if (selected) FoodTheme.colors.surface else FoodTheme.colors.primaryDark
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(FoodTheme.dimens.radiusPill))
+            .background(if (selected) FoodTheme.colors.primary else FoodTheme.colors.primarySoft),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = contentColor,
+            modifier = Modifier
+                .clickable(onClick = onToggle)
+                .padding(start = 12.dp, top = 6.dp, bottom = 6.dp, end = 2.dp),
+        )
+        Icon(
+            imageVector = Icons.Outlined.Close,
+            contentDescription = "删除标签",
+            tint = contentColor,
+            modifier = Modifier
+                .clickable(onClick = onDelete)
+                .padding(start = 2.dp, end = 8.dp, top = 6.dp, bottom = 6.dp)
+                .size(14.dp),
+        )
     }
 }
 

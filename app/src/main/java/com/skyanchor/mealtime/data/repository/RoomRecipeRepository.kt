@@ -158,4 +158,9 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
             }
         }
     }
+
+    override suspend fun deleteTag(id: Long) = db.withTransaction {
+        recipeDao.deleteTagCrossRefs(id)
+        tagDao.delete(id)
+    }
 }

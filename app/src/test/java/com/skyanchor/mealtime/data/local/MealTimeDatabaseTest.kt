@@ -200,8 +200,8 @@ class MealTimeDatabaseTest {
         val p2 = mealRepository.addPlan(today, com.skyanchor.mealtime.core.model.MealType.LUNCH, r2)
         val p3 = mealRepository.addPlan(today, com.skyanchor.mealtime.core.model.MealType.LUNCH, r3)
 
-        mealRepository.movePlan(p3, -1)
-        mealRepository.movePlan(p2, +1)
+        mealRepository.movePlan(p3!!, -1)
+        mealRepository.movePlan(p2!!, +1)
 
         val lunch = db.mealPlanDao().observeByDate(today.toString()).first()
             .filter { it.plan.mealType == "LUNCH" }

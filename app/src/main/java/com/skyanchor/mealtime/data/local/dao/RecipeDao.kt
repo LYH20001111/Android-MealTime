@@ -111,6 +111,10 @@ interface RecipeDao {
 
     @Query("DELETE FROM recipe_tag WHERE recipeId = :recipeId")
     suspend fun clearTags(recipeId: Long)
+
+    /** 删除系统标签时，解除所有菜谱与该标签的关联 */
+    @Query("DELETE FROM recipe_tag WHERE tagId = :tagId")
+    suspend fun deleteTagCrossRefs(tagId: Long)
 }
 
 @Dao
@@ -127,6 +131,9 @@ interface TagDao {
 
     @Insert
     suspend fun insert(tag: TagEntity): Long
+
+    @Query("DELETE FROM tag WHERE id = :id")
+    suspend fun delete(id: Long)
 
     @Query("SELECT * FROM tag")
     suspend fun exportAll(): List<TagEntity>

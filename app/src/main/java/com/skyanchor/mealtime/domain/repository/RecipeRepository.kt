@@ -69,4 +69,7 @@ interface RecipeRepository {
 
     /** 选择或创建标签：存在同名标签则直接返回 */
     suspend fun getOrCreateTag(name: String): Tag
+
+    /** 删除系统标签，同时解除所有菜谱与该标签的关联 */
+    suspend fun deleteTag(id: Long)
 }

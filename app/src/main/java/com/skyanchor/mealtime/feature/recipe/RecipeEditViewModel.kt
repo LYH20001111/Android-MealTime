@@ -239,6 +239,19 @@ class RecipeEditViewModel(
         }
     }
 
+    /** 删除系统标签：同步移出候选列表与已选集合，已选用它的菜谱自动解除关联 */
+    fun deleteTag(tag: Tag) {
+        viewModelScope.launch {
+            recipeRepository.deleteTag(tag.id)
+            _uiState.update { state ->
+                state.copy(
+                    availableTags = state.availableTags.filter { it.id != tag.id },
+                    selectedTagIds = state.selectedTagIds - tag.id,
+                )
+            }
+        }
+    }
+
     fun setDifficulty(value: Difficulty) = _uiState.update { it.copy(difficulty = value) }
 
     fun setCookingTime(value: String) =
