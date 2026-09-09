@@ -3,6 +3,7 @@ package com.skyanchor.mealtime.feature.inventory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +30,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.ArrowDropDown
 import androidx.compose.material.icons.outlined.CalendarMonth
@@ -47,6 +49,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -239,13 +242,45 @@ fun InventoryEditScreen(
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                    verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm), // 换行时增加垂直间距
                 ) {
                     state.ingredientTypes.forEach { type ->
-                        TagChip(
-                            text = type.label,
-                            selected = state.ingredientType == type.key,
-                            onClick = { viewModel.setIngredientType(type.key) },
+                        val isSelected = state.ingredientType == type.key
+
+                        // 1. 动态切换背景色与文字颜色
+                        val backgroundColor by animateColorAsState(
+                            targetValue = if (isSelected) FoodTheme.colors.primary else FoodTheme.colors.primary.copy(alpha = 0.1f),
+                            label = "typeChipBgAnimation"
                         )
+                        val textColor = if (isSelected) Color.White else FoodTheme.colors.primary
+
+                        // 2. 胶囊形状 Chip 选项
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape) // 药丸/胶囊形状
+                                .background(backgroundColor)
+                                .clickable { viewModel.setIngredientType(type.key) }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            // 选中状态下显示勾选图标 ✓
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                            }
+
+                            Text(
+                                text = type.label,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = textColor
+                            )
+                        }
                     }
                 }
             }
@@ -329,15 +364,63 @@ fun InventoryEditScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-                    FormLabel("数量级别（不确定具体数量时可选）")
-                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-                    Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
-                        QuantityLevel.entries.forEach { level ->
-                            TagChip(
-                                text = level.chineseLabel,
-                                selected = state.quantityLevel == level,
-                                onClick = { viewModel.selectQuantityLevel(level) },
+                    Column {
+                        // 1. 标题分层：粗体主标题 + 灰色副标题提示
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "数量级别 ",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = FoodTheme.colors.textPrimary,
+                                fontWeight = FontWeight.Bold
                             )
+                            Text(
+                                text = "(不确定具体数量时可选)",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = FoodTheme.colors.textTertiary
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+
+                        // 2. 优化后的标签选择区
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            QuantityLevel.entries.forEach { level ->
+                                val isSelected = state.quantityLevel == level
+
+                                Surface(
+                                    selected = isSelected,
+                                    onClick = { viewModel.selectQuantityLevel(level) },
+                                    shape = RoundedCornerShape(50), // 胶囊全圆角
+                                    color = if (isSelected) {
+                                        FoodTheme.colors.primary // 选中态：深紫色实心背景
+                                    } else {
+                                        FoodTheme.colors.primary.copy(alpha = 0.1f) // 未选中态：浅紫色微光背景
+                                    },
+                                    contentColor = if (isSelected) Color.White else FoodTheme.colors.primary
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.Center
+                                    ) {
+                                        // 选中时显示 Check 图标
+                                        if (isSelected) {
+                                            Icon(
+                                                imageVector = Icons.Default.Check,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp),
+                                                tint = Color.White
+                                            )
+                                            Spacer(modifier = Modifier.size(4.dp))
+                                        }
+                                        Text(
+                                            text = level.chineseLabel,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }

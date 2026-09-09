@@ -5,6 +5,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -30,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.AddPhotoAlternate
 import androidx.compose.material.icons.outlined.Close
@@ -236,15 +238,48 @@ fun RecipeEditScreen(
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
                     FormLabel("分类", true)
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                        verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm), // 换行时增加垂直间距
                     ) {
                         state.categories.forEach { category ->
-                            TagChip(
-                                text = category.name,
-                                selected = state.selectedCategoryId == category.id,
-                                onClick = { viewModel.selectCategory(category.id) },
+                            val isSelected = state.selectedCategoryId == category.id
+
+                            // 1. 动态切换背景色与文字颜色
+                            val backgroundColor by animateColorAsState(
+                                targetValue = if (isSelected) FoodTheme.colors.primary else FoodTheme.colors.primary.copy(alpha = 0.1f),
+                                label = "categoryChipBgAnimation"
                             )
+                            val textColor = if (isSelected) Color.White else FoodTheme.colors.primary
+
+                            // 2. 胶囊形状 Chip 选项
+                            Row(
+                                modifier = Modifier
+                                    .clip(CircleShape) // 药丸/胶囊形状
+                                    .background(backgroundColor)
+                                    .clickable { viewModel.selectCategory(category.id) }
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                // 选中状态下显示勾选图标 ✓
+                                if (isSelected) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
+
+                                Text(
+                                    text = category.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = textColor
+                                )
+                            }
                         }
                     }
                     if (state.categoryError) ErrorText("请选择一个分类")
@@ -260,11 +295,42 @@ fun RecipeEditScreen(
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
                     Difficulty.entries.forEach { difficulty ->
-                        TagChip(
-                            text = difficulty.chineseLabel,
-                            selected = state.difficulty == difficulty,
-                            onClick = { viewModel.setDifficulty(difficulty) },
+                        val isSelected = state.difficulty == difficulty
+
+                        // 1. 动态切换背景色与文字颜色
+                        val backgroundColor by animateColorAsState(
+                            targetValue = if (isSelected) FoodTheme.colors.primary else FoodTheme.colors.primary.copy(alpha = 0.1f),
+                            label = "difficultyChipBgAnimation"
                         )
+                        val textColor = if (isSelected) Color.White else FoodTheme.colors.primary
+
+                        // 2. 胶囊形状 Chip 选项
+                        Row(
+                            modifier = Modifier
+                                .clip(CircleShape) // 药丸/胶囊形状
+                                .background(backgroundColor)
+                                .clickable { viewModel.setDifficulty(difficulty) }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            // 选中状态下显示勾选图标 ✓
+                            if (isSelected) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                            }
+
+                            Text(
+                                text = difficulty.chineseLabel,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = textColor
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
