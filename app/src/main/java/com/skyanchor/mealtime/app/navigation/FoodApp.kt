@@ -34,6 +34,7 @@ import com.skyanchor.mealtime.feature.home.MealPlanScreen
 import com.skyanchor.mealtime.feature.inventory.InventoryDetailScreen
 import com.skyanchor.mealtime.feature.inventory.InventoryEditScreen
 import com.skyanchor.mealtime.feature.inventory.InventoryListScreen
+import com.skyanchor.mealtime.feature.inventory.ExpiringInventoryScreen
 import com.skyanchor.mealtime.feature.profile.DataManagementScreen
 import com.skyanchor.mealtime.feature.profile.HistoryScreen
 import com.skyanchor.mealtime.feature.profile.ProfileScreen
@@ -138,6 +139,7 @@ fun FoodApp(modifier: Modifier = Modifier) {
                         navController.navigate(Routes.consumeConfirm(LocalDate.now(), mealType))
                     },
                     onOpenRecommend = { mealType -> navController.navigate(Routes.recommend(mealType)) },
+                    onOpenExpiring = { navController.navigate(Routes.EXPIRING) },
                     onAddRecipe = { navController.navigate(Routes.recipeEdit(-1L)) },
                 )
             }
@@ -232,6 +234,12 @@ fun FoodApp(modifier: Modifier = Modifier) {
                     targetMealType = targetMeal,
                     onBack = { navController.popBackStack() },
                     onOpenRecipe = { id -> navController.navigate(Routes.recipeDetail(id)) },
+                )
+            }
+            composable(Routes.EXPIRING) {
+                ExpiringInventoryScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenItem = { id -> navController.navigate(Routes.inventoryDetail(id)) },
                 )
             }
             composable(Routes.SETTINGS) {

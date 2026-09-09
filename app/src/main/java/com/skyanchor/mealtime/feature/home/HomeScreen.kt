@@ -105,6 +105,7 @@ fun HomeScreen(
     onOpenRecipe: (Long) -> Unit,
     onCompleteMeal: (MealType) -> Unit,
     onOpenRecommend: (MealType?) -> Unit,
+    onOpenExpiring: () -> Unit,
     onAddRecipe: () -> Unit,
     viewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.factory(rememberAppContainer()),
@@ -184,7 +185,7 @@ fun HomeScreen(
                 ExpiringBanner(
                     items = state.expiring,
                     count = state.expiringCount,
-                    onClick = { onOpenRecommend(null) },
+                    onClick = onOpenExpiring,
                 )
             }
 

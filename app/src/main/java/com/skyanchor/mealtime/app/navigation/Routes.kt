@@ -9,6 +9,7 @@ object Routes {
     const val MEAL_PLAN = "meal/{date}/{mealType}"
     const val CONSUME_CONFIRM = "consume-confirm/{date}/{mealType}"
     const val RECOMMEND = "recommend?mealType={mealType}"
+    const val EXPIRING = "expiring"
     const val SETTINGS = "settings"
     const val HISTORY = "history"
     const val DATA_MANAGEMENT = "data-management"
