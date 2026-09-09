@@ -40,7 +40,7 @@ class RecipeRepositoryTest {
         db.openHelper.writableDatabase
         recipeRepository = RoomRecipeRepository(db)
         ingredientRepository = RoomIngredientRepository(db)
-        saveRecipe = SaveRecipeUseCase(recipeRepository, ingredientRepository)
+        saveRecipe = SaveRecipeUseCase(recipeRepository)
     }
 
     @After
@@ -54,14 +54,14 @@ class RecipeRepositoryTest {
             recipe = Recipe(name = "番茄炒蛋"),
             ingredients = listOf(
                 RecipeIngredientLine(
-                    ingredient = com.skyanchor.mealtime.core.model.Ingredient(name = "番茄"),
+                    name = "番茄",
                     quantity = 2.0,
                     unit = "个",
                     type = IngredientTypes.INGREDIENT,
                     sortOrder = 0,
                 ),
                 RecipeIngredientLine(
-                    ingredient = com.skyanchor.mealtime.core.model.Ingredient(name = "盐"),
+                    name = "盐",
                     quantity = 2.0,
                     unit = "g",
                     type = IngredientTypes.SEASONING,
@@ -74,13 +74,13 @@ class RecipeRepositoryTest {
         val detail = recipeRepository.getRecipeDetail(recipeId)
         assertNotNull(detail)
         assertEquals("番茄炒蛋", detail!!.recipe.name)
-        assertEquals(listOf("番茄", "盐"), detail.ingredients.map { it.ingredient.name })
+        assertEquals(listOf("番茄", "盐"), detail.ingredients.map { it.name })
         assertEquals(IngredientTypes.SEASONING, detail.ingredients[1].type)
         assertEquals(listOf("快手"), detail.tags.map { it.name })
 
-        // 食材字典应为"选择或创建"落库的两条
-        assertNotNull(ingredientRepository.getIngredientByName("番茄"))
-        assertNotNull(ingredientRepository.getIngredientByName("盐"))
+        // 配料与食材字典解耦：保存菜谱不写字典，用户仍可在食材页自由新增同名食材
+        assertTrue(ingredientRepository.getIngredientByName("番茄") == null)
+        assertTrue(ingredientRepository.getIngredientByName("盐") == null)
     }
 
     @Test
@@ -98,7 +98,7 @@ class RecipeRepositoryTest {
             recipe = Recipe(name = "旧菜"),
             ingredients = listOf(
                 RecipeIngredientLine(
-                    ingredient = com.skyanchor.mealtime.core.model.Ingredient(name = "土豆"),
+                    name = "土豆",
                     quantity = 1.0,
                     unit = "个",
                     type = IngredientTypes.INGREDIENT,
@@ -113,7 +113,7 @@ class RecipeRepositoryTest {
             recipe = existing.recipe.copy(name = "新菜名", steps = listOf("切块", "下锅")),
             ingredients = listOf(
                 RecipeIngredientLine(
-                    ingredient = com.skyanchor.mealtime.core.model.Ingredient(name = "青椒"),
+                    name = "青椒",
                     quantity = 2.0,
                     unit = "个",
                     type = IngredientTypes.INGREDIENT,
@@ -126,7 +126,7 @@ class RecipeRepositoryTest {
         val updated = recipeRepository.getRecipeDetail(recipeId)!!
         assertEquals("新菜名", updated.recipe.name)
         assertEquals(listOf("切块", "下锅"), updated.recipe.steps)
-        assertEquals(listOf("青椒"), updated.ingredients.map { it.ingredient.name })
+        assertEquals(listOf("青椒"), updated.ingredients.map { it.name })
     }
 
     @Test

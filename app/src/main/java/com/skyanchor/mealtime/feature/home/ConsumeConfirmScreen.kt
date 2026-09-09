@@ -170,7 +170,7 @@ fun ConsumeConfirmScreen(
                                             FoodTextField(
                                                 value = line.actualText,
                                                 onValueChange = {
-                                                    viewModel.updateActual(line.planId, line.ingredientId, it)
+                                                    viewModel.updateActual(line.planId, line.name, it)
                                                 },
                                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                                 modifier = Modifier.width(84.dp),

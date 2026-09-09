@@ -33,22 +33,17 @@ data class RecipeEntity(
             childColumns = ["recipeId"],
             onDelete = ForeignKey.CASCADE,
         ),
-        ForeignKey(
-            entity = IngredientEntity::class,
-            parentColumns = ["id"],
-            childColumns = ["ingredientId"],
-        ),
     ],
     indices = [
         Index("recipeId"),
-        Index("ingredientId"),
     ],
 )
 data class RecipeIngredientEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val recipeId: Long,
-    val ingredientId: Long,
+    /** 配料名称：与食材字典解耦，仅作展示/搜索/名称匹配，不写 ingredient 表 */
+    val ingredientName: String,
     val quantity: Double? = null,
     val unit: String? = null,
     val ingredientType: String,

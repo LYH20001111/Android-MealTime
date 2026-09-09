@@ -3,18 +3,17 @@ package com.skyanchor.mealtime.domain.usecase
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
-import com.skyanchor.mealtime.domain.repository.IngredientRepository
 import com.skyanchor.mealtime.domain.repository.MealRepository
 import com.skyanchor.mealtime.domain.repository.RecipeRepository
 import java.time.LocalDate
 
 /**
- * 保存菜谱：校验名称，配料行中的食材先在字典中"选择或创建"，
- * 再整单（主记录 + 配料 + 标签）事务落库。
+ * 保存菜谱：校验名称后整单（主记录 + 配料 + 标签）事务落库。
+ * 配料行与食材字典完全解耦：只存名称，不写 ingredient 表、不校验重名，
+ * 用户仍可随后在食材页自由新增同名食材。
  */
 class SaveRecipeUseCase(
     private val recipeRepository: RecipeRepository,
-    private val ingredientRepository: IngredientRepository,
 ) {
 
     /** @return 菜谱 id */
@@ -27,14 +26,8 @@ class SaveRecipeUseCase(
         require(name.isNotEmpty()) { "菜名不能为空" }
 
         val resolved = ingredients
-            .filter { it.ingredient.name.isNotBlank() }
-            .map { line ->
-                val stored = ingredientRepository.getOrCreate(
-                    name = line.ingredient.name.trim(),
-                    type = line.type,
-                )
-                line.copy(ingredient = stored)
-            }
+            .filter { it.name.isNotBlank() }
+            .map { line -> line.copy(name = line.name.trim()) }
         return recipeRepository.saveRecipe(recipe.copy(name = name), resolved, tagIds)
     }
 }

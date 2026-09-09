@@ -29,7 +29,7 @@ interface RecipeRepository {
 
     /**
      * 新增或更新菜谱：菜谱主记录、配料行、标签在同一个事务中保存。
-     * 配料行必须引用有效 Ingredient（R：不允许自由字符串食材）。
+     * 配料行只存名称与种类，与食材字典解耦（R：不校验重名、不写字典）。
      */
     suspend fun saveRecipe(
         recipe: Recipe,
@@ -41,9 +41,6 @@ interface RecipeRepository {
     suspend fun archiveRecipe(id: Long)
 
     suspend fun setFavorite(id: Long, favorite: Boolean)
-
-    /** 库存匹配推荐：查这些食材能做的菜 */
-    suspend fun getRecipesUsingIngredients(ingredientIds: List<Long>): List<Recipe>
 
     fun observeCategories(): Flow<List<Category>>
 

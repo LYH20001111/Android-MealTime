@@ -8,7 +8,6 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
 import com.skyanchor.mealtime.core.model.Category
 import com.skyanchor.mealtime.core.model.Difficulty
-import com.skyanchor.mealtime.core.model.Ingredient
 import com.skyanchor.mealtime.core.model.IngredientTypeInfo
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
@@ -174,7 +173,7 @@ class RecipeEditViewModel(
     }
 
     private fun toLineInput(line: RecipeIngredientLine) = IngredientLineInput(
-        name = line.ingredient.name,
+        name = line.name,
         quantity = line.quantity?.toString()?.removeSuffix(".0") ?: "",
         unit = line.unit ?: "",
     )
@@ -343,7 +342,7 @@ class RecipeEditViewModel(
                             if (input.name.isNotBlank()) {
                                 add(
                                     RecipeIngredientLine(
-                                        ingredient = Ingredient(name = input.name.trim()),
+                                        name = input.name.trim(),
                                         quantity = parseQuantity(input.quantity),
                                         unit = input.unit.trim().takeIf { it.isNotEmpty() },
                                         type = section.typeKey,
@@ -376,10 +375,7 @@ class RecipeEditViewModel(
                         recipeId = recipeId,
                         recipeRepository = container.recipeRepository,
                         ingredientRepository = container.ingredientRepository,
-                        saveRecipeUseCase = SaveRecipeUseCase(
-                            container.recipeRepository,
-                            container.ingredientRepository,
-                        ),
+                        saveRecipeUseCase = SaveRecipeUseCase(container.recipeRepository),
                     )
                 }
             }

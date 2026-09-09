@@ -28,7 +28,6 @@ import com.skyanchor.mealtime.data.local.entity.RecipeIngredientEntity
 import com.skyanchor.mealtime.data.local.entity.TagEntity
 import com.skyanchor.mealtime.data.local.relation.InventoryWithIngredient
 import com.skyanchor.mealtime.data.local.relation.MealPlanWithRecipe
-import com.skyanchor.mealtime.data.local.relation.RecipeIngredientWithIngredient
 import com.skyanchor.mealtime.data.local.relation.RecipeWithIngredients
 import java.time.LocalDate
 
@@ -64,15 +63,15 @@ fun RecipeEntity.toDomain(): Recipe = Recipe(
     updatedAt = updatedAt,
 )
 
-fun RecipeIngredientWithIngredient.toDomain(): RecipeIngredientLine = RecipeIngredientLine(
-    id = line.id,
-    recipeId = line.recipeId,
-    ingredient = ingredient.toDomain(),
-    quantity = line.quantity,
-    unit = line.unit,
-    type = line.ingredientType.ifBlank { IngredientTypes.INGREDIENT },
-    note = line.note,
-    sortOrder = line.sortOrder,
+fun RecipeIngredientEntity.toDomain(): RecipeIngredientLine = RecipeIngredientLine(
+    id = id,
+    recipeId = recipeId,
+    name = ingredientName,
+    quantity = quantity,
+    unit = unit,
+    type = ingredientType.ifBlank { IngredientTypes.INGREDIENT },
+    note = note,
+    sortOrder = sortOrder,
 )
 
 fun RecipeWithIngredients.toDomain(tags: List<Tag> = emptyList()): RecipeDetail = RecipeDetail(
@@ -152,7 +151,7 @@ fun Recipe.toEntity(createdAt: Long, updatedAt: Long): RecipeEntity = RecipeEnti
 fun RecipeIngredientLine.toEntity(recipeId: Long): RecipeIngredientEntity = RecipeIngredientEntity(
     id = id,
     recipeId = recipeId,
-    ingredientId = ingredient.id,
+    ingredientName = name,
     quantity = quantity,
     unit = unit,
     ingredientType = type,

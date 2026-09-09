@@ -23,9 +23,8 @@ interface RecipeDao {
           AND (:query IS NULL
               OR name LIKE '%' || :query || '%'
               OR id IN (
-                  SELECT ri.recipeId FROM recipe_ingredient AS ri
-                  JOIN ingredient AS i ON i.id = ri.ingredientId
-                  WHERE i.name LIKE '%' || :query || '%'
+                  SELECT recipeId FROM recipe_ingredient
+                  WHERE ingredientName LIKE '%' || :query || '%'
               ))
           AND (:categoryId IS NULL OR categoryId = :categoryId)
           AND (:favoritesOnly = 0 OR isFavorite = 1)
@@ -51,15 +50,6 @@ interface RecipeDao {
     @Transaction
     @Query("SELECT * FROM recipe WHERE id = :id")
     fun observeWithIngredients(id: Long): Flow<RecipeWithIngredients?>
-
-    @Query(
-        """
-        SELECT * FROM recipe
-        WHERE isArchived = 0
-          AND id IN (SELECT recipeId FROM recipe_ingredient WHERE ingredientId IN (:ingredientIds))
-        """
-    )
-    suspend fun getRecipesUsingIngredients(ingredientIds: List<Long>): List<RecipeEntity>
 
     @Insert
     suspend fun insert(recipe: RecipeEntity): Long

@@ -30,11 +30,11 @@ data class Recipe(
     val updatedAt: Long = 0,
 )
 
-/** 菜谱中的一行配料/调料，必须引用标准食材（R：食材不允许自由字符串） */
+/** 菜谱中的一行配料/调料：与食材字典解耦，只存名称与种类，用户可自由填写（R：不校验重名） */
 data class RecipeIngredientLine(
     val id: Long = 0,
     val recipeId: Long = 0,
-    val ingredient: Ingredient,
+    val name: String,
     val quantity: Double? = null,
     val unit: String? = null,
     /** 食材种类键（IngredientTypes 或自定义种类），决定在哪个分区展示 */

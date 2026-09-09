@@ -49,7 +49,7 @@ data class InventoryEditUiState(
     val location: String = "",
     val note: String = "",
     val nameError: Boolean = false,
-    /** 食材名与字典中已有食材重名（输入时实时提示；新增保存时弹窗拦截） */
+    /** 食材名与库存中已有食材重名（输入时实时提示；新增保存时弹窗拦截）；菜谱占位的字典条目不算 */
     val nameDuplicate: Boolean = false,
     /** 保存时命中重名，弹窗提示且不落库 */
     val showNameDuplicateDialog: Boolean = false,
@@ -120,14 +120,14 @@ class InventoryEditViewModel(
         scheduleNameDuplicateCheck(value)
     }
 
-    /** 停止输入后查重：食材字典中已有同名有效食材时提示 */
+    /** 停止输入后查重：库存中已有同名食材时提示；菜谱创建的无库存字典条目不算重名 */
     private fun scheduleNameDuplicateCheck(raw: String) {
         nameCheckJob?.cancel()
         val name = raw.trim()
         if (name.isEmpty()) return
         nameCheckJob = viewModelScope.launch {
             delay(NAME_DUPLICATE_CHECK_DELAY_MS)
-            val existing = ingredientRepository.getIngredientByName(name)
+            val existing = ingredientRepository.getStockedIngredientByName(name)
             _uiState.update { state ->
                 if (state.ingredientName.trim() == name) {
                     state.copy(nameDuplicate = existing != null)
@@ -235,9 +235,9 @@ class InventoryEditViewModel(
 
         viewModelScope.launch {
             try {
-                // 新增保存前最终查重：输入防抖可能尚未完成，或期间新增了同名食材
+                // 新增保存前最终查重：与库存中已有食材重名才拦截（菜谱占位的字典条目可复用建库存）
                 if (state.isNew) {
-                    val existing = ingredientRepository.getIngredientByName(state.ingredientName.trim())
+                    val existing = ingredientRepository.getStockedIngredientByName(state.ingredientName.trim())
                     if (existing != null) {
                         _uiState.update {
                             it.copy(isSaving = false, nameDuplicate = true, showNameDuplicateDialog = true)
@@ -252,7 +252,9 @@ class InventoryEditViewModel(
                         imageUri = state.imageUri,
                     )
                 } else {
-                    originalIngredient ?: Ingredient(name = state.ingredientName.trim())
+                    // 编辑沿用原食材（含 id），仅种类可变更
+                    originalIngredient?.copy(type = state.ingredientType)
+                        ?: Ingredient(name = state.ingredientName.trim())
                 }
                 // 无库存：数量/级别/日期/位置不落库；备注两种状态都保留（规范文档 §20/§26）
                 val empty = state.isEmptyStock
@@ -271,10 +273,13 @@ class InventoryEditViewModel(
                 val savedId = if (state.isNew) {
                     addInventory(item)
                 } else {
-                    // 图片挂在食材字典上；编辑批次时图片有变则同步更新字典
+                    // 图片与种类挂在食材字典上；编辑时有变则同步更新字典（种类连带菜谱配料行）
                     val original = originalIngredient
                     if (original != null && original.imageUri != state.imageUri) {
                         ingredientRepository.updateImage(original.id, state.imageUri)
+                    }
+                    if (original != null && original.type != state.ingredientType) {
+                        ingredientRepository.updateType(original.id, state.ingredientType)
                     }
                     updateInventory(item, previousQuantity)
                     item.id

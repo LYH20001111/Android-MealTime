@@ -215,7 +215,7 @@ fun InventoryEditScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 if (state.nameError) ErrorText("请填写食材名称")
-                if (state.nameDuplicate) ErrorText("该食材已存在")
+                if (state.nameDuplicate) ErrorText("该食材已在库存中")
             }
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
@@ -232,22 +232,20 @@ fun InventoryEditScreen(
                 )
                 if (state.imageError) ErrorText("请添加食材图片")
             }
-            // 类型属于基本信息，新增时始终可选；编辑保留原食材关联不在此变更
-            if (state.isNew) {
-                item {
-                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-                    FormLabel("类型", true)
-                    Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
-                    ) {
-                        state.ingredientTypes.forEach { type ->
-                            TagChip(
-                                text = type.label,
-                                selected = state.ingredientType == type.key,
-                                onClick = { viewModel.setIngredientType(type.key) },
-                            )
-                        }
+            // 类型属于基本信息，新增/编辑均可选；编辑切换后保存时同步食材字典
+            item {
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
+                FormLabel("类型", true)
+                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                ) {
+                    state.ingredientTypes.forEach { type ->
+                        TagChip(
+                            text = type.label,
+                            selected = state.ingredientType == type.key,
+                            onClick = { viewModel.setIngredientType(type.key) },
+                        )
                     }
                 }
             }
@@ -433,8 +431,8 @@ fun InventoryEditScreen(
     if (state.showNameDuplicateDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissNameDuplicateDialog,
-            title = { Text("食材已存在") },
-            text = { Text("已存在同名食材「${state.ingredientName.trim()}」，请换一个名称后再保存。") },
+            title = { Text("食材已在库存中") },
+            text = { Text("「${state.ingredientName.trim()}」已在库存列表中，可前往查看或编辑，或换一个名称后再保存。") },
             confirmButton = {
                 TextButton(onClick = viewModel::dismissNameDuplicateDialog) { Text("好的") }
             },

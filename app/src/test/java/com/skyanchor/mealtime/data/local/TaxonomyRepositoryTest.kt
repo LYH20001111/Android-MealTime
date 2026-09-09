@@ -3,7 +3,6 @@ package com.skyanchor.mealtime.data.local
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.skyanchor.mealtime.core.model.FALLBACK_CATEGORY_NAME
-import com.skyanchor.mealtime.core.model.Ingredient
 import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
@@ -43,7 +42,7 @@ class TaxonomyRepositoryTest {
         db.openHelper.writableDatabase
         recipeRepository = RoomRecipeRepository(db)
         ingredientRepository = RoomIngredientRepository(db)
-        saveRecipe = SaveRecipeUseCase(recipeRepository, ingredientRepository)
+        saveRecipe = SaveRecipeUseCase(recipeRepository)
     }
 
     @After
@@ -107,11 +106,13 @@ class TaxonomyRepositoryTest {
     @Test
     fun deleteIngredientTypeMovesIngredientsAndRecipeLinesToFallback() = runBlocking {
         ingredientRepository.addType("干货")
+        // 配料与字典解耦：字典里的食材需单独创建（模拟食材页新增）
+        ingredientRepository.getOrCreate("干香菇", "干货")
         val recipeId = saveRecipe(
             recipe = Recipe(name = "香菇炖鸡"),
             ingredients = listOf(
                 RecipeIngredientLine(
-                    ingredient = Ingredient(name = "干香菇"),
+                    name = "干香菇",
                     quantity = 5.0,
                     unit = "朵",
                     type = "干货",
@@ -121,9 +122,7 @@ class TaxonomyRepositoryTest {
             tagIds = emptyList(),
         )
 
-        // 库存也挂一条干货种类的食材
-        val ingredient = ingredientRepository.getIngredientByName("干香菇")!!
-        assertNotNull(ingredient)
+        assertNotNull(ingredientRepository.getIngredientByName("干香菇"))
 
         ingredientRepository.deleteType("干货")
 
@@ -142,11 +141,12 @@ class TaxonomyRepositoryTest {
     @Test
     fun deleteSeasoningTypeKeepsConsumableLogicConsistent() = runBlocking {
         // 删除「调料」后，调料食材归入「其他」；「其他」按食材语义参与扣减
+        ingredientRepository.getOrCreate("盐", IngredientTypes.SEASONING)
         val recipeId = saveRecipe(
             recipe = Recipe(name = "番茄炒蛋"),
             ingredients = listOf(
                 RecipeIngredientLine(
-                    ingredient = Ingredient(name = "盐"),
+                    name = "盐",
                     quantity = 2.0,
                     unit = "g",
                     type = IngredientTypes.SEASONING,

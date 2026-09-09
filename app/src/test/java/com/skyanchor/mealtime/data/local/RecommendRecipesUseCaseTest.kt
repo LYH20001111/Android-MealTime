@@ -81,7 +81,7 @@ class RecommendRecipesUseCaseTest {
             lines.mapIndexed { index, (ingredient, quantity, unit) ->
                 RecipeIngredientEntity(
                     recipeId = recipeId,
-                    ingredientId = ingredientId(ingredient),
+                    ingredientName = ingredient,
                     quantity = quantity,
                     unit = unit,
                     ingredientType = IngredientTypes.INGREDIENT,

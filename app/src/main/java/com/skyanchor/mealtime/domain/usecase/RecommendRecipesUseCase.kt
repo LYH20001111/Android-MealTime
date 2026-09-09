@@ -36,14 +36,14 @@ class RecommendRecipesUseCase(
         val nearDays = settingsRepository.getString(SettingsKeys.EXPIRY_NEAR_DAYS)
             ?.toIntOrNull() ?: SettingsKeys.DEFAULT_EXPIRY_NEAR_DAYS
         val expiring = inventoryRepository.observeExpiring(nearDays).first()
-        val expiringIds = expiring.map { it.ingredient.id }.toSet()
-        val expiringNames = expiring.map { it.ingredient.name }
+        val expiringNames = expiring.map { it.ingredient.name }.toSet()
 
-        val stockedIds = inventoryRepository.observeInventory()
+        // 配料与食材字典解耦：库存匹配按名称进行
+        val stockedNames = inventoryRepository.observeInventory()
             .first()
             .mapNotNull { item ->
                 // 数量级别批次（quantity 为 null）也算"有货"
-                if (item.quantity == null || item.quantity > 0) item.ingredient.id else null
+                if (item.quantity == null || item.quantity > 0) item.ingredient.name else null
             }
             .toSet()
 
@@ -54,8 +54,7 @@ class RecommendRecipesUseCase(
             score(
                 recipe = recipe,
                 today = today,
-                stockedIds = stockedIds,
-                expiringIds = expiringIds,
+                stockedNames = stockedNames,
                 expiringNames = expiringNames,
                 usageByRecipe = usageByRecipe,
                 detailProvider = { recipeRepository.getRecipeDetail(recipe.id) },
@@ -82,9 +81,8 @@ class RecommendRecipesUseCase(
     internal suspend fun score(
         recipe: Recipe,
         today: LocalDate,
-        stockedIds: Set<Long>,
-        expiringIds: Set<Long>,
-        expiringNames: List<String>,
+        stockedNames: Set<String>,
+        expiringNames: Set<String>,
         usageByRecipe: Map<Long, com.skyanchor.mealtime.core.model.RecentRecipeUsage>,
         detailProvider: suspend () -> com.skyanchor.mealtime.core.model.RecipeDetail?,
     ): Recommendation {
@@ -93,9 +91,9 @@ class RecommendRecipesUseCase(
             ?.filter { it.type != IngredientTypes.SEASONING && it.quantity != null }
             ?: emptyList()
 
-        val matched = lines.count { it.ingredient.id in stockedIds }
+        val matched = lines.count { it.name in stockedNames }
         val matchRatio = if (lines.isEmpty()) 0.0 else matched.toDouble() / lines.size
-        val expiringHits = lines.filter { it.ingredient.id in expiringIds }
+        val expiringHits = lines.filter { it.name in expiringNames }
 
         var score = matchRatio * 50
         score += (minOf(expiringHits.size, 2) / 2.0) * 40
@@ -118,10 +116,7 @@ class RecommendRecipesUseCase(
                 else -> add("△ 库存里还没有它的食材")
             }
             if (expiringHits.isNotEmpty()) {
-                val hitNames = expiringHits.mapNotNull { line ->
-                    expiringNames.firstOrNull { it == line.ingredient.name }
-                }.ifEmpty { expiringHits.map { it.ingredient.name } }
-                add("✓ 能消耗临期食材：${hitNames.joinToString("、")}")
+                add("✓ 能消耗临期食材：${expiringHits.map { it.name }.joinToString("、")}")
             }
             if (recipe.isFavorite) add("✓ 你的收藏")
             when {

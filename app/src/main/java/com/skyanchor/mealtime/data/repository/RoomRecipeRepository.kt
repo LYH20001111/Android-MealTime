@@ -86,11 +86,6 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
         recipeDao.setFavorite(id, favorite, System.currentTimeMillis())
     }
 
-    override suspend fun getRecipesUsingIngredients(ingredientIds: List<Long>): List<Recipe> {
-        if (ingredientIds.isEmpty()) return emptyList()
-        return recipeDao.getRecipesUsingIngredients(ingredientIds).map { it.toDomain() }
-    }
-
     override fun observeCategories(): Flow<List<Category>> =
         db.categoryDao().observeAll().map { list -> list.map { it.toDomain() } }
 

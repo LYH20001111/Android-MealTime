@@ -283,7 +283,7 @@ private fun RecipeDetailContent(
                 ) {
                     lines.forEach { line ->
                         IngredientRow(
-                            name = line.ingredient.name,
+                            name = line.name,
                             amount = formatAmount(line.quantity, line.unit),
                         )
                     }

@@ -10,16 +10,10 @@ import com.skyanchor.mealtime.data.local.entity.MealPlanEntity
 import com.skyanchor.mealtime.data.local.entity.RecipeEntity
 import com.skyanchor.mealtime.data.local.entity.RecipeIngredientEntity
 
-data class RecipeIngredientWithIngredient(
-    @Embedded val line: RecipeIngredientEntity,
-    @Relation(parentColumn = "ingredientId", entityColumn = "id")
-    val ingredient: IngredientEntity,
-)
-
 data class RecipeWithIngredients(
     @Embedded val recipe: RecipeEntity,
     @Relation(entity = RecipeIngredientEntity::class, parentColumn = "id", entityColumn = "recipeId")
-    val ingredients: List<RecipeIngredientWithIngredient>,
+    val ingredients: List<RecipeIngredientEntity>,
 )
 
 data class InventoryWithIngredient(

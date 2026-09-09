@@ -36,6 +36,7 @@ import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Dining
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Kitchen
 import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Warning
@@ -434,7 +435,7 @@ fun SettingsScreen(
                         ) {
                             // 食材主题占位图标：选择餐饮图标
                             Icon(
-                                imageVector = Icons.Outlined.Dining, // 替换为更适合食材的图标
+                                imageVector = Icons.Outlined.Kitchen, // 替换为更适合食材的图标
                                 contentDescription = null,
                                 tint = FoodTheme.colors.textTertiary,
                                 modifier = Modifier.size(20.dp)

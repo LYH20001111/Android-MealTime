@@ -2,7 +2,6 @@ package com.skyanchor.mealtime.data.local
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.skyanchor.mealtime.core.model.Ingredient
 import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealStatus
 import com.skyanchor.mealtime.core.model.MealType
@@ -13,6 +12,7 @@ import com.skyanchor.mealtime.data.local.entity.IngredientEntity
 import com.skyanchor.mealtime.data.local.entity.InventoryItemEntity
 import com.skyanchor.mealtime.data.local.entity.RecipeEntity
 import com.skyanchor.mealtime.data.local.entity.RecipeIngredientEntity
+import com.skyanchor.mealtime.data.repository.RoomIngredientRepository
 import com.skyanchor.mealtime.data.repository.RoomInventoryRepository
 import com.skyanchor.mealtime.data.repository.RoomMealRepository
 import com.skyanchor.mealtime.data.repository.RoomRecipeRepository
@@ -42,6 +42,7 @@ class CompleteMealTest {
     private lateinit var mealRepository: RoomMealRepository
     private lateinit var recipeRepository: RoomRecipeRepository
     private lateinit var inventoryRepository: RoomInventoryRepository
+    private lateinit var ingredientRepository: RoomIngredientRepository
     private lateinit var completeMeal: CompleteMealUseCase
     private val today: LocalDate = LocalDate.now()
 
@@ -53,7 +54,8 @@ class CompleteMealTest {
         mealRepository = RoomMealRepository(db)
         recipeRepository = RoomRecipeRepository(db)
         inventoryRepository = RoomInventoryRepository(db)
-        completeMeal = CompleteMealUseCase(mealRepository, recipeRepository)
+        ingredientRepository = RoomIngredientRepository(db)
+        completeMeal = CompleteMealUseCase(mealRepository, recipeRepository, ingredientRepository)
     }
 
     @After
@@ -61,7 +63,7 @@ class CompleteMealTest {
         db.close()
     }
 
-    /** 同名食材共享同一条字典记录，保证菜谱配料与库存批次可关联 */
+    /** 库存批次仍挂在食材字典上：同名共享一条字典记录，保证扣减可按名称匹配到 */
     private suspend fun ingredientId(name: String): Long =
         db.ingredientDao().getByName(name)?.id
             ?: db.ingredientDao().insert(
@@ -77,7 +79,7 @@ class CompleteMealTest {
             lines.map { line ->
                 RecipeIngredientEntity(
                     recipeId = recipeId,
-                    ingredientId = ingredientId(line.ingredient.name),
+                    ingredientName = line.name,
                     quantity = line.quantity,
                     unit = line.unit,
                     ingredientType = line.type,
@@ -109,14 +111,14 @@ class CompleteMealTest {
         newRecipe(
             "番茄炒蛋",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
-                RecipeIngredientLine(ingredient = Ingredient(name = "鸡蛋"), quantity = 3.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 1),
+                RecipeIngredientLine(name = "番茄", quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(name = "鸡蛋", quantity = 3.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 1),
             ),
         )
         newRecipe(
             "番茄汤",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 1.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(name = "番茄", quantity = 1.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         val earlyBatch = newBatch("番茄", 1.0, expireInDays = 1) // 先过期，先扣
@@ -166,7 +168,7 @@ class CompleteMealTest {
         newRecipe(
             "需要很多鸡蛋",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "鸡蛋"), quantity = 3.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(name = "鸡蛋", quantity = 3.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         val batch = newBatch("鸡蛋", 1.0, expireInDays = 2)
@@ -199,20 +201,38 @@ class CompleteMealTest {
     }
 
     @Test
+    fun unstockedIngredientIsSkippedFromDeduction() = runBlocking {
+        // 配料与食材字典解耦：食材页没有"仙人掌"，完成用餐不产生任何扣减与流水
+        newRecipe(
+            "仙人掌沙拉",
+            listOf(
+                RecipeIngredientLine(name = "仙人掌", quantity = 2.0, unit = "片", type = IngredientTypes.INGREDIENT, sortOrder = 0),
+            ),
+        )
+        val recipeId = db.recipeDao().observeRecipes(null, null, false).first().first().id
+        mealRepository.addPlan(today, MealType.LUNCH, recipeId)
+
+        val deducted = completeMeal(today, MealType.LUNCH)
+
+        assertEquals(0, deducted)
+        assertEquals(0, consumeTransactions().size)
+        assertEquals(1, db.mealRecordDao().getByDate(today.toString()).size)
+    }
+
+    @Test
     fun userAdjustmentOverridesExpectedQuantity() = runBlocking {
         newRecipe(
             "番茄炒蛋",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(name = "番茄", quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         val batch = newBatch("番茄", 5.0, expireInDays = 3)
         val recipeId = db.recipeDao().observeRecipes(null, null, false).first().first().id
         val planId = mealRepository.addPlan(today, MealType.LUNCH, recipeId)
-        val ingredientId = db.inventoryItemDao().getById(batch)!!.ingredientId
 
-        // 用户把实际消耗从 2 改为 1（R05）
-        completeMeal(today, MealType.LUNCH, adjustments = mapOf("$planId:$ingredientId" to 1.0))
+        // 用户把实际消耗从 2 改为 1（R05）：调整项按 "planId:食材名" 标识
+        completeMeal(today, MealType.LUNCH, adjustments = mapOf("$planId:番茄" to 1.0))
 
         assertEquals(4.0, db.inventoryItemDao().getById(batch)!!.quantity!!, 1e-9)
     }
@@ -222,7 +242,7 @@ class CompleteMealTest {
         newRecipe(
             "番茄炒蛋",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "番茄"), quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(name = "番茄", quantity = 2.0, unit = "个", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         newBatch("番茄", 5.0, expireInDays = 4)
@@ -244,7 +264,7 @@ class CompleteMealTest {
         newRecipe(
             "会被归档的菜",
             listOf(
-                RecipeIngredientLine(ingredient = Ingredient(name = "豆腐"), quantity = 1.0, unit = "块", type = IngredientTypes.INGREDIENT, sortOrder = 0),
+                RecipeIngredientLine(name = "豆腐", quantity = 1.0, unit = "块", type = IngredientTypes.INGREDIENT, sortOrder = 0),
             ),
         )
         newBatch("豆腐", 5.0, expireInDays = 6)

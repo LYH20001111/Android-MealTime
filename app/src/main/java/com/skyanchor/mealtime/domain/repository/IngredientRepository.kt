@@ -16,6 +16,12 @@ interface IngredientRepository {
 
     suspend fun getIngredientByName(name: String): Ingredient?
 
+    /**
+     * 查"已在库存中"的同名食材（字典存在且至少有一个有效库存批次）。
+     * 库存新增查重用：菜谱创建的无库存字典条目不算重名，可复用建库存。
+     */
+    suspend fun getStockedIngredientByName(name: String): Ingredient?
+
     /** 选择或创建：存在同名有效食材则直接返回，否则创建（录入菜谱/库存的快捷路径）；
      *  传入 imageUri 时，若已有食材还没图或图不同，则更新字典图片 */
     suspend fun getOrCreate(
@@ -27,6 +33,9 @@ interface IngredientRepository {
 
     /** 仅更新食材图片（null 表示移除） */
     suspend fun updateImage(id: Long, imageUri: String?)
+
+    /** 更新食材种类；菜谱配料行的冗余种类一并同步，保持展示一致 */
+    suspend fun updateType(id: Long, type: String)
 
     suspend fun softDelete(id: Long)
 

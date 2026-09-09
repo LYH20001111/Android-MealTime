@@ -101,7 +101,15 @@ class RoomInventoryRepository(private val db: MealTimeDatabase) : InventoryRepos
     }
 
     override suspend fun softDelete(id: Long) {
-        itemDao.softDelete(id, System.currentTimeMillis())
+        db.withTransaction {
+            val item = itemDao.getById(id) ?: return@withTransaction
+            itemDao.softDelete(id, System.currentTimeMillis())
+            // 删除的是最后一个有效批次时，同步软删字典条目；
+            // 否则字典查重仍命中旧记录，同名食材永远无法再次新增
+            if (itemDao.getByIngredient(item.ingredientId).isEmpty()) {
+                db.ingredientDao().softDelete(item.ingredientId)
+            }
+        }
     }
 
     override fun observeTransactions(limit: Int): Flow<List<InventoryTransaction>> =

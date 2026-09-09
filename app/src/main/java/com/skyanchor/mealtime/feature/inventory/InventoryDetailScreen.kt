@@ -101,7 +101,7 @@ fun InventoryDetailScreen(
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
             title = { Text("删除库存") },
-            text = { Text("批次会归档，相关流水会保留。确定删除吗？") },
+            text = { Text("批次会归档，相关流水会保留；若该食材没有其他库存，将一并从食材库移除。确定删除吗？") },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false

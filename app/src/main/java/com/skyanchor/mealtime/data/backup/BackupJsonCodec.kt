@@ -122,7 +122,14 @@ internal object BackupJsonCodec {
         root.getJSONArray("tags").forEachItem { db.tagDao().insert(it.toTag()) }
         root.getJSONArray("recipes").forEachItem { db.recipeDao().insert(it.toRecipe(resolveImage)) }
         root.getJSONArray("ingredients").forEachItem { db.ingredientDao().insert(it.toIngredient(resolveImage)) }
-        root.getJSONArray("recipeIngredients").forEachItem { db.recipeDao().insertIngredients(listOf(it.toRecipeIngredient())) }
+        // 旧格式 recipeIngredients 只存 ingredientId，用 ingredients 数组反查名称
+        val legacyNameById = HashMap<Long, String>()
+        root.getJSONArray("ingredients").forEachItem { ingredient ->
+            legacyNameById[ingredient.getLong("id")] = ingredient.stringOr("name")
+        }
+        root.getJSONArray("recipeIngredients").forEachItem {
+            db.recipeDao().insertIngredients(listOf(it.toRecipeIngredient(legacyNameById)))
+        }
         root.getJSONArray("recipeTags").forEachItem { db.recipeDao().insertTagCrossRefs(listOf(it.toCrossRef())) }
         root.getJSONArray("inventoryItems").forEachItem { db.inventoryItemDao().insert(it.toInventoryItem()) }
         root.getJSONArray("inventoryTransactions").forEachItem { db.inventoryTransactionDao().insert(it.toTransaction()) }
@@ -193,13 +200,17 @@ private fun JSONObject.toIngredient(resolveImage: ((String) -> String?)?) = Ingr
 )
 
 private fun RecipeIngredientEntity.toJson() = JSONObject().apply {
-    put("id", id); put("recipeId", recipeId); put("ingredientId", ingredientId)
+    put("id", id); put("recipeId", recipeId); put("ingredientName", ingredientName)
     quantity?.let { put("quantity", it) }; unit?.let { put("unit", it) }
     put("ingredientType", ingredientType); note?.let { put("note", it) }; put("sortOrder", sortOrder)
 }
 
-private fun JSONObject.toRecipeIngredient() = RecipeIngredientEntity(
-    id = getLong("id"), recipeId = getLong("recipeId"), ingredientId = getLong("ingredientId"),
+/** 旧备份只有 ingredientId：按 ingredients 数组反查名称兜底 */
+private fun JSONObject.toRecipeIngredient(legacyNameById: Map<Long, String>) = RecipeIngredientEntity(
+    id = getLong("id"), recipeId = getLong("recipeId"),
+    ingredientName = optStringOrNull("ingredientName")
+        ?: optLongBoxed("ingredientId")?.let(legacyNameById::get)
+        ?: "",
     quantity = if (isNull("quantity")) null else getDouble("quantity"),
     unit = optStringOrNull("unit"), ingredientType = optStringOrNull("ingredientType") ?: "INGREDIENT",
     note = optStringOrNull("note"), sortOrder = optIntBoxed("sortOrder") ?: 0,

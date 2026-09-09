@@ -2,7 +2,6 @@ package com.skyanchor.mealtime.data.local
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.skyanchor.mealtime.core.model.Ingredient
 import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.Recipe
@@ -58,12 +57,12 @@ class BackupRoundtripTest {
 
     private fun seed() = runBlocking {
         val recipeRepository = RoomRecipeRepository(db)
-        val saveRecipe = SaveRecipeUseCase(recipeRepository, com.skyanchor.mealtime.data.repository.RoomIngredientRepository(db))
+        val saveRecipe = SaveRecipeUseCase(recipeRepository)
         val recipeId = saveRecipe(
             recipe = Recipe(name = "番茄炒蛋", steps = listOf("炒蛋", "下番茄")),
             ingredients = listOf(
                 RecipeIngredientLine(
-                    ingredient = Ingredient(name = "番茄"),
+                    name = "番茄",
                     quantity = 2.0,
                     unit = "个",
                     type = IngredientTypes.INGREDIENT,
@@ -72,7 +71,10 @@ class BackupRoundtripTest {
             ),
             tagIds = listOf(recipeRepository.getOrCreateTag("快手").id),
         )
-        val ingredientId = db.ingredientDao().getByName("番茄")!!.id
+        // 菜谱配料与字典解耦：库存食材单独在食材页/字典创建
+        val ingredientId = db.ingredientDao().insert(
+            com.skyanchor.mealtime.data.local.entity.IngredientEntity(name = "番茄", type = "INGREDIENT", createdAt = 1),
+        )
         db.inventoryItemDao().insert(
             InventoryItemEntity(
                 ingredientId = ingredientId,

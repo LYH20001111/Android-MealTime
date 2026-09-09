@@ -71,16 +71,14 @@ class MealTimeDatabaseTest {
     @Test
     fun recipeWithIngredientsRoundtrip() = runBlocking {
         val recipeId = db.recipeDao().insert(recipe("番茄炒蛋"))
-        val tomato = db.ingredientDao().insert(ingredient("番茄"))
-        val egg = db.ingredientDao().insert(ingredient("鸡蛋"))
         db.recipeDao().insertIngredients(
             listOf(
                 RecipeIngredientEntity(
-                    recipeId = recipeId, ingredientId = tomato,
+                    recipeId = recipeId, ingredientName = "番茄",
                     quantity = 2.0, unit = "个", ingredientType = "INGREDIENT", sortOrder = 0,
                 ),
                 RecipeIngredientEntity(
-                    recipeId = recipeId, ingredientId = egg,
+                    recipeId = recipeId, ingredientName = "鸡蛋",
                     quantity = 3.0, unit = "个", ingredientType = "INGREDIENT", sortOrder = 1,
                 ),
             )
@@ -88,7 +86,7 @@ class MealTimeDatabaseTest {
         val detail = db.recipeDao().getWithIngredients(recipeId)!!
         assertEquals("番茄炒蛋", detail.recipe.name)
         assertEquals(2, detail.ingredients.size)
-        assertTrue(detail.ingredients.any { it.ingredient.name == "番茄" && it.line.quantity == 2.0 })
+        assertTrue(detail.ingredients.any { it.ingredientName == "番茄" && it.quantity == 2.0 })
     }
 
     @Test
@@ -108,11 +106,10 @@ class MealTimeDatabaseTest {
     fun recipeSearchMatchesIngredientName() = runBlocking {
         val mapoId = db.recipeDao().insert(recipe("蚂蚁上树"))
         db.recipeDao().insert(recipe("青椒肉丝"))
-        val noodle = db.ingredientDao().insert(ingredient("粉丝"))
         db.recipeDao().insertIngredients(
             listOf(
                 RecipeIngredientEntity(
-                    recipeId = mapoId, ingredientId = noodle,
+                    recipeId = mapoId, ingredientName = "粉丝",
                     quantity = 1.0, unit = "把", ingredientType = "INGREDIENT", sortOrder = 0,
                 )
             )
@@ -186,6 +183,105 @@ class MealTimeDatabaseTest {
         assertEquals(2, transactions.size) // ADD + ADJUST
         val adjust = transactions.first { it.type == "ADJUST" }
         assertEquals(-3.0, adjust.changeQuantity!!, 1e-9)
+    }
+
+    @Test
+    fun deleteLastBatchRetiresIngredientForRecreation() = runBlocking {
+        val inventoryRepository = RoomInventoryRepository(db)
+        val ingredientRepository = RoomIngredientRepository(db)
+        val ingredientId = db.ingredientDao().insert(ingredient("鸡蛋"))
+        val ingredient = db.ingredientDao().getById(ingredientId)!!.toDomain()
+
+        val itemId = inventoryRepository.addInventory(
+            InventoryItem(ingredient = ingredient, quantity = 3.0, unit = "个"),
+            note = "买入",
+        )
+        assertTrue(ingredientRepository.getStockedIngredientByName("鸡蛋") != null)
+
+        inventoryRepository.softDelete(itemId)
+
+        // 最后一个批次删除后，字典条目一并软删：查重不再命中，同名可再次新增
+        assertTrue(db.inventoryItemDao().getById(itemId)!!.isDeleted)
+        assertTrue(db.ingredientDao().getById(ingredientId)!!.isDeleted)
+        assertTrue(ingredientRepository.getIngredientByName("鸡蛋") == null)
+        val recreated = ingredientRepository.getOrCreate("鸡蛋", IngredientTypes.SEASONING)
+        // 复活软删条目：沿用原 id（历史库存关联恢复），种类按新输入更新
+        assertEquals(ingredientId, recreated.id)
+        assertEquals(IngredientTypes.SEASONING, db.ingredientDao().getById(ingredientId)!!.type)
+        assertTrue(!db.ingredientDao().getById(ingredientId)!!.isDeleted)
+    }
+
+    @Test
+    fun validDictionaryEntryWithoutStockDoesNotBlockInventoryCreation() = runBlocking {
+        val inventoryRepository = RoomInventoryRepository(db)
+        val ingredientRepository = RoomIngredientRepository(db)
+        // 字典中存在同名条目但无库存批次（有效未软删）
+        val dictionaryEntry = ingredientRepository.getOrCreate("花菜", IngredientTypes.INGREDIENT)
+
+        // 库存新增查重：字典存在但无库存 → 不算重名
+        assertTrue(ingredientRepository.getIngredientByName("花菜") != null)
+        assertTrue(ingredientRepository.getStockedIngredientByName("花菜") == null)
+
+        // 走新增库存用例：复用字典条目建批次，不弹重名拦截；种类以食材页选择为准
+        val addInventory = com.skyanchor.mealtime.domain.usecase.AddInventoryUseCase(
+            inventoryRepository, ingredientRepository,
+        )
+        val itemId = addInventory(
+            InventoryItem(
+                ingredient = dictionaryEntry.copy(type = IngredientTypes.SEASONING),
+                quantity = 1.0, unit = "颗",
+            ),
+        )
+        assertTrue(itemId > 0)
+        assertTrue(ingredientRepository.getStockedIngredientByName("花菜")?.id == dictionaryEntry.id)
+        // 复用而非新建：字典中仍只有一条花菜
+        assertEquals(1, db.ingredientDao().exportAll().count { it.name == "花菜" })
+        // 种类以食材页表单选择为准
+        assertEquals(IngredientTypes.SEASONING, db.ingredientDao().getById(dictionaryEntry.id)!!.type)
+    }
+
+    @Test
+    fun deleteBatchKeepsIngredientWhileOtherBatchesRemain() = runBlocking {
+        val repository = RoomInventoryRepository(db)
+        val ingredientId = db.ingredientDao().insert(ingredient("鸡蛋"))
+        val ingredient = db.ingredientDao().getById(ingredientId)!!.toDomain()
+
+        val first = repository.addInventory(
+            InventoryItem(ingredient = ingredient, quantity = 1.0, unit = "个"),
+            note = null,
+        )
+        repository.addInventory(
+            InventoryItem(ingredient = ingredient, quantity = 2.0, unit = "个"),
+            note = null,
+        )
+
+        repository.softDelete(first)
+
+        // 仍有有效批次：字典条目保留，查重继续命中
+        assertTrue(!db.ingredientDao().getById(ingredientId)!!.isDeleted)
+        assertTrue(RoomIngredientRepository(db).getIngredientByName("鸡蛋") != null)
+    }
+
+    @Test
+    fun updateIngredientTypeOnlyAffectsDictionary() = runBlocking {
+        // 配料与字典解耦：字典种类变更不再同步菜谱配料行
+        val ingredientRepository = RoomIngredientRepository(db)
+        val ingredientId = db.ingredientDao().insert(ingredient("生姜", type = "SEASONING"))
+        val recipeId = db.recipeDao().insert(recipe("姜汁鸡"))
+        db.recipeDao().insertIngredients(
+            listOf(
+                RecipeIngredientEntity(
+                    recipeId = recipeId, ingredientName = "生姜",
+                    quantity = 1.0, unit = "块", ingredientType = "SEASONING", sortOrder = 0,
+                )
+            )
+        )
+
+        ingredientRepository.updateType(ingredientId, IngredientTypes.INGREDIENT)
+
+        assertEquals(IngredientTypes.INGREDIENT, db.ingredientDao().getById(ingredientId)!!.type)
+        val line = db.recipeDao().getWithIngredients(recipeId)!!.ingredients.first()
+        assertEquals("SEASONING", line.ingredientType)
     }
 
     @Test

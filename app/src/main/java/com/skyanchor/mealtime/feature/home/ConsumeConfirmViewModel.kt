@@ -20,10 +20,9 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 
-/** 一行可调整的预计消耗 */
+/** 一行可调整的预计消耗（按名称标识：配料与食材字典解耦，无 ingredientId） */
 data class ConsumeLineUi(
     val planId: Long,
-    val ingredientId: Long,
     val name: String,
     val unit: String?,
     val expected: Double,
@@ -84,13 +83,12 @@ class ConsumeConfirmViewModel(
                     recipeId = plan.recipe.id,
                     name = plan.recipe.name,
                     lines = detail?.ingredients
-                        ?.filter { it.quantity != null && it.ingredient.name.isNotBlank() }
+                        ?.filter { it.quantity != null && it.name.isNotBlank() }
                         ?.filter { it.type != com.skyanchor.mealtime.core.model.IngredientTypes.SEASONING }
                         ?.map { line ->
                             ConsumeLineUi(
                                 planId = plan.id,
-                                ingredientId = line.ingredient.id,
-                                name = line.ingredient.name,
+                                name = line.name,
                                 unit = line.unit,
                                 expected = line.quantity!!,
                                 actualText = line.quantity.toString().removeSuffix(".0"),
@@ -105,12 +103,12 @@ class ConsumeConfirmViewModel(
         }
     }
 
-    fun updateActual(planId: Long, ingredientId: Long, value: String) = _uiState.update { state ->
+    fun updateActual(planId: Long, name: String, value: String) = _uiState.update { state ->
         state.copy(
             dishes = state.dishes.map { dish ->
                 dish.copy(
                     lines = dish.lines.map { line ->
-                        if (line.planId == planId && line.ingredientId == ingredientId) {
+                        if (line.planId == planId && line.name == name) {
                             line.copy(actualText = value.filter { c -> c.isDigit() || c == '.' }.take(7))
                         } else {
                             line
@@ -133,7 +131,7 @@ class ConsumeConfirmViewModel(
                 val adjustments = buildMap {
                     state.dishes.forEach { dish ->
                         dish.lines.forEach { line ->
-                            put("${line.planId}:${line.ingredientId}", line.actualText.toDoubleOrNull() ?: line.expected)
+                            put("${line.planId}:${line.name}", line.actualText.toDoubleOrNull() ?: line.expected)
                         }
                     }
                 }
@@ -168,6 +166,7 @@ class ConsumeConfirmViewModel(
                     completeMeal = CompleteMealUseCase(
                         container.mealRepository,
                         container.recipeRepository,
+                        container.ingredientRepository,
                     ),
                 )
             }

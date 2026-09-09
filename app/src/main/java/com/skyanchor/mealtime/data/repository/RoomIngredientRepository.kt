@@ -31,6 +31,9 @@ class RoomIngredientRepository(private val db: MealTimeDatabase) : IngredientRep
     override suspend fun getIngredientByName(name: String): Ingredient? =
         dao.getByName(name)?.toDomain()
 
+    override suspend fun getStockedIngredientByName(name: String): Ingredient? =
+        dao.getStockedByName(name)?.toDomain()
+
     override suspend fun getOrCreate(
         name: String,
         type: String,
@@ -46,22 +49,39 @@ class RoomIngredientRepository(private val db: MealTimeDatabase) : IngredientRep
                 }
                 existing.copy(imageUri = imageUri ?: existing.imageUri).toDomain()
             } else {
-                val id = dao.insert(
-                    IngredientEntity(
-                        name = trimmed,
-                        type = type,
-                        defaultUnit = defaultUnit,
-                        imageUri = imageUri,
-                        createdAt = System.currentTimeMillis(),
+                // 曾被软删的同名条目直接复活：沿用原 id，历史菜谱/库存关联自动恢复
+                val deleted = dao.getDeletedByName(trimmed)
+                val id = if (deleted != null) {
+                    dao.revive(deleted.id, type, imageUri)
+                    deleted.id
+                } else {
+                    dao.insert(
+                        IngredientEntity(
+                            name = trimmed,
+                            type = type,
+                            defaultUnit = defaultUnit,
+                            imageUri = imageUri,
+                            createdAt = System.currentTimeMillis(),
+                        )
                     )
+                }
+                Ingredient(
+                    id = id,
+                    name = trimmed,
+                    type = type,
+                    defaultUnit = defaultUnit,
+                    imageUri = imageUri ?: deleted?.imageUri,
                 )
-                Ingredient(id = id, name = trimmed, type = type, defaultUnit = defaultUnit, imageUri = imageUri)
             }
         }
     }
 
     override suspend fun updateImage(id: Long, imageUri: String?) {
         dao.updateImage(id, imageUri)
+    }
+
+    override suspend fun updateType(id: Long, type: String) {
+        dao.updateType(id, type)
     }
 
     override suspend fun softDelete(id: Long) {

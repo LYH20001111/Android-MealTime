@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 
 /**
  * 新增库存批次：食材先在字典中"选择或创建"，再入库并写 ADD 流水（R04）。
+ * 菜谱配料与字典解耦，不会反向写入；此处是字典条目的唯一入口之一。
  */
 class AddInventoryUseCase(
     private val inventoryRepository: InventoryRepository,
@@ -24,7 +25,14 @@ class AddInventoryUseCase(
             defaultUnit = item.unit,
             imageUri = item.ingredient.imageUri,
         )
-        return inventoryRepository.addInventory(item.copy(ingredient = stored), note)
+        // 复用既有字典条目（如无库存的旧条目）时，种类以食材页表单选择为准
+        val ingredient = if (stored.type != item.ingredient.type) {
+            ingredientRepository.updateType(stored.id, item.ingredient.type)
+            stored.copy(type = item.ingredient.type)
+        } else {
+            stored
+        }
+        return inventoryRepository.addInventory(item.copy(ingredient = ingredient), note)
     }
 }
 
