@@ -4,23 +4,46 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.DragIndicator
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Dining
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +58,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -139,8 +167,9 @@ fun SettingsScreen(
             .fillMaxSize()
             .verticalScroll(rememberScrollState()),
     ) {
+        // 顶部导航栏
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(onClick = onBack) {
@@ -161,103 +190,100 @@ fun SettingsScreen(
         Column(
             modifier = Modifier.padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
         ) {
+            // ================= 临期通知 =================
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             SectionTitle(text = "临期通知")
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(FoodTheme.dimens.spaceLg),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "每日临期汇总提醒",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = FoodTheme.colors.textPrimary,
-                        )
-                        Text(
-                            text = "每天最多提醒一次，首页提醒始终可用",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = FoodTheme.colors.textTertiary,
+                Column {
+                    SettingItemRow(
+                        icon = Icons.Outlined.NotificationsActive,
+                        iconTint = FoodTheme.colors.primary,
+                        title = "每日临期汇总提醒",
+                        subtitle = "每天最多提醒一次，首页提醒始终可用"
+                    ) {
+                        Switch(
+                            checked = state.notificationEnabled,
+                            onCheckedChange = { checked ->
+                                if (checked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    viewModel.setNotificationEnabled(checked)
+                                    if (checked) ExpiryNotificationWorker.schedule(context)
+                                    else ExpiryNotificationWorker.cancel(context)
+                                }
+                            },
+                            colors = SwitchDefaults.colors(checkedTrackColor = FoodTheme.colors.primary),
                         )
                     }
-                    Switch(
-                        checked = state.notificationEnabled,
-                        onCheckedChange = { checked ->
-                            if (checked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                            } else {
-                                viewModel.setNotificationEnabled(checked)
-                                if (checked) {
-                                    ExpiryNotificationWorker.schedule(context)
-                                } else {
-                                    ExpiryNotificationWorker.cancel(context)
-                                }
-                            }
-                        },
-                        colors = SwitchDefaults.colors(checkedTrackColor = FoodTheme.colors.primary),
-                    )
-                }
-            }
-            if (state.notificationEnabled) {
-                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-                FoodCard {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(FoodTheme.dimens.spaceLg),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "提前提醒天数",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = FoodTheme.colors.textPrimary,
-                            )
-                            Text(
-                                text = "到期前多少天开始提醒",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = FoodTheme.colors.textTertiary,
+
+                    if (state.notificationEnabled) {
+                        SettingItemRow(
+                            icon = Icons.Outlined.DateRange,
+                            iconTint = FoodTheme.colors.primary,
+                            title = "提前提醒天数",
+                            subtitle = "到期前多少天开始提醒"
+                        ) {
+                            Stepper(
+                                value = state.advanceDays,
+                                onValueChange = viewModel::setAdvanceDays
                             )
                         }
-                        FoodTextField(
-                            value = state.advanceDays,
-                            onValueChange = viewModel::setAdvanceDays,
-                            modifier = Modifier.width(72.dp),
-                        )
+
+                        Box(modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceLg, vertical = FoodTheme.dimens.spaceMd)) {
+                            SecondaryButton(
+                                text = "发送测试通知",
+                                onClick = { ExpiryNotificationWorker.runOnceForTest(context) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-                SecondaryButton(
-                    text = "发送测试通知",
-                    onClick = { ExpiryNotificationWorker.runOnceForTest(context) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
             }
 
+            // ================= 默认值 =================
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
             SectionTitle(text = "默认值")
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Column(
-                    modifier = Modifier.padding(FoodTheme.dimens.spaceLg),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceMd),
+                    modifier = Modifier.padding(vertical = FoodTheme.dimens.spaceSm),
                 ) {
-                    SettingNumberRow("默认用餐人数", state.servings, viewModel::setServings)
-                    SettingNumberRow("临期阈值（天）", state.nearDays, viewModel::setNearDays)
-                    SettingNumberRow("紧急阈值（天）", state.urgentDays, viewModel::setUrgentDays)
+                    SettingDropdownRow(
+                        icon = Icons.Outlined.Person,
+                        iconTint = FoodTheme.colors.textSecondary, // 假设你有 textSecondary，或者用 primary
+                        label = "默认用餐人数",
+                        value = state.servings,
+                        options = (1..10).map { it.toString() },
+                        onChange = viewModel::setServings
+                    )
+                    SettingDropdownRow(
+                        icon = Icons.Outlined.DateRange,
+                        iconTint = FoodTheme.colors.primary,
+                        label = "临期阈值（天）",
+                        value = state.nearDays,
+                        options = (1..7).map { it.toString() },
+                        onChange = viewModel::setNearDays
+                    )
+                    SettingDropdownRow(
+                        icon = Icons.Outlined.Warning,
+                        iconTint = FoodTheme.colors.danger,
+                        label = "紧急阈值（天）",
+                        value = state.urgentDays,
+                        options = (1..3).map { it.toString() },
+                        onChange = viewModel::setUrgentDays
+                    )
                 }
             }
 
+            // ================= 分类管理 =================
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
             SectionTitle(text = "分类管理")
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Column(
                     modifier = Modifier.padding(FoodTheme.dimens.spaceLg),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                    verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
                 ) {
                     Text(
                         text = "菜谱分类",
@@ -278,17 +304,82 @@ fun SettingsScreen(
                             onDelete = { pendingCategoryDelete = category },
                         )
                     }
+                    // 新增分类输入框（保持原样即可，也可加入Icon）
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = FoodTheme.dimens.spaceMd)
                     ) {
-                        FoodTextField(
-                            value = state.newCategoryName,
-                            onValueChange = viewModel::setNewCategoryName,
-                            placeholder = "新增菜谱分类",
-                            modifier = Modifier.weight(1f),
-                        )
-                        SecondaryButton(text = "添加", onClick = viewModel::addCategory)
+                        // 1. 定制带图标和背景的输入框
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp) // 固定高度，与按钮保持协调
+                                .background(
+                                    color = FoodTheme.colors.primary.copy(alpha = 0.08f), // 浅色背景
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = FoodTheme.colors.primary.copy(alpha = 0.3f), // 细边框
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // 占位图标
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Outlined.MenuBook,
+                                contentDescription = null,
+                                tint = FoodTheme.colors.textTertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // 核心输入区域
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                if (state.newCategoryName.isEmpty()) {
+                                    Text(
+                                        text = "新增菜谱分类",
+                                        color = FoodTheme.colors.textTertiary,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                BasicTextField(
+                                    value = state.newCategoryName,
+                                    onValueChange = viewModel::setNewCategoryName,
+                                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = FoodTheme.colors.textPrimary),
+                                    cursorBrush = SolidColor(FoodTheme.colors.primary),
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
+                        // 2. 定制高亮的主色调添加按钮
+                        Button(
+                            onClick = viewModel::addCategory,
+                            shape = RoundedCornerShape(50), // 药丸形状的全圆角
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = FoodTheme.colors.primary, // 品牌主色
+                                contentColor = Color.White // 白色文字和图标
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                            modifier = Modifier.height(44.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "添加",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
                     }
                 }
             }
@@ -296,7 +387,7 @@ fun SettingsScreen(
             FoodCard {
                 Column(
                     modifier = Modifier.padding(FoodTheme.dimens.spaceLg),
-                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                    verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
                 ) {
                     Text(
                         text = "食材分类",
@@ -319,15 +410,80 @@ fun SettingsScreen(
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp), // 使用具体值以保持一致
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = FoodTheme.dimens.spaceSm)
                     ) {
-                        FoodTextField(
-                            value = state.newTypeName,
-                            onValueChange = viewModel::setNewTypeName,
-                            placeholder = "新增食材分类",
-                            modifier = Modifier.weight(1f),
-                        )
-                        SecondaryButton(text = "添加", onClick = viewModel::addIngredientType)
+                        // 1. 定制带图标和背景的食材输入框
+                        Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(44.dp) // 固定高度，与按钮保持协调
+                                .background(
+                                    color = FoodTheme.colors.primary.copy(alpha = 0.08f), // 浅色背景
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = FoodTheme.colors.primary.copy(alpha = 0.3f), // 细边框
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                                .padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // 食材主题占位图标：选择餐饮图标
+                            Icon(
+                                imageVector = Icons.Outlined.Dining, // 替换为更适合食材的图标
+                                contentDescription = null,
+                                tint = FoodTheme.colors.textTertiary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            // 核心输入区域
+                            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                                if (state.newTypeName.isEmpty()) {
+                                    Text(
+                                        text = "新增食材分类", // 更新占位符文本
+                                        color = FoodTheme.colors.textTertiary,
+                                        style = MaterialTheme.typography.bodyMedium
+                                    )
+                                }
+                                BasicTextField(
+                                    value = state.newTypeName, // 更新值和回调
+                                    onValueChange = viewModel::setNewTypeName,
+                                    textStyle = MaterialTheme.typography.bodyMedium.copy(color = FoodTheme.colors.textPrimary),
+                                    cursorBrush = SolidColor(FoodTheme.colors.primary),
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+
+                        // 2. 定制高亮的主色调添加按钮
+                        Button(
+                            onClick = viewModel::addIngredientType, // 更新回调
+                            shape = RoundedCornerShape(50), // 药丸形状的全圆角
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = FoodTheme.colors.primary, // 品牌主色
+                                contentColor = Color.White // 白色文字和图标
+                            ),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                            modifier = Modifier.height(44.dp)
+                        ) {
+                            // 加号图标
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "添加",
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
                     }
                 }
             }
@@ -349,69 +505,6 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
-        }
-    }
-}
-
-@Composable
-private fun CategoryRow(
-    name: String,
-    deletable: Boolean,
-    renamable: Boolean,
-    canMoveUp: Boolean,
-    canMoveDown: Boolean,
-    onMoveUp: () -> Unit,
-    onMoveDown: () -> Unit,
-    onRename: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.bodyMedium,
-            color = FoodTheme.colors.textPrimary,
-            modifier = Modifier.weight(1f),
-        )
-        IconButton(onClick = onMoveUp, enabled = canMoveUp) {
-            Icon(
-                imageVector = Icons.Filled.KeyboardArrowUp,
-                contentDescription = "上移$name",
-                tint = if (canMoveUp) FoodTheme.colors.textTertiary else FoodTheme.colors.textTertiary.copy(alpha = 0.3f),
-            )
-        }
-        IconButton(onClick = onMoveDown, enabled = canMoveDown) {
-            Icon(
-                imageVector = Icons.Filled.KeyboardArrowDown,
-                contentDescription = "下移$name",
-                tint = if (canMoveDown) FoodTheme.colors.textTertiary else FoodTheme.colors.textTertiary.copy(alpha = 0.3f),
-            )
-        }
-        if (renamable) {
-            IconButton(onClick = onRename) {
-                Icon(
-                    imageVector = Icons.Outlined.Edit,
-                    contentDescription = "重命名$name",
-                    tint = FoodTheme.colors.textTertiary,
-                )
-            }
-        }
-        if (deletable) {
-            IconButton(onClick = onDelete) {
-                Icon(
-                    imageVector = Icons.Outlined.Delete,
-                    contentDescription = "删除$name",
-                    tint = FoodTheme.colors.textTertiary,
-                )
-            }
-        } else {
-            Text(
-                text = "不可删除",
-                style = MaterialTheme.typography.labelSmall,
-                color = FoodTheme.colors.textTertiary,
-            )
         }
     }
 }
@@ -442,27 +535,225 @@ private fun RenameDialog(
         },
     )
 }
+// ================= 新增的基础 UI 组件 =================
 
 @Composable
-private fun SettingNumberRow(
-    label: String,
-    value: String,
-    onChange: (String) -> Unit,
+private fun SettingItemRow(
+    icon: ImageVector,
+    iconTint: Color,
+    title: String,
+    subtitle: String? = null,
+    trailingContent: @Composable () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = FoodTheme.dimens.spaceLg, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconTint,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = FoodTheme.colors.textPrimary,
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = FoodTheme.colors.textTertiary,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        trailingContent()
+    }
+}
+
+@Composable
+private fun SettingDropdownRow(
+    icon: ImageVector,
+    iconTint: Color,
+    label: String,
+    value: String,
+    options: List<String>,
+    onChange: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = FoodTheme.dimens.spaceLg, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = iconTint,
+            modifier = Modifier.size(24.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
             color = FoodTheme.colors.textPrimary,
             modifier = Modifier.weight(1f),
         )
-        FoodTextField(
-            value = value,
-            onValueChange = onChange,
-            modifier = Modifier.width(72.dp),
+        Box {
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(FoodTheme.colors.textTertiary.copy(alpha = 0.1f))
+                    .clickable { expanded = true }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = value,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = FoodTheme.colors.textPrimary
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = FoodTheme.colors.textTertiary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                options.forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option) },
+                        onClick = {
+                            onChange(option)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Stepper(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val intValue = value.toIntOrNull() ?: 0
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(FoodTheme.colors.textTertiary.copy(alpha = 0.1f))
+    ) {
+        IconButton(
+            onClick = { onValueChange((intValue - 1).coerceAtLeast(0).toString()) },
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(Icons.Default.Remove, contentDescription = "减少", tint = FoodTheme.colors.textSecondary)
+        }
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = FoodTheme.colors.textPrimary,
+            modifier = Modifier.width(32.dp),
+            textAlign = TextAlign.Center
         )
+
+        IconButton(
+            onClick = { onValueChange((intValue + 1).toString()) },
+            modifier = Modifier.size(36.dp)
+        ) {
+            Icon(Icons.Default.Add, contentDescription = "增加", tint = FoodTheme.colors.textSecondary)
+        }
+    }
+}
+
+@Composable
+private fun CategoryRow(
+    name: String,
+    deletable: Boolean,
+    renamable: Boolean,
+    canMoveUp: Boolean,
+    canMoveDown: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onRename: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        // 左侧的拖拽指示图标（装饰用，实际排序由右侧上下箭头控制）
+        Icon(
+            imageVector = Icons.Default.DragIndicator,
+            contentDescription = null,
+            tint = FoodTheme.colors.textTertiary.copy(alpha = 0.5f),
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyMedium,
+            color = FoodTheme.colors.textPrimary,
+            modifier = Modifier.weight(1f),
+        )
+
+        // 操作区按钮，使用了更紧凑的间距和轻量级图标
+        if (canMoveUp) {
+            IconButton(onClick = onMoveUp, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "上移", tint = FoodTheme.colors.textSecondary)
+            }
+        }
+        if (canMoveDown) {
+            IconButton(onClick = onMoveDown, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "下移", tint = FoodTheme.colors.textSecondary)
+            }
+        }
+        if (renamable) {
+            IconButton(onClick = onRename, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = "重命名",
+                    tint = FoodTheme.colors.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        if (deletable) {
+            IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
+                Icon(
+                    imageVector = Icons.Outlined.Delete,
+                    contentDescription = "删除",
+                    tint = FoodTheme.colors.danger, // 标红提示危险操作
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        } else {
+            Text(
+                text = "系统",
+                style = MaterialTheme.typography.labelSmall,
+                color = FoodTheme.colors.textTertiary,
+                modifier = Modifier.padding(end = 8.dp)
+            )
+        }
     }
 }
