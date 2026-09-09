@@ -56,6 +56,7 @@ import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.RecipeDetail
 import com.skyanchor.mealtime.core.ui.FoodCard
+import com.skyanchor.mealtime.core.ui.FoodImagePreviewDialog
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.SectionTitle
 import com.skyanchor.mealtime.core.ui.TagChip
@@ -77,6 +78,7 @@ fun RecipeDetailScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showArchiveDialog by remember { mutableStateOf(false) }
+    var showImagePreview by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.addedMealType) {
         state.addedMealType?.let { type ->
@@ -99,6 +101,13 @@ fun RecipeDetailScreen(
             dismissButton = {
                 TextButton(onClick = { showArchiveDialog = false }) { Text("取消") }
             },
+        )
+    }
+
+    if (showImagePreview) {
+        FoodImagePreviewDialog(
+            imageUri = state.detail?.recipe?.imageUri,
+            onDismiss = { showImagePreview = false },
         )
     }
 
@@ -212,7 +221,10 @@ fun RecipeDetailScreen(
                     }
                 }
 
-                else -> RecipeDetailContent(detail = state.detail ?: return@Column)
+                else -> RecipeDetailContent(
+                    detail = state.detail ?: return@Column,
+                    onImageClick = { showImagePreview = true },
+                )
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
         }
@@ -220,7 +232,10 @@ fun RecipeDetailScreen(
 }
 
 @Composable
-private fun RecipeDetailContent(detail: RecipeDetail) {
+private fun RecipeDetailContent(
+    detail: RecipeDetail,
+    onImageClick: () -> Unit,
+) {
     val recipe = detail.recipe
     Column(
         modifier = Modifier.padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
@@ -228,12 +243,13 @@ private fun RecipeDetailContent(detail: RecipeDetail) {
         if (recipe.imageUri != null) {
             AsyncImage(
                 model = recipe.imageUri,
-                contentDescription = null,
+                contentDescription = "菜谱图片，点击查看大图",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
-                    .clip(RoundedCornerShape(FoodTheme.dimens.radiusLg)),
+                    .clip(RoundedCornerShape(FoodTheme.dimens.radiusLg))
+                    .clickable(onClick = onImageClick),
             )
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
         }
