@@ -156,6 +156,8 @@ fun InventoryListScreen(
                 }
 
                 else -> {
+                    // 列表末尾统计文案：显示当前 Tab 下的食材数量
+                    val footerLabel = state.tabs.firstOrNull { it.key == state.selectedTabKey }?.label ?: "全部"
                     LazyColumn(
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(top = FoodTheme.dimens.spaceMd),
@@ -169,7 +171,19 @@ fun InventoryListScreen(
                             )
                         }
                         item {
-                            Spacer(modifier = Modifier.height(96.dp))
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                if (state.query.isBlank()) {
+                                    Text(
+                                        text = "$footerLabel : ${state.items.size}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = FoodTheme.colors.primary,
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(96.dp))
+                            }
                         }
                     }
                 }

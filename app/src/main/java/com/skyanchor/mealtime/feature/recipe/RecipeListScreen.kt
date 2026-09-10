@@ -143,6 +143,13 @@ fun RecipeListScreen(
                 }
 
                 else -> {
+                    // 列表末尾统计文案：显示当前分类下的菜谱数量
+                    val footerLabel = when {
+                        state.selectedCategoryId != null ->
+                            state.categories.firstOrNull { it.id == state.selectedCategoryId }?.name ?: "全部"
+                        state.favoritesOnly -> "收藏"
+                        else -> "全部"
+                    }
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
                         modifier = Modifier.weight(1f),
@@ -158,7 +165,19 @@ fun RecipeListScreen(
                             )
                         }
                         item(span = { GridItemSpan(maxLineSpan) }) {
-                            Spacer(modifier = Modifier.height(96.dp))
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                if (state.query.isBlank()) {
+                                    Text(
+                                        text = "$footerLabel : ${state.recipes.size}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = FoodTheme.colors.primary,
+                                    )
+                                }
+                                Spacer(modifier = Modifier.height(96.dp))
+                            }
                         }
                     }
                 }
