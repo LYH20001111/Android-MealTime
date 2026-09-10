@@ -82,7 +82,7 @@ fun SecondaryButton(
         modifier = modifier
             .heightIn(min = dimens.buttonHeight)
             .clip(RoundedCornerShape(dimens.radiusLg))
-            .background(colors.primarySoft)
+            .background(colors.primaryLight)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = dimens.spaceLg, vertical = dimens.spaceMd),
         contentAlignment = Alignment.Center,
