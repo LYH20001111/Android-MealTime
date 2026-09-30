@@ -31,8 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTheme
 
@@ -52,16 +54,15 @@ fun ProfileScreen(
         }.getOrNull() ?: "1.0"
         AlertDialog(
             onDismissRequest = { showAbout = false },
-            title = { Text("关于 饭点") },
+            title = { Text(stringResource(R.string.profile_about_title)) },
             text = {
                 Text(
-                    "饭点 v$version\n\n帮助决定\"今天吃什么\"，并优先把家里的食材吃掉。\n\n" +
-                        "V1 为本地应用，所有数据仅保存在本机，可在\"数据管理\"中备份。",
+                    stringResource(R.string.profile_about_body, version),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
-                TextButton(onClick = { showAbout = false }) { Text("知道了") }
+                TextButton(onClick = { showAbout = false }) { Text(stringResource(R.string.profile_got_it)) }
             },
         )
     }
@@ -95,13 +96,13 @@ fun ProfileScreen(
                 Spacer(modifier = Modifier.size(FoodTheme.dimens.spaceMd))
                 Column {
                     Text(
-                        text = "本地用户",
+                        text = stringResource(R.string.profile_local_user),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = FoodTheme.colors.textPrimary,
                     )
                     Text(
-                        text = "数据仅保存在本机，可导出备份",
+                        text = stringResource(R.string.profile_local_user_subtitle),
                         style = MaterialTheme.typography.bodySmall,
                         color = FoodTheme.colors.textTertiary,
                     )
@@ -114,16 +115,16 @@ fun ProfileScreen(
             Column(
                 modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceLg, vertical = FoodTheme.dimens.spaceSm),
             ) {
-                EntryRow(icon = Icons.Outlined.History, title = "历史记录", subtitle = "吃过什么，一目了然") {
+                EntryRow(icon = Icons.Outlined.History, title = stringResource(R.string.profile_history_title), subtitle = stringResource(R.string.profile_history_subtitle)) {
                     onOpenHistory()
                 }
-                EntryRow(icon = Icons.Outlined.Settings, title = "设置", subtitle = "通知、默认值与分类管理") {
+                EntryRow(icon = Icons.Outlined.Settings, title = stringResource(R.string.profile_settings_title), subtitle = stringResource(R.string.profile_settings_subtitle)) {
                     onOpenSettings()
                 }
-                EntryRow(icon = Icons.Outlined.Storage, title = "数据管理", subtitle = "备份、恢复与导出") {
+                EntryRow(icon = Icons.Outlined.Storage, title = stringResource(R.string.profile_data_management_title), subtitle = stringResource(R.string.profile_data_management_subtitle)) {
                     onOpenDataManagement()
                 }
-                EntryRow(icon = Icons.Outlined.Info, title = "关于", subtitle = "版本与说明") {
+                EntryRow(icon = Icons.Outlined.Info, title = stringResource(R.string.profile_about_entry_title), subtitle = stringResource(R.string.profile_about_entry_subtitle)) {
                     showAbout = true
                 }
             }

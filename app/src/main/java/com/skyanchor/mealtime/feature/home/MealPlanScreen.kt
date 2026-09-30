@@ -39,11 +39,14 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.chineseLabel
 import com.skyanchor.mealtime.core.ui.EmptyState
@@ -83,7 +86,7 @@ fun MealPlanScreen(
 
     /** 已在本餐菜单中的菜不可再选：提示已存在，且不关闭选菜面板 */
     fun notifyAlreadyAdded(name: String) {
-        scope.launch { snackbarHostState.showSnackbar("「$name」已在本餐菜单中") }
+        scope.launch { snackbarHostState.showSnackbar(AppStrings.get(R.string.meal_plan_screen_already_in_menu, name)) }
     }
 
     LaunchedEffect(state.notice) {
@@ -109,7 +112,7 @@ fun MealPlanScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = stringResource(R.string.common_back),
                         tint = FoodTheme.colors.textPrimary,
                     )
                 }
@@ -132,7 +135,7 @@ fun MealPlanScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = "加载中…",
+                            text = stringResource(R.string.meal_plan_screen_loading),
                             style = MaterialTheme.typography.bodyMedium,
                             color = FoodTheme.colors.textTertiary,
                         )
@@ -142,9 +145,9 @@ fun MealPlanScreen(
                 state.dishes.isEmpty() -> {
                     EmptyState(
                         icon = Icons.AutoMirrored.Outlined.MenuBook,
-                        title = "这餐还没有菜品",
-                        hint = "从你的菜谱库里挑一道吧",
-                        actionText = "添加菜品",
+                        title = stringResource(R.string.meal_plan_screen_empty_title),
+                        hint = stringResource(R.string.meal_plan_screen_empty_hint),
+                        actionText = stringResource(R.string.meal_plan_screen_add_dish),
                         onAction = { showPicker = true },
                     )
                 }
@@ -180,7 +183,7 @@ fun MealPlanScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Filled.KeyboardArrowUp,
-                                            contentDescription = "上移",
+                                            contentDescription = stringResource(R.string.meal_plan_screen_move_up),
                                             tint = FoodTheme.colors.textSecondary,
                                         )
                                     }
@@ -189,7 +192,7 @@ fun MealPlanScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Filled.KeyboardArrowDown,
-                                            contentDescription = "下移",
+                                            contentDescription = stringResource(R.string.meal_plan_screen_move_down),
                                             tint = FoodTheme.colors.textSecondary,
                                         )
                                     }
@@ -201,7 +204,7 @@ fun MealPlanScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.SwapHoriz,
-                                            contentDescription = "更换",
+                                            contentDescription = stringResource(R.string.meal_plan_screen_replace),
                                             tint = FoodTheme.colors.primary,
                                         )
                                     }
@@ -210,7 +213,7 @@ fun MealPlanScreen(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Outlined.Close,
-                                            contentDescription = "删除",
+                                            contentDescription = stringResource(R.string.common_delete),
                                             tint = FoodTheme.colors.textTertiary,
                                         )
                                     }
@@ -219,7 +222,7 @@ fun MealPlanScreen(
                         }
                         item {
                             PrimaryButton(
-                                text = "＋ 添加菜品",
+                                text = stringResource(R.string.meal_plan_screen_add_dish_button),
                                 onClick = { showPicker = true },
                                 modifier = Modifier.fillMaxWidth(),
                             )
@@ -244,7 +247,7 @@ fun MealPlanScreen(
                 modifier = Modifier.padding(horizontal = FoodTheme.dimens.pageHorizontalPadding),
             ) {
                 Text(
-                    text = if (replacingPlanId != null) "换成哪道菜？" else "选择菜品",
+                    text = if (replacingPlanId != null) stringResource(R.string.meal_plan_screen_picker_replace_title) else stringResource(R.string.meal_plan_screen_picker_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = FoodTheme.colors.textPrimary,
                 )
@@ -252,12 +255,12 @@ fun MealPlanScreen(
                 FoodSearchField(
                     value = state.pickerQuery,
                     onValueChange = viewModel::setPickerQuery,
-                    placeholder = "搜索菜谱",
+                    placeholder = stringResource(R.string.meal_plan_screen_search_placeholder),
                 )
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                 if (state.pickerRecipes.isEmpty()) {
                     Text(
-                        text = if (state.pickerQuery.isBlank()) "还没有菜谱，先去菜谱页创建" else "没有匹配的菜谱",
+                        text = if (state.pickerQuery.isBlank()) stringResource(R.string.meal_plan_screen_no_recipes) else stringResource(R.string.meal_plan_screen_no_matching_recipes),
                         style = MaterialTheme.typography.bodyMedium,
                         color = FoodTheme.colors.textTertiary,
                         modifier = Modifier.padding(vertical = FoodTheme.dimens.spaceXxl),
@@ -299,7 +302,7 @@ fun MealPlanScreen(
                                     )
                                     val meta = listOfNotNull(
                                         recipe.difficulty.chineseLabel,
-                                        recipe.cookingTimeMin?.let { "$it 分钟" },
+                                        recipe.cookingTimeMin?.let { stringResource(R.string.meal_plan_screen_minutes, it) },
                                     ).joinToString(" · ")
                                     if (meta.isNotEmpty()) {
                                         Text(
@@ -311,7 +314,7 @@ fun MealPlanScreen(
                                 }
                                 if (alreadyAdded) {
                                     Text(
-                                        text = "已添加",
+                                        text = stringResource(R.string.meal_plan_screen_already_added),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = FoodTheme.colors.textTertiary,
                                     )
@@ -329,10 +332,10 @@ fun MealPlanScreen(
 }
 
 internal fun mealLabel(type: MealType): String = when (type) {
-    MealType.BREAKFAST -> "早餐"
-    MealType.LUNCH -> "午餐"
-    MealType.DINNER -> "晚餐"
+    MealType.BREAKFAST -> AppStrings.get(R.string.meal_type_breakfast)
+    MealType.LUNCH -> AppStrings.get(R.string.meal_type_lunch)
+    MealType.DINNER -> AppStrings.get(R.string.meal_type_dinner)
 }
 
 private fun formatShortDate(date: LocalDate): String =
-    date.format(DateTimeFormatter.ofPattern("M月d日", Locale.CHINA))
+    date.format(DateTimeFormatter.ofPattern(AppStrings.get(R.string.date_pattern_medium), Locale.getDefault()))

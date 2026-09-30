@@ -37,12 +37,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.Recommendation
 import com.skyanchor.mealtime.core.ui.EmptyState
@@ -89,13 +92,17 @@ fun RecommendScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = stringResource(R.string.common_back),
                         tint = FoodTheme.colors.textPrimary,
                     )
                 }
                 Spacer(modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceSm))
                 Text(
-                    text = if (state.isRandom) "随机一道" else "为你推荐",
+                    text = if (state.isRandom) {
+                        stringResource(R.string.recommend_random)
+                    } else {
+                        stringResource(R.string.recommend_for_you)
+                    },
                     style = MaterialTheme.typography.titleLarge,
                     color = FoodTheme.colors.textPrimary,
                     modifier = Modifier.weight(1f),
@@ -103,14 +110,14 @@ fun RecommendScreen(
                 IconButton(onClick = viewModel::randomPick) {
                     Icon(
                         imageVector = Icons.Outlined.Casino,
-                        contentDescription = "随机一道",
+                        contentDescription = stringResource(R.string.recommend_random),
                         tint = FoodTheme.colors.textSecondary,
                     )
                 }
                 IconButton(onClick = viewModel::refresh) {
                     Icon(
                         imageVector = Icons.Outlined.Refresh,
-                        contentDescription = "刷新",
+                        contentDescription = stringResource(R.string.recommend_refresh),
                         tint = FoodTheme.colors.textSecondary,
                     )
                 }
@@ -133,8 +140,8 @@ fun RecommendScreen(
                 state.items.isEmpty() -> {
                     EmptyState(
                         icon = Icons.Outlined.AutoAwesome,
-                        title = "还没有可推荐的菜谱",
-                        hint = "先在菜谱页创建几道菜，推荐才有用武之地",
+                        title = stringResource(R.string.recommend_empty_title),
+                        hint = stringResource(R.string.recommend_empty_hint),
                     )
                 }
 
@@ -166,9 +173,9 @@ fun RecommendScreen(
 }
 
 internal fun mealLabel(type: MealType): String = when (type) {
-    MealType.BREAKFAST -> "早餐"
-    MealType.LUNCH -> "午餐"
-    MealType.DINNER -> "晚餐"
+    MealType.BREAKFAST -> AppStrings.get(R.string.meal_type_breakfast)
+    MealType.LUNCH -> AppStrings.get(R.string.meal_type_lunch)
+    MealType.DINNER -> AppStrings.get(R.string.meal_type_dinner)
 }
 
 @Composable
@@ -233,7 +240,7 @@ private fun RecommendCard(
                                 .padding(horizontal = 12.dp, vertical = 6.dp),
                         ) {
                             Text(
-                                text = "${item.score}分",
+                                text = stringResource(R.string.recommend_score, item.score),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = FoodTheme.colors.primaryDark,
                                 fontWeight = FontWeight.Bold,
@@ -256,7 +263,11 @@ private fun RecommendCard(
                     if (item.totalIngredients > 0) {
                         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                         Text(
-                            text = "库存匹配 ${item.matchedCount}/${item.totalIngredients} 种食材",
+                            text = stringResource(
+                                R.string.recommend_stock_match,
+                                item.matchedCount,
+                                item.totalIngredients,
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = FoodTheme.colors.textTertiary,
                         )
@@ -266,7 +277,7 @@ private fun RecommendCard(
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             SecondaryButton(
-                text = "加入$nextMealLabel",
+                text = stringResource(R.string.recommend_add_to_meal, nextMealLabel),
                 onClick = onAdd,
                 modifier = Modifier.fillMaxWidth(),
             )

@@ -1,5 +1,7 @@
 package com.skyanchor.mealtime.domain.usecase
 
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.core.model.RecipeIngredientLine
@@ -23,7 +25,7 @@ class SaveRecipeUseCase(
         tagIds: List<Long>,
     ): Long {
         val name = recipe.name.trim()
-        require(name.isNotEmpty()) { "菜名不能为空" }
+        require(name.isNotEmpty()) { AppStrings.get(R.string.recipe_error_name_empty) }
 
         val resolved = ingredients
             .filter { it.name.isNotBlank() }

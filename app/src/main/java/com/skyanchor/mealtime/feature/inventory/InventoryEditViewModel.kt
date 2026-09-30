@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.Ingredient
 import com.skyanchor.mealtime.core.model.IngredientTypeInfo
 import com.skyanchor.mealtime.core.model.IngredientTypes
@@ -107,7 +109,7 @@ class InventoryEditViewModel(
                         )
                     }
                 } else {
-                    _uiState.update { it.copy(isLoading = false, saveError = "库存不存在或已删除", ingredientTypes = types) }
+                    _uiState.update { it.copy(isLoading = false, saveError = AppStrings.get(R.string.inventory_edit_error_not_found), ingredientTypes = types) }
                 }
             }
         }
@@ -228,7 +230,7 @@ class InventoryEditViewModel(
             return
         }
         if (!isValidDateOrder(state)) {
-            _uiState.update { it.copy(saveError = "日期需满足：生产日期 ≤ 购买日期 ≤ 过期日期") }
+            _uiState.update { it.copy(saveError = AppStrings.get(R.string.inventory_edit_error_date_order)) }
             return
         }
         _uiState.update { it.copy(isSaving = true, saveError = null) }
@@ -288,7 +290,7 @@ class InventoryEditViewModel(
             } catch (e: IllegalArgumentException) {
                 _uiState.update { it.copy(isSaving = false, saveError = e.message) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isSaving = false, saveError = "保存失败，请重试") }
+                _uiState.update { it.copy(isSaving = false, saveError = AppStrings.get(R.string.common_save_failed)) }
             }
         }
     }

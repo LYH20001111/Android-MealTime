@@ -1,6 +1,8 @@
 package com.skyanchor.mealtime.data.repository
 
 import android.content.Context
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.data.backup.BackupExporter
 import com.skyanchor.mealtime.data.backup.BackupImporter
 import com.skyanchor.mealtime.data.backup.BackupJsonCodec
@@ -63,7 +65,7 @@ class RoomBackupRepository(
             try {
                 importer.preview(zip)
             } catch (e: java.util.zip.ZipException) {
-                throw IllegalArgumentException("不是有效的饭点备份文件", e)
+                throw IllegalArgumentException(AppStrings.get(R.string.backup_error_invalid), e)
             }
         }
 
@@ -72,7 +74,7 @@ class RoomBackupRepository(
             try {
                 importer.restore(zip)
             } catch (e: java.util.zip.ZipException) {
-                throw IllegalArgumentException("不是有效的饭点备份文件", e)
+                throw IllegalArgumentException(AppStrings.get(R.string.backup_error_invalid), e)
             }
         }
 }

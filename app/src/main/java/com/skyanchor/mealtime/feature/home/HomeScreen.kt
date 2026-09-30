@@ -73,6 +73,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -81,6 +82,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.common.ExpiryCalculator
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.MealType
@@ -282,7 +284,7 @@ private fun HomeHeader(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "今天吃什么？",
+                        text = stringResource(R.string.home_screen_what_to_eat_today),
                         style = MaterialTheme.typography.titleMedium,
                         color = Color(0xFF6F68A1),
                     )
@@ -295,7 +297,7 @@ private fun HomeHeader(
                 }
                 Icon(
                     imageVector = Icons.Outlined.Notifications,
-                    contentDescription = "通知",
+                    contentDescription = stringResource(R.string.home_screen_notifications_cd),
                     tint = FoodTheme.colors.textSecondary,
                     modifier = Modifier
                         .size(40.dp)
@@ -311,16 +313,16 @@ private fun HomeHeader(
 private fun getGreeting(): String {
     val hour = LocalTime.now().hour
     return when {
-        hour < 6 -> "夜深了 🌙"
-        hour < 11 -> "早上好 🌤️"
-        hour < 14 -> "中午好 🍚"
-        hour < 18 -> "下午好 ☀️"
-        else -> "晚上好 👋"
+        hour < 6 -> AppStrings.get(R.string.home_screen_greeting_late_night)
+        hour < 11 -> AppStrings.get(R.string.home_screen_greeting_morning)
+        hour < 14 -> AppStrings.get(R.string.home_screen_greeting_noon)
+        hour < 18 -> AppStrings.get(R.string.home_screen_greeting_afternoon)
+        else -> AppStrings.get(R.string.home_screen_greeting_evening)
     }
 }
 
 private fun formatDate(date: LocalDate): String =
-    date.format(DateTimeFormatter.ofPattern("M月d日 · EEEE", Locale.CHINA))
+    date.format(DateTimeFormatter.ofPattern(AppStrings.get(R.string.date_pattern_medium_weekday), Locale.getDefault()))
 
 // ===================== 临期食材提醒 =====================
 
@@ -331,9 +333,10 @@ private fun ExpiringBanner(
     onClick: () -> Unit,
 ) {
     val today = LocalDate.now()
+    val itemDaysTemplate = stringResource(R.string.home_screen_expiring_item_days)
     val detail = items.take(2).joinToString("   ") { item ->
         val days = item.expireDate?.let { ExpiryCalculator.daysUntil(it, today) }
-        "${item.ingredient.name}（${days ?: "?"}天）"
+        itemDaysTemplate.format(item.ingredient.name, days ?: "?")
     }
 
     FoodCard(
@@ -366,7 +369,7 @@ private fun ExpiringBanner(
             Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceMd))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "有 $count 种食材即将过期",
+                    text = stringResource(R.string.home_screen_expiring_banner_title, count),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = FoodTheme.colors.textPrimary,
@@ -380,7 +383,7 @@ private fun ExpiringBanner(
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "查看",
+                    text = stringResource(R.string.home_screen_view),
                     style = MaterialTheme.typography.bodyMedium,
                     color = FoodTheme.colors.textTertiary,
                 )
@@ -561,7 +564,7 @@ private fun RecommendationCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "今日推荐",
+                    text = stringResource(R.string.home_screen_today_recommendation),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White,
@@ -574,7 +577,7 @@ private fun RecommendationCard(
                         .padding(horizontal = 8.dp, vertical = 2.dp),
                 ) {
                     Text(
-                        text = "为你精选",
+                        text = stringResource(R.string.home_screen_picked_for_you),
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White,
                     )
@@ -620,7 +623,7 @@ private fun RecommendationCard(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "加入今日三餐",
+                        text = stringResource(R.string.home_screen_add_to_today_meals),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = colors.primary,
@@ -667,13 +670,13 @@ private fun TodayRecommendationError(onRetry: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "暂时无法获取今日推荐",
+                text = stringResource(R.string.home_screen_recommendation_error),
                 style = MaterialTheme.typography.bodyMedium,
                 color = FoodTheme.colors.textSecondary,
             )
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             SecondaryButton(
-                text = "重新加载",
+                text = stringResource(R.string.home_screen_reload),
                 onClick = onRetry,
             )
         }
@@ -688,9 +691,9 @@ private fun TodayRecommendationEmpty(onAddRecipe: () -> Unit) {
     ) {
         EmptyState(
             icon = Icons.Outlined.RestaurantMenu,
-            title = "还没有推荐菜谱",
-            hint = "先添加几道喜欢的菜吧",
-            actionText = "去添加菜谱",
+            title = stringResource(R.string.home_screen_no_recipes_title),
+            hint = stringResource(R.string.home_screen_no_recipes_hint),
+            actionText = stringResource(R.string.home_screen_go_add_recipe),
             onAction = onAddRecipe,
         )
     }
@@ -706,7 +709,7 @@ private fun AddToMealDialog(
     var selected by remember { mutableStateOf(defaultMealType) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("加入哪一餐？") },
+        title = { Text(stringResource(R.string.home_screen_add_to_meal_dialog_title)) },
         text = {
             Column {
                 MealType.entries.forEach { type ->
@@ -733,10 +736,10 @@ private fun AddToMealDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(selected) }) { Text("确认") }
+            TextButton(onClick = { onConfirm(selected) }) { Text(stringResource(R.string.common_confirm)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }
@@ -760,7 +763,7 @@ private fun TodayMealsSectionTitle() {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
-            text = "今日三餐",
+            text = stringResource(R.string.home_screen_today_meals),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = FoodTheme.colors.textPrimary,
@@ -856,14 +859,14 @@ private fun MealHeader(
         when {
             // §26：完成后的餐次弱化为"✓ 已完成"
             allCompleted -> MealStatusChip(
-                text = "✓ 已完成",
+                text = stringResource(R.string.home_screen_status_completed),
                 containerColor = FoodTheme.colors.success.copy(alpha = 0.12f),
                 contentColor = FoodTheme.colors.success,
             )
 
             // §16：当前餐次轻微强化
             isCurrent -> MealStatusChip(
-                text = "当前",
+                text = stringResource(R.string.home_screen_status_current),
                 containerColor = FoodTheme.colors.primaryLight,
                 contentColor = FoodTheme.colors.primary,
             )
@@ -958,7 +961,7 @@ private fun MealRecipeCard(
                         .padding(horizontal = 8.dp, vertical = 3.dp),
                 ) {
                     Text(
-                        text = "已完成",
+                        text = stringResource(R.string.home_screen_completed_badge),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
@@ -998,12 +1001,12 @@ private fun MealActionRow(
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
         EditMealButton(
-            text = "✎ 修改菜品",
+            text = stringResource(R.string.home_screen_edit_dishes),
             onClick = onManage,
             modifier = Modifier.weight(1f),
         )
         PrimaryButton(
-            text = "✓ 完成用餐",
+            text = stringResource(R.string.home_screen_finish_meal),
             onClick = onComplete,
             modifier = Modifier.weight(1f),
         )
@@ -1076,13 +1079,13 @@ private fun MealEmptyState(
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             Text(
-                text = "还没有安排${getMealTypeLabel(mealType)}哦~",
+                text = stringResource(R.string.home_screen_no_meal_planned, getMealTypeLabel(mealType)),
                 style = MaterialTheme.typography.titleMedium,
                 color = FoodTheme.colors.textPrimary,
             )
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
             Text(
-                text = "根据你的食材和口味，帮你推荐",
+                text = stringResource(R.string.home_screen_recommend_hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textSecondary,
             )
@@ -1098,7 +1101,7 @@ private fun MealEmptyState(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = "✨ 帮我推荐",
+                    text = stringResource(R.string.home_screen_recommend_for_me),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White,
@@ -1107,7 +1110,7 @@ private fun MealEmptyState(
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             // 保留手动选菜入口：进入餐次管理页自己挑
             Text(
-                text = "或自己挑一道 >",
+                text = stringResource(R.string.home_screen_or_pick_manually),
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textTertiary,
                 modifier = Modifier.clickable(onClick = onManage),
@@ -1117,9 +1120,9 @@ private fun MealEmptyState(
 }
 
 private fun getMealTypeLabel(type: MealType): String = when (type) {
-    MealType.BREAKFAST -> "早餐"
-    MealType.LUNCH -> "午餐"
-    MealType.DINNER -> "晚餐"
+    MealType.BREAKFAST -> AppStrings.get(R.string.meal_type_breakfast)
+    MealType.LUNCH -> AppStrings.get(R.string.meal_type_lunch)
+    MealType.DINNER -> AppStrings.get(R.string.meal_type_dinner)
 }
 
 private fun getMealTimeLabel(type: MealType): String = when (type) {
@@ -1178,14 +1181,14 @@ private fun SmartRecommendationCard(onClick: () -> Unit) {
             Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceMd))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "智能推荐",
+                    text = stringResource(R.string.home_screen_smart_recommendation),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = FoodTheme.colors.textPrimary,
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "根据你的库存和口味偏好，推荐今日菜谱",
+                    text = stringResource(R.string.home_screen_smart_recommendation_subtitle),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.textSecondary,
                 )
@@ -1200,7 +1203,7 @@ private fun SmartRecommendationCard(onClick: () -> Unit) {
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = "一键安排",
+                        text = stringResource(R.string.home_screen_plan_in_one_tap),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = Color.White,
@@ -1238,7 +1241,7 @@ private fun TodayNoteCard(note: String, onClick: () -> Unit) {
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "今日备注",
+                text = stringResource(R.string.home_screen_today_note),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = FoodTheme.colors.textPrimary,
@@ -1256,7 +1259,7 @@ private fun TodayNoteCard(note: String, onClick: () -> Unit) {
                 )
                 Spacer(modifier = Modifier.width(2.dp))
                 Text(
-                    text = "添加",
+                    text = stringResource(R.string.common_add),
                     style = MaterialTheme.typography.bodyMedium,
                     color = FoodTheme.colors.primary,
                 )
@@ -1270,7 +1273,7 @@ private fun TodayNoteCard(note: String, onClick: () -> Unit) {
             backgroundColor = FoodTheme.colors.surface,
         ) {
             Text(
-                text = note.ifBlank { "记录一下今天的饮食计划、心情或其他想法吧..." },
+                text = note.ifBlank { stringResource(R.string.home_screen_note_blank_hint) },
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (note.isBlank()) FoodTheme.colors.textTertiary else FoodTheme.colors.textPrimary,
                 modifier = Modifier
@@ -1292,12 +1295,12 @@ private fun NoteEditDialog(
     var text by remember { mutableStateOf(initial) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("今日备注") },
+        title = { Text(stringResource(R.string.home_screen_today_note)) },
         text = {
             OutlinedTextField(
                 value = text,
                 onValueChange = { text = it },
-                placeholder = { Text("如：晚上 3 人用餐") },
+                placeholder = { Text(stringResource(R.string.home_screen_note_dialog_hint)) },
                 singleLine = false,
                 minLines = 2,
                 modifier = Modifier.fillMaxWidth(),
@@ -1311,10 +1314,10 @@ private fun NoteEditDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(text) }) { Text("保存") }
+            TextButton(onClick = { onConfirm(text) }) { Text(stringResource(R.string.common_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }

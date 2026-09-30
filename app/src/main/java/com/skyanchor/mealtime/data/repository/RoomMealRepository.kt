@@ -1,6 +1,8 @@
 package com.skyanchor.mealtime.data.repository
 
 import androidx.room.withTransaction
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.ConsumptionDeduction
 import com.skyanchor.mealtime.core.model.MealHistoryItem
 import com.skyanchor.mealtime.core.model.MealPlan
@@ -86,7 +88,7 @@ class RoomMealRepository(private val db: MealTimeDatabase) : MealRepository {
                         type = "CONSUME",
                         sourceType = "MEAL",
                         sourceId = recordId,
-                        note = "库存不足，超出部分如实记录",
+                        note = AppStrings.get(R.string.meal_note_insufficient_stock),
                         createdAt = now,
                     )
                 )

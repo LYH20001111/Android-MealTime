@@ -1,5 +1,7 @@
 package com.skyanchor.mealtime.domain.usecase
 
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.Recommendation
 import com.skyanchor.mealtime.core.model.Recipe
@@ -72,7 +74,7 @@ class RecommendRecipesUseCase(
         return Recommendation(
             recipe = picked,
             score = 0,
-            reasons = listOf("从菜谱库里随机为你挑选"),
+            reasons = listOf(AppStrings.get(R.string.recommend_reason_random)),
             matchedCount = 0,
             totalIngredients = 0,
         )
@@ -111,17 +113,22 @@ class RecommendRecipesUseCase(
         val reasons = buildList {
             when {
                 lines.isEmpty() -> Unit
-                matched == lines.size -> add("✓ 库存充足，现在就能做")
-                matched > 0 -> add("✓ 库存可覆盖 $matched/${lines.size} 种食材")
-                else -> add("△ 库存里还没有它的食材")
+                matched == lines.size -> add(AppStrings.get(R.string.recommend_reason_stock_full))
+                matched > 0 -> add(AppStrings.get(R.string.recommend_reason_stock_partial, matched, lines.size))
+                else -> add(AppStrings.get(R.string.recommend_reason_no_stock))
             }
             if (expiringHits.isNotEmpty()) {
-                add("✓ 能消耗临期食材：${expiringHits.map { it.name }.joinToString("、")}")
+                add(
+                    AppStrings.get(
+                        R.string.recommend_reason_expiring,
+                        expiringHits.map { it.name }.joinToString(AppStrings.get(R.string.common_name_separator)),
+                    )
+                )
             }
-            if (recipe.isFavorite) add("✓ 你的收藏")
+            if (recipe.isFavorite) add(AppStrings.get(R.string.recommend_reason_favorite))
             when {
-                notEatenForWeek -> add("✓ 最近 7 天没有吃过")
-                eatenWithin3Days -> add("△ 最近 3 天刚安排过")
+                notEatenForWeek -> add(AppStrings.get(R.string.recommend_reason_not_eaten_week))
+                eatenWithin3Days -> add(AppStrings.get(R.string.recommend_reason_eaten_recently))
             }
         }
 

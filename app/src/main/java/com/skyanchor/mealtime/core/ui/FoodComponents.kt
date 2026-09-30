@@ -32,9 +32,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.skyanchor.mealtime.R
 
 /** 主操作按钮：紫渐变底、白字、高 48dp、圆角 16dp（UI_DESIGN.md §7）。 */
 @Composable
@@ -243,7 +245,7 @@ fun FoodSearchField(
     value: String,
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "搜索",
+    placeholder: String = stringResource(R.string.common_search),
 ) {
     TextField(
         value = value,
@@ -267,7 +269,7 @@ fun FoodSearchField(
             if (value.isNotEmpty()) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "清空",
+                    contentDescription = stringResource(R.string.common_clear),
                     tint = FoodTheme.colors.textTertiary,
                     modifier = Modifier
                         .clickable { onValueChange("") }

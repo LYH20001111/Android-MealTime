@@ -64,10 +64,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.model.Category
 import com.skyanchor.mealtime.core.model.FALLBACK_CATEGORY_NAME
@@ -78,6 +80,7 @@ import com.skyanchor.mealtime.core.ui.FoodTextField
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.SectionTitle
 import com.skyanchor.mealtime.core.ui.SecondaryButton
+import com.skyanchor.mealtime.core.ui.ingredientTypeDisplayLabel
 import com.skyanchor.mealtime.notification.ExpiryNotificationWorker
 
 /**
@@ -108,16 +111,24 @@ fun SettingsScreen(
     if (pendingCategoryDelete != null) {
         AlertDialog(
             onDismissRequest = { pendingCategoryDelete = null },
-            title = { Text("删除分类") },
-            text = { Text("确定删除分类「${pendingCategoryDelete?.name}」吗？其中的菜谱会自动归入「$FALLBACK_CATEGORY_NAME」。") },
+            title = { Text(stringResource(R.string.settings_screen_delete_category_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.settings_screen_delete_category_dialog,
+                        pendingCategoryDelete?.name ?: "",
+                        FALLBACK_CATEGORY_NAME,
+                    )
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     pendingCategoryDelete?.let { viewModel.deleteCategory(it.id) }
                     pendingCategoryDelete = null
-                }) { Text("删除", color = FoodTheme.colors.danger) }
+                }) { Text(stringResource(R.string.common_delete), color = FoodTheme.colors.danger) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingCategoryDelete = null }) { Text("取消") }
+                TextButton(onClick = { pendingCategoryDelete = null }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -125,23 +136,36 @@ fun SettingsScreen(
     if (pendingTypeDelete != null) {
         AlertDialog(
             onDismissRequest = { pendingTypeDelete = null },
-            title = { Text("删除种类") },
-            text = { Text("确定删除食材种类「${pendingTypeDelete?.label}」吗？其中的食材与菜谱配料会自动归入「其他」。") },
+            title = { Text(stringResource(R.string.settings_screen_delete_type_title)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.settings_screen_delete_type_dialog,
+                        pendingTypeDelete?.let {
+                            ingredientTypeDisplayLabel(storedLabel = it.label, key = it.key)
+                        } ?: "",
+                        ingredientTypeDisplayLabel(
+                            storedLabel = IngredientTypes.label(IngredientTypes.OTHER),
+                            key = IngredientTypes.OTHER,
+                        ),
+                    )
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     pendingTypeDelete?.let { viewModel.deleteIngredientType(it.key) }
                     pendingTypeDelete = null
-                }) { Text("删除", color = FoodTheme.colors.danger) }
+                }) { Text(stringResource(R.string.common_delete), color = FoodTheme.colors.danger) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingTypeDelete = null }) { Text("取消") }
+                TextButton(onClick = { pendingTypeDelete = null }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
 
     renamingCategory?.let { pending ->
         RenameDialog(
-            title = "重命名分类",
+            title = stringResource(R.string.settings_screen_rename_category),
             initialName = pending.name,
             onConfirm = { newName ->
                 viewModel.renameCategory(pending.id, newName)
@@ -153,7 +177,7 @@ fun SettingsScreen(
 
     renamingType?.let { pending ->
         RenameDialog(
-            title = "重命名食材种类",
+            title = stringResource(R.string.settings_screen_rename_type),
             initialName = pending.label,
             onConfirm = { newName ->
                 viewModel.renameIngredientType(pending.key, newName)
@@ -176,13 +200,13 @@ fun SettingsScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = stringResource(R.string.common_back),
                     tint = FoodTheme.colors.textPrimary,
                 )
             }
             Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceSm))
             Text(
-                text = "设置",
+                text = stringResource(R.string.settings_screen_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = FoodTheme.colors.textPrimary,
             )
@@ -193,15 +217,15 @@ fun SettingsScreen(
         ) {
             // ================= 临期通知 =================
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-            SectionTitle(text = "临期通知")
+            SectionTitle(text = stringResource(R.string.settings_screen_section_expiring_notifications))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Column {
                     SettingItemRow(
                         icon = Icons.Outlined.NotificationsActive,
                         iconTint = FoodTheme.colors.primary,
-                        title = "每日临期汇总提醒",
-                        subtitle = "每天最多提醒一次，首页提醒始终可用"
+                        title = stringResource(R.string.settings_screen_daily_summary_reminder),
+                        subtitle = stringResource(R.string.settings_screen_daily_summary_reminder_subtitle)
                     ) {
                         Switch(
                             checked = state.notificationEnabled,
@@ -222,8 +246,8 @@ fun SettingsScreen(
                         SettingItemRow(
                             icon = Icons.Outlined.DateRange,
                             iconTint = FoodTheme.colors.primary,
-                            title = "提前提醒天数",
-                            subtitle = "到期前多少天开始提醒"
+                            title = stringResource(R.string.settings_screen_advance_days_title),
+                            subtitle = stringResource(R.string.settings_screen_advance_days_subtitle)
                         ) {
                             Stepper(
                                 value = state.advanceDays,
@@ -233,7 +257,7 @@ fun SettingsScreen(
 
                         Box(modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceLg, vertical = FoodTheme.dimens.spaceMd)) {
                             SecondaryButton(
-                                text = "发送测试通知",
+                                text = stringResource(R.string.settings_screen_send_test_notification),
                                 onClick = { ExpiryNotificationWorker.runOnceForTest(context) },
                                 modifier = Modifier.fillMaxWidth(),
                             )
@@ -244,7 +268,7 @@ fun SettingsScreen(
 
             // ================= 默认值 =================
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "默认值")
+            SectionTitle(text = stringResource(R.string.settings_screen_section_defaults))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Column(
@@ -253,7 +277,7 @@ fun SettingsScreen(
                     SettingDropdownRow(
                         icon = Icons.Outlined.Person,
                         iconTint = FoodTheme.colors.textSecondary, // 假设你有 textSecondary，或者用 primary
-                        label = "默认用餐人数",
+                        label = stringResource(R.string.settings_screen_default_servings),
                         value = state.servings,
                         options = (1..10).map { it.toString() },
                         onChange = viewModel::setServings
@@ -261,7 +285,7 @@ fun SettingsScreen(
                     SettingDropdownRow(
                         icon = Icons.Outlined.DateRange,
                         iconTint = FoodTheme.colors.primary,
-                        label = "临期阈值（天）",
+                        label = stringResource(R.string.settings_screen_near_threshold_days),
                         value = state.nearDays,
                         options = (1..7).map { it.toString() },
                         onChange = viewModel::setNearDays
@@ -269,7 +293,7 @@ fun SettingsScreen(
                     SettingDropdownRow(
                         icon = Icons.Outlined.Warning,
                         iconTint = FoodTheme.colors.danger,
-                        label = "紧急阈值（天）",
+                        label = stringResource(R.string.settings_screen_urgent_threshold_days),
                         value = state.urgentDays,
                         options = (1..3).map { it.toString() },
                         onChange = viewModel::setUrgentDays
@@ -279,7 +303,7 @@ fun SettingsScreen(
 
             // ================= 分类管理 =================
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "分类管理")
+            SectionTitle(text = stringResource(R.string.settings_screen_section_categories))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Column(
@@ -287,7 +311,7 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
                 ) {
                     Text(
-                        text = "菜谱分类",
+                        text = stringResource(R.string.settings_screen_recipe_categories),
                         style = MaterialTheme.typography.titleSmall,
                         color = FoodTheme.colors.textPrimary,
                     )
@@ -343,7 +367,7 @@ fun SettingsScreen(
                             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                 if (state.newCategoryName.isEmpty()) {
                                     Text(
-                                        text = "新增菜谱分类",
+                                        text = stringResource(R.string.settings_screen_new_category_hint),
                                         color = FoodTheme.colors.textTertiary,
                                         style = MaterialTheme.typography.bodyMedium
                                     )
@@ -377,7 +401,7 @@ fun SettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "添加",
+                                text = stringResource(R.string.common_add),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -391,14 +415,14 @@ fun SettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
                 ) {
                     Text(
-                        text = "食材分类",
+                        text = stringResource(R.string.settings_screen_ingredient_categories),
                         style = MaterialTheme.typography.titleSmall,
                         color = FoodTheme.colors.textPrimary,
                     )
                     state.ingredientTypes.forEachIndexed { index, type ->
                         val isBuiltinOther = type.key == IngredientTypes.OTHER
                         CategoryRow(
-                            name = type.label,
+                            name = ingredientTypeDisplayLabel(storedLabel = type.label, key = type.key),
                             deletable = !isBuiltinOther,
                             renamable = !isBuiltinOther,
                             canMoveUp = index > 0,
@@ -446,7 +470,7 @@ fun SettingsScreen(
                             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                                 if (state.newTypeName.isEmpty()) {
                                     Text(
-                                        text = "新增食材分类", // 更新占位符文本
+                                        text = stringResource(R.string.settings_screen_new_type_hint), // 更新占位符文本
                                         color = FoodTheme.colors.textTertiary,
                                         style = MaterialTheme.typography.bodyMedium
                                     )
@@ -481,7 +505,7 @@ fun SettingsScreen(
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "添加",
+                                text = stringResource(R.string.common_add),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
@@ -490,7 +514,7 @@ fun SettingsScreen(
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXs))
             Text(
-                text = "重命名或调整顺序后，菜谱筛选、食材分组等处同步生效；删除分类后，其中的菜谱/食材会自动归入「其他」",
+                text = stringResource(R.string.settings_screen_categories_footer, FALLBACK_CATEGORY_NAME),
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textTertiary,
                 modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceXs),
@@ -529,10 +553,10 @@ private fun RenameDialog(
             )
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(text) }, enabled = changed) { Text("保存") }
+            TextButton(onClick = { onConfirm(text) }, enabled = changed) { Text(stringResource(R.string.common_save)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }
@@ -666,7 +690,7 @@ private fun Stepper(
             onClick = { onValueChange((intValue - 1).coerceAtLeast(0).toString()) },
             modifier = Modifier.size(36.dp)
         ) {
-            Icon(Icons.Default.Remove, contentDescription = "减少", tint = FoodTheme.colors.textSecondary)
+            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.settings_screen_decrease), tint = FoodTheme.colors.textSecondary)
         }
 
         Text(
@@ -681,7 +705,7 @@ private fun Stepper(
             onClick = { onValueChange((intValue + 1).toString()) },
             modifier = Modifier.size(36.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "增加", tint = FoodTheme.colors.textSecondary)
+            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.settings_screen_increase), tint = FoodTheme.colors.textSecondary)
         }
     }
 }
@@ -721,19 +745,19 @@ private fun CategoryRow(
         // 操作区按钮，使用了更紧凑的间距和轻量级图标
         if (canMoveUp) {
             IconButton(onClick = onMoveUp, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "上移", tint = FoodTheme.colors.textSecondary)
+                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = stringResource(R.string.settings_screen_move_up), tint = FoodTheme.colors.textSecondary)
             }
         }
         if (canMoveDown) {
             IconButton(onClick = onMoveDown, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "下移", tint = FoodTheme.colors.textSecondary)
+                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = stringResource(R.string.settings_screen_move_down), tint = FoodTheme.colors.textSecondary)
             }
         }
         if (renamable) {
             IconButton(onClick = onRename, modifier = Modifier.size(32.dp)) {
                 Icon(
                     imageVector = Icons.Outlined.Edit,
-                    contentDescription = "重命名",
+                    contentDescription = stringResource(R.string.settings_screen_rename),
                     tint = FoodTheme.colors.primary,
                     modifier = Modifier.size(20.dp)
                 )
@@ -743,14 +767,14 @@ private fun CategoryRow(
             IconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
                 Icon(
                     imageVector = Icons.Outlined.Delete,
-                    contentDescription = "删除",
+                    contentDescription = stringResource(R.string.common_delete),
                     tint = FoodTheme.colors.danger, // 标红提示危险操作
                     modifier = Modifier.size(20.dp)
                 )
             }
         } else {
             Text(
-                text = "系统",
+                text = stringResource(R.string.settings_screen_builtin_label),
                 style = MaterialTheme.typography.labelSmall,
                 color = FoodTheme.colors.textTertiary,
                 modifier = Modifier.padding(end = 8.dp)

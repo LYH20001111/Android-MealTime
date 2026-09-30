@@ -33,12 +33,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.common.ExpiryCalculator
 import com.skyanchor.mealtime.core.common.ExpiryStatus
 import com.skyanchor.mealtime.core.model.IngredientTypes
@@ -49,6 +52,7 @@ import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /**
  * 临期食材列表：首页临期提醒条「查看」进入。
@@ -77,13 +81,13 @@ fun ExpiringInventoryScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = stringResource(R.string.common_back),
                         tint = FoodTheme.colors.textPrimary,
                     )
                 }
                 Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceSm))
                 Text(
-                    text = "临期食材",
+                    text = stringResource(R.string.expiring_title),
                     style = MaterialTheme.typography.titleLarge,
                     color = FoodTheme.colors.textPrimary,
                 )
@@ -105,8 +109,8 @@ fun ExpiringInventoryScreen(
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         EmptyState(
                             icon = Icons.Outlined.Eco,
-                            title = "没有临期食材",
-                            hint = "保质期临近的食材会出现在这里",
+                            title = stringResource(R.string.expiring_empty_title),
+                            hint = stringResource(R.string.expiring_empty_hint),
                         )
                     }
                 }
@@ -119,7 +123,7 @@ fun ExpiringInventoryScreen(
                     ) {
                         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
                         Text(
-                            text = "共 ${state.items.size} 批食材临近保质期，按到期时间排序，优先吃掉最早过期的",
+                            text = stringResource(R.string.expiring_summary, state.items.size),
                             style = MaterialTheme.typography.bodySmall,
                             color = FoodTheme.colors.textSecondary,
                         )
@@ -210,14 +214,14 @@ private fun ExpiringCard(
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "库存：${stockText(item)}",
+                    text = stringResource(R.string.expiring_stock_label, stockText(item)),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.textSecondary,
                 )
                 expireDate?.let {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "保质期至 ${formatDate(it)}",
+                        text = stringResource(R.string.expiring_best_before, formatDate(it)),
                         style = MaterialTheme.typography.bodySmall,
                         color = FoodTheme.colors.textTertiary,
                     )
@@ -245,17 +249,19 @@ private fun stockText(item: InventoryItem): String {
     val amount = item.quantity?.let { q ->
         val quantityText = q.toString().removeSuffix(".0")
         item.unit?.let { "$quantityText $it" } ?: quantityText
-    } ?: item.quantityLevel?.chineseLabel ?: "库存空"
+    } ?: item.quantityLevel?.chineseLabel ?: AppStrings.get(R.string.expiring_empty_stock)
     return amount
 }
 
 /** 剩余天数：还有几天过期 / 今天过期 / 已过期 N 天 / 未设置保质期 */
 private fun daysLabel(days: Long?): String = when {
-    days == null -> "未设置保质期"
-    days < 0 -> "已过期 ${-days} 天"
-    days == 0L -> "今天过期"
-    else -> "还有 $days 天过期"
+    days == null -> AppStrings.get(R.string.expiring_no_expiry_date)
+    days < 0 -> AppStrings.get(R.string.expiring_expired_days_ago, -days)
+    days == 0L -> AppStrings.get(R.string.expiring_expires_today)
+    else -> AppStrings.get(R.string.expiring_expires_in_days, days)
 }
 
 private fun formatDate(date: LocalDate): String =
-    date.format(DateTimeFormatter.ofPattern("M月d日"))
+    date.format(
+        DateTimeFormatter.ofPattern(AppStrings.get(R.string.date_pattern_medium), Locale.getDefault()),
+    )

@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +77,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.skyanchor.mealtime.core.common.AppStrings
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.common.copyImageToPrivate
 import com.skyanchor.mealtime.core.model.QuantityLevel
@@ -85,6 +88,7 @@ import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.PrimaryButton
 import com.skyanchor.mealtime.core.ui.SectionTitle
 import com.skyanchor.mealtime.core.ui.TagChip
+import com.skyanchor.mealtime.core.ui.ingredientTypeDisplayLabel
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
@@ -134,7 +138,7 @@ fun InventoryEditScreen(
         bottomBar = {
             if (!state.isLoading) {
                 PrimaryButton(
-                    text = if (state.isSaving) "保存中…" else "保存食材",
+                    text = if (state.isSaving) stringResource(R.string.inventory_edit_screen_saving) else stringResource(R.string.inventory_edit_screen_save_ingredient),
                     onClick = { viewModel.save(onSaved = { onDone() }) },
                     enabled = !state.isSaving,
                     modifier = Modifier
@@ -182,13 +186,13 @@ fun InventoryEditScreen(
                     IconButton(onClick = onDone) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回",
+                            contentDescription = stringResource(R.string.common_back),
                             tint = FoodTheme.colors.textPrimary,
                         )
                     }
                     Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceSm))
                     Text(
-                        text = if (state.isNew) "新增食材" else "编辑食材",
+                        text = if (state.isNew) stringResource(R.string.inventory_edit_screen_add_ingredient) else stringResource(R.string.inventory_edit_screen_edit_ingredient),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = FoodTheme.colors.textPrimary,
@@ -207,22 +211,22 @@ fun InventoryEditScreen(
             // ① 基本信息 · 必填：名称 / 图片 / 类型
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
-                SectionHeader(title = "基本信息", badge = "必填 3 项")
+                SectionHeader(title = stringResource(R.string.inventory_edit_screen_basic_info), badge = stringResource(R.string.inventory_edit_screen_required_badge))
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-                FormLabel("食材名称", true)
+                FormLabel(stringResource(R.string.inventory_edit_screen_ingredient_name), true)
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 FoodTextField(
                     value = state.ingredientName,
                     onValueChange = viewModel::setIngredientName,
-                    placeholder = "例如：番茄",
+                    placeholder = stringResource(R.string.inventory_edit_screen_ingredient_name_hint),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (state.nameError) ErrorText("请填写食材名称")
-                if (state.nameDuplicate) ErrorText("该食材已在库存中")
+                if (state.nameError) ErrorText(stringResource(R.string.inventory_edit_screen_error_name_required))
+                if (state.nameDuplicate) ErrorText(stringResource(R.string.inventory_edit_screen_error_name_duplicate))
             }
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-                FormLabel("食材图片", true)
+                FormLabel(stringResource(R.string.inventory_edit_screen_ingredient_image), true)
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 IngredientImagePicker(
                     imageUri = state.imageUri,
@@ -233,12 +237,12 @@ fun InventoryEditScreen(
                     },
                     onClear = { viewModel.setImageUri(null) },
                 )
-                if (state.imageError) ErrorText("请添加食材图片")
+                if (state.imageError) ErrorText(stringResource(R.string.inventory_edit_screen_error_image_required))
             }
             // 类型属于基本信息，新增/编辑均可选；编辑切换后保存时同步食材字典
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-                FormLabel("类型", true)
+                FormLabel(stringResource(R.string.inventory_edit_screen_type), true)
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 FlowRow(
                     horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
@@ -276,7 +280,7 @@ fun InventoryEditScreen(
                             }
 
                             Text(
-                                text = type.label,
+                                text = ingredientTypeDisplayLabel(storedLabel = type.label, key = type.key),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = textColor
                             )
@@ -288,21 +292,21 @@ fun InventoryEditScreen(
             // ② 库存状态 · 必填：有库存 / 无库存
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                SectionHeader(title = "库存状态")
+                SectionHeader(title = stringResource(R.string.inventory_edit_screen_stock_status))
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
                 ) {
                     StockChoiceCard(
-                        title = "有库存",
-                        subtitle = "可记录数量、保质期等信息",
+                        title = stringResource(R.string.inventory_edit_screen_in_stock),
+                        subtitle = stringResource(R.string.inventory_edit_screen_in_stock_subtitle),
                         selected = !state.isEmptyStock,
                         onClick = { viewModel.requestEmptyStock(false) },
                         modifier = Modifier.weight(1f),
                     )
                     StockChoiceCard(
-                        title = "无库存",
-                        subtitle = "不需要填写库存相关信息",
+                        title = stringResource(R.string.inventory_edit_screen_out_of_stock),
+                        subtitle = stringResource(R.string.inventory_edit_screen_out_of_stock_subtitle),
                         selected = state.isEmptyStock,
                         onClick = { viewModel.requestEmptyStock(true) },
                         modifier = Modifier.weight(1f),
@@ -315,21 +319,21 @@ fun InventoryEditScreen(
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
                     Text(
-                        text = "当前没有这项食材",
+                        text = stringResource(R.string.inventory_edit_screen_no_stock_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = FoodTheme.colors.textTertiary,
                     )
                 }
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    SectionHeader(title = "其他信息 · 可选")
+                    SectionHeader(title = stringResource(R.string.inventory_edit_screen_other_info_optional))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-                    FormLabel("备注")
+                    FormLabel(stringResource(R.string.inventory_edit_screen_note))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     FoodTextField(
                         value = state.note,
                         onValueChange = viewModel::setNote,
-                        placeholder = "例如：下次买一瓶",
+                        placeholder = stringResource(R.string.inventory_edit_screen_note_hint_no_stock),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -337,24 +341,24 @@ fun InventoryEditScreen(
                 // ③ 库存详情：数量 / 单位 / 数量级别
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    SectionHeader(title = "库存详情")
+                    SectionHeader(title = stringResource(R.string.inventory_edit_screen_stock_details))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm),
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            FormLabel("数量")
+                            FormLabel(stringResource(R.string.inventory_edit_screen_quantity))
                             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                             FoodTextField(
                                 value = state.quantityText,
                                 onValueChange = viewModel::setQuantity,
-                                placeholder = "如：4",
+                                placeholder = stringResource(R.string.inventory_edit_screen_quantity_hint),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier.fillMaxWidth(),
                             )
                         }
                         Column(modifier = Modifier.weight(1f)) {
-                            FormLabel("单位")
+                            FormLabel(stringResource(R.string.inventory_edit_screen_unit))
                             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                             UnitDropdown(
                                 value = state.unit,
@@ -368,13 +372,13 @@ fun InventoryEditScreen(
                         // 1. 标题分层：粗体主标题 + 灰色副标题提示
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                text = "数量级别 ",
+                                text = stringResource(R.string.inventory_edit_screen_quantity_level) + " ",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = FoodTheme.colors.textPrimary,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "(不确定具体数量时可选)",
+                                text = stringResource(R.string.inventory_edit_screen_quantity_level_hint),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = FoodTheme.colors.textTertiary
                             )
@@ -428,28 +432,28 @@ fun InventoryEditScreen(
                 // ④ 保质期信息：过期 / 购买 / 生产日期
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    SectionTitle(text = "保质期")
+                    SectionTitle(text = stringResource(R.string.inventory_edit_screen_shelf_life))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                     DateField(
-                        label = "保质期",
+                        label = stringResource(R.string.inventory_edit_screen_shelf_life),
                         value = state.expireDate,
                         highlight = true,
                         onChange = viewModel::setExpireDate,
                     )
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    SectionTitle(text = "购买日期")
+                    SectionTitle(text = stringResource(R.string.inventory_edit_screen_purchase_date))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     DateField(
-                        label = "购买日期",
+                        label = stringResource(R.string.inventory_edit_screen_purchase_date),
                         value = state.purchaseDate,
                         highlight = false,
                         onChange = viewModel::setPurchaseDate,
                     )
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    SectionTitle(text = "生产日期")
+                    SectionTitle(text = stringResource(R.string.inventory_edit_screen_production_date))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     DateField(
-                        label = "生产日期",
+                        label = stringResource(R.string.inventory_edit_screen_production_date),
                         value = state.productionDate,
                         highlight = false,
                         onChange = viewModel::setProductionDate,
@@ -460,22 +464,22 @@ fun InventoryEditScreen(
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-                    FormLabel("存放位置")
+                    FormLabel(stringResource(R.string.inventory_edit_screen_storage_location))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     FoodTextField(
                         value = state.location,
                         onValueChange = viewModel::setLocation,
-                        placeholder = "冷藏室 / 冷冻层 / 橱柜…",
+                        placeholder = stringResource(R.string.inventory_edit_screen_storage_hint),
                         leadingIcon = Icons.Outlined.LocationOn,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-                    FormLabel("备注")
+                    FormLabel(stringResource(R.string.inventory_edit_screen_note))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     FoodTextField(
                         value = state.note,
                         onValueChange = viewModel::setNote,
-                        placeholder = "品牌、开封日期等",
+                        placeholder = stringResource(R.string.inventory_edit_screen_note_hint),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -499,13 +503,13 @@ fun InventoryEditScreen(
     if (state.pendingEmptyStock) {
         AlertDialog(
             onDismissRequest = viewModel::dismissEmptyStock,
-            title = { Text("切换为无库存？") },
-            text = { Text("当前库存数量、日期和存放位置将不再作为当前库存信息保留。") },
+            title = { Text(stringResource(R.string.inventory_edit_screen_dialog_empty_stock_title)) },
+            text = { Text(stringResource(R.string.inventory_edit_screen_dialog_empty_stock_text)) },
             confirmButton = {
-                TextButton(onClick = viewModel::confirmEmptyStock) { Text("确认") }
+                TextButton(onClick = viewModel::confirmEmptyStock) { Text(stringResource(R.string.common_confirm)) }
             },
             dismissButton = {
-                TextButton(onClick = viewModel::dismissEmptyStock) { Text("取消") }
+                TextButton(onClick = viewModel::dismissEmptyStock) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -514,10 +518,10 @@ fun InventoryEditScreen(
     if (state.showNameDuplicateDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissNameDuplicateDialog,
-            title = { Text("食材已在库存中") },
-            text = { Text("「${state.ingredientName.trim()}」已在库存列表中，可前往查看或编辑，或换一个名称后再保存。") },
+            title = { Text(stringResource(R.string.inventory_edit_screen_dialog_name_duplicate_title)) },
+            text = { Text(stringResource(R.string.inventory_edit_screen_dialog_name_duplicate_text, state.ingredientName.trim())) },
             confirmButton = {
-                TextButton(onClick = viewModel::dismissNameDuplicateDialog) { Text("好的") }
+                TextButton(onClick = viewModel::dismissNameDuplicateDialog) { Text(stringResource(R.string.inventory_edit_screen_got_it)) }
             },
         )
     }
@@ -634,7 +638,7 @@ private fun GuideBanner(
                 )
         ) {
             Text(
-                text = "添加食材",
+                text = stringResource(R.string.inventory_edit_screen_banner_title),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = FoodTheme.colors.primary,
@@ -645,7 +649,7 @@ private fun GuideBanner(
             )
 
             Text(
-                text = "记录食材信息，方便管理和使用",
+                text = stringResource(R.string.inventory_edit_screen_banner_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textSecondary,
                 maxLines = 1,
@@ -730,14 +734,14 @@ private fun UnitDropdown(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = value.ifEmpty { "选择单位" },
+                text = value.ifEmpty { stringResource(R.string.inventory_edit_screen_select_unit) },
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (value.isEmpty()) colors.textTertiary else colors.textPrimary,
             )
             Spacer(modifier = Modifier.weight(1f))
             Icon(
                 imageVector = Icons.Outlined.ArrowDropDown,
-                contentDescription = "选择单位",
+                contentDescription = stringResource(R.string.inventory_edit_screen_select_unit),
                 tint = colors.textTertiary,
             )
         }
@@ -777,7 +781,7 @@ private fun IngredientImagePicker(
         if (imageUri != null) {
             AsyncImage(
                 model = imageUri,
-                contentDescription = "食材图片",
+                contentDescription = stringResource(R.string.inventory_edit_screen_ingredient_image),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -791,7 +795,7 @@ private fun IngredientImagePicker(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "移除图片",
+                    contentDescription = stringResource(R.string.inventory_edit_screen_remove_image),
                     tint = FoodTheme.colors.textSecondary,
                 )
             }
@@ -805,13 +809,13 @@ private fun IngredientImagePicker(
                 )
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 Text(
-                    text = "添加食材图片",
+                    text = stringResource(R.string.inventory_edit_screen_add_ingredient_image),
                     style = MaterialTheme.typography.bodyMedium,
                     color = FoodTheme.colors.textSecondary,
                 )
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXs))
                 Text(
-                    text = "一张清晰的图片更好认",
+                    text = stringResource(R.string.inventory_edit_screen_image_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.textTertiary,
                 )
@@ -835,8 +839,8 @@ fun DateField(
 
     val formatter = remember {
         DateTimeFormatter.ofPattern(
-            "yyyy年M月d日",
-            Locale.CHINA
+            AppStrings.get(R.string.date_pattern_full),
+            Locale.getDefault()
         )
     }
 
@@ -887,7 +891,7 @@ fun DateField(
             // 左侧日历图标
             Icon(
                 imageVector = Icons.Outlined.CalendarMonth,
-                contentDescription = "选择$label",
+                contentDescription = stringResource(R.string.inventory_edit_screen_select_field, label),
                 tint = primaryColor.copy(alpha = 0.75f),
                 modifier = Modifier.size(20.dp)
             )
@@ -898,7 +902,7 @@ fun DateField(
 
             // 日期文本
             Text(
-                text = value?.format(formatter) ?: "请选择$label",
+                text = value?.format(formatter) ?: stringResource(R.string.inventory_edit_screen_select_field_prompt, label),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (value != null) {
                     FoodTheme.colors.textPrimary
@@ -911,7 +915,7 @@ fun DateField(
             // 右侧箭头
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
-                contentDescription = "选择日期",
+                contentDescription = stringResource(R.string.inventory_edit_screen_select_date),
                 tint = primaryColor.copy(alpha = 0.65f),
                 modifier = Modifier.size(18.dp)
             )
@@ -946,7 +950,7 @@ fun DateField(
                     }
                 ) {
                     Text(
-                        text = "确定",
+                        text = stringResource(R.string.common_ok),
                         color = primaryColor
                     )
                 }
@@ -958,7 +962,7 @@ fun DateField(
                     }
                 ) {
                     Text(
-                        text = "取消",
+                        text = stringResource(R.string.common_cancel),
                         color = FoodTheme.colors.textSecondary
                     )
                 }
@@ -978,7 +982,7 @@ fun DateField(
                             .selectedDateMillis
                             ?.toLocalDate()
                             ?.format(formatter)
-                            ?: "请选择日期",
+                            ?: stringResource(R.string.inventory_edit_screen_select_date_prompt),
                         color = primaryColor
                     )
                 }
@@ -995,7 +999,7 @@ private fun LocalDate.toPickerMillis(): Long {
 }
 
 private fun formatDate(date: LocalDate): String =
-    "${date.year}年${date.monthValue}月${date.dayOfMonth}日"
+    date.format(DateTimeFormatter.ofPattern(AppStrings.get(R.string.date_pattern_full)))
 
 private fun LocalDate.toEpochMilli(): Long =
     atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()

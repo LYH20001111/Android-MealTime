@@ -26,6 +26,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.ui.res.stringResource
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.feature.home.HomeScreen
@@ -55,6 +57,7 @@ fun FoodApp(modifier: Modifier = Modifier) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = FoodTab.entries.any { it.route == currentRoute }
+    val tabLabels = FoodTab.entries.associateWith { stringResource(it.labelRes) }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -87,21 +90,21 @@ fun FoodApp(modifier: Modifier = Modifier) {
                                     ) {
                                         Icon(
                                             tab.icon,
-                                            contentDescription = tab.label,
+                                            contentDescription = tabLabels[tab],
                                             tint = FoodTheme.colors.primary,
                                         )
                                     }
                                 } else {
                                     Icon(
                                         tab.icon,
-                                        contentDescription = tab.label,
+                                        contentDescription = tabLabels[tab],
                                         tint = FoodTheme.colors.textTertiary,
                                     )
                                 }
                             },
                             label = {
                                 Text(
-                                    tab.label,
+                                    tabLabels[tab] ?: "",
                                     color = if (currentRoute == tab.route) {
                                         FoodTheme.colors.primary
                                     } else {

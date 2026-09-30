@@ -1,6 +1,8 @@
 package com.skyanchor.mealtime.data.repository
 
 import androidx.room.withTransaction
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.Ingredient
 import com.skyanchor.mealtime.core.model.IngredientTypeInfo
 import com.skyanchor.mealtime.core.model.IngredientTypes
@@ -93,10 +95,10 @@ class RoomIngredientRepository(private val db: MealTimeDatabase) : IngredientRep
 
     override suspend fun addType(label: String): IngredientTypeInfo {
         val trimmed = label.trim()
-        require(trimmed.isNotEmpty()) { "种类名称不能为空" }
+        require(trimmed.isNotEmpty()) { AppStrings.get(R.string.ingredient_type_error_name_empty) }
         return db.withTransaction {
-            require(typeDao.getByKey(trimmed) == null) { "种类「$trimmed」已存在" }
-            require(typeDao.getByLabel(trimmed) == null) { "种类「$trimmed」已存在" }
+            require(typeDao.getByKey(trimmed) == null) { AppStrings.get(R.string.ingredient_type_error_duplicate, trimmed) }
+            require(typeDao.getByLabel(trimmed) == null) { AppStrings.get(R.string.ingredient_type_error_duplicate, trimmed) }
             val sortOrder = (typeDao.maxSortOrder() ?: -1) + 1
             typeDao.insert(IngredientTypeEntity(key = trimmed, label = trimmed, sortOrder = sortOrder))
             IngredientTypeInfo(key = trimmed, label = trimmed, sortOrder = sortOrder)
@@ -104,7 +106,7 @@ class RoomIngredientRepository(private val db: MealTimeDatabase) : IngredientRep
     }
 
     override suspend fun deleteType(key: String) = db.withTransaction {
-        require(key != IngredientTypes.OTHER) { "「其他」种类不能删除" }
+        require(key != IngredientTypes.OTHER) { AppStrings.get(R.string.ingredient_type_error_cannot_delete, AppStrings.get(R.string.ingredient_type_other)) }
         if (typeDao.getByKey(key) == null) return@withTransaction
         // 兜底种类不存在时自动补建
         val fallback = typeDao.getByKey(IngredientTypes.OTHER) ?: run {
@@ -136,15 +138,15 @@ class RoomIngredientRepository(private val db: MealTimeDatabase) : IngredientRep
     }
 
     override suspend fun renameType(key: String, newLabel: String): IngredientTypeInfo = db.withTransaction {
-        val type = typeDao.getByKey(key) ?: throw IllegalArgumentException("种类不存在")
+        val type = typeDao.getByKey(key) ?: throw IllegalArgumentException(AppStrings.get(R.string.ingredient_type_error_not_found))
         val trimmed = newLabel.trim()
-        require(trimmed.isNotEmpty()) { "种类名称不能为空" }
-        require(key != IngredientTypes.OTHER) { "「其他」种类不能重命名" }
+        require(trimmed.isNotEmpty()) { AppStrings.get(R.string.ingredient_type_error_name_empty) }
+        require(key != IngredientTypes.OTHER) { AppStrings.get(R.string.ingredient_type_error_cannot_rename, AppStrings.get(R.string.ingredient_type_other)) }
         require(trimmed != IngredientTypes.label(IngredientTypes.OTHER)) {
-            "「${IngredientTypes.label(IngredientTypes.OTHER)}」为内置保留名称"
+            AppStrings.get(R.string.ingredient_type_error_reserved_name, AppStrings.get(R.string.ingredient_type_other))
         }
         val existing = typeDao.getByLabel(trimmed)
-        require(existing == null || existing.key == key) { "种类「$trimmed」已存在" }
+        require(existing == null || existing.key == key) { AppStrings.get(R.string.ingredient_type_error_duplicate, trimmed) }
         typeDao.renameLabel(key, trimmed)
         IngredientTypeInfo(key = key, label = trimmed, sortOrder = type.sortOrder)
     }

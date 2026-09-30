@@ -23,12 +23,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTextField
@@ -68,13 +71,13 @@ fun ConsumeConfirmScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = stringResource(R.string.common_back),
                         tint = FoodTheme.colors.textPrimary,
                     )
                 }
                 Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceSm))
                 Text(
-                    text = "完成${mealTypeName(mealType)} · ${formatDate(state.date)}",
+                    text = stringResource(R.string.consume_screen_title, mealTypeName(mealType), formatDate(state.date)),
                     style = MaterialTheme.typography.titleLarge,
                     color = FoodTheme.colors.textPrimary,
                 )
@@ -85,7 +88,7 @@ fun ConsumeConfirmScreen(
             ) {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
                 Text(
-                    text = "确认这顿饭实际消耗的食材，库存会自动扣减。",
+                    text = stringResource(R.string.consume_screen_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.textSecondary,
                 )
@@ -96,7 +99,7 @@ fun ConsumeConfirmScreen(
                     horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceMd),
                 ) {
                     Text(
-                        text = "用餐人数",
+                        text = stringResource(R.string.consume_screen_servings_label),
                         style = MaterialTheme.typography.titleMedium,
                         color = FoodTheme.colors.textPrimary,
                     )
@@ -113,19 +116,19 @@ fun ConsumeConfirmScreen(
 
                 if (state.isLoading) {
                     Text(
-                        text = "加载中…",
+                        text = stringResource(R.string.consume_screen_loading),
                         style = MaterialTheme.typography.bodyMedium,
                         color = FoodTheme.colors.textTertiary,
                     )
                 } else if (state.alreadyCompleted) {
                     Text(
-                        text = "这一餐已经完成过了，去历史记录看看吧。",
+                        text = stringResource(R.string.consume_screen_already_completed),
                         style = MaterialTheme.typography.bodyMedium,
                         color = FoodTheme.colors.textSecondary,
                     )
                 } else if (state.dishes.isEmpty()) {
                     Text(
-                        text = "这餐还没有安排菜品",
+                        text = stringResource(R.string.consume_screen_no_dishes),
                         style = MaterialTheme.typography.bodyMedium,
                         color = FoodTheme.colors.textTertiary,
                     )
@@ -145,7 +148,7 @@ fun ConsumeConfirmScreen(
                                 if (!dish.hasDeductions) {
                                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                                     Text(
-                                        text = "没有食材明细，不扣减库存",
+                                        text = stringResource(R.string.consume_screen_no_deductions),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = FoodTheme.colors.textTertiary,
                                     )
@@ -201,7 +204,7 @@ fun ConsumeConfirmScreen(
 
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
                 PrimaryButton(
-                    text = if (state.isSaving) "确认中…" else "确认用餐",
+                    text = if (state.isSaving) stringResource(R.string.consume_screen_confirming) else stringResource(R.string.consume_screen_confirm_meal),
                     onClick = { viewModel.confirm(onCompleted = onCompleted) },
                     enabled = !state.isSaving && !state.isLoading && !state.alreadyCompleted,
                     modifier = Modifier.fillMaxWidth(),
@@ -213,10 +216,10 @@ fun ConsumeConfirmScreen(
 }
 
 internal fun mealTypeName(type: MealType): String = when (type) {
-    MealType.BREAKFAST -> "早餐"
-    MealType.LUNCH -> "午餐"
-    MealType.DINNER -> "晚餐"
+    MealType.BREAKFAST -> AppStrings.get(R.string.meal_type_breakfast)
+    MealType.LUNCH -> AppStrings.get(R.string.meal_type_lunch)
+    MealType.DINNER -> AppStrings.get(R.string.meal_type_dinner)
 }
 
 private fun formatDate(date: LocalDate): String =
-    date.format(DateTimeFormatter.ofPattern("M月d日", Locale.CHINA))
+    date.format(DateTimeFormatter.ofPattern(AppStrings.get(R.string.date_pattern_medium), Locale.getDefault()))

@@ -61,6 +61,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -71,6 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.common.copyImageToPrivate
 import com.skyanchor.mealtime.core.model.Difficulty
@@ -82,6 +84,7 @@ import com.skyanchor.mealtime.core.ui.PrimaryButton
 import com.skyanchor.mealtime.core.ui.SecondaryButton
 import com.skyanchor.mealtime.core.ui.SectionTitle
 import com.skyanchor.mealtime.core.ui.TagChip
+import com.skyanchor.mealtime.core.ui.ingredientTypeDisplayLabel
 import kotlinx.coroutines.launch
 
 /**
@@ -132,7 +135,7 @@ fun RecipeEditScreen(
         bottomBar = {
             if (!state.isLoading) {
                 PrimaryButton(
-                    text = if (state.isSaving) "保存中…" else "保存菜谱",
+                    text = if (state.isSaving) stringResource(R.string.recipe_edit_screen_saving) else stringResource(R.string.recipe_edit_screen_save_recipe),
                     onClick = { viewModel.save(onSaved = { onDone() }) },
                     enabled = !state.isSaving,
                     modifier = Modifier
@@ -181,13 +184,13 @@ fun RecipeEditScreen(
                     IconButton(onClick = ::attemptLeave) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回",
+                            contentDescription = stringResource(R.string.common_back),
                             tint = FoodTheme.colors.textPrimary,
                         )
                     }
                     Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceSm))
                     Text(
-                        text = if (state.isNew) "新增菜谱" else "编辑菜谱",
+                        text = if (state.isNew) stringResource(R.string.recipe_edit_screen_add_recipe) else stringResource(R.string.recipe_edit_screen_edit_recipe),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold,
                         color = FoodTheme.colors.textPrimary,
@@ -205,22 +208,22 @@ fun RecipeEditScreen(
             // ① 基本信息：菜名 / 封面 / 分类（必填 3 项）
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-                SectionHeader(title = "基本信息", badge = "必填 3 项")
+                SectionHeader(title = stringResource(R.string.recipe_edit_screen_basic_info), badge = stringResource(R.string.recipe_edit_screen_required_badge))
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-                FormLabel("菜名", true)
+                FormLabel(stringResource(R.string.recipe_edit_screen_recipe_name), true)
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 FoodTextField(
                     value = state.name,
                     onValueChange = viewModel::setName,
-                    placeholder = "给这道菜起个名字吧",
+                    placeholder = stringResource(R.string.recipe_edit_screen_recipe_name_hint),
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (state.nameError) ErrorText("请输入菜名")
-                if (state.nameDuplicate) ErrorText("该菜谱已存在")
+                if (state.nameError) ErrorText(stringResource(R.string.recipe_edit_screen_error_name_required))
+                if (state.nameDuplicate) ErrorText(stringResource(R.string.recipe_edit_screen_error_name_duplicate))
             }
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                FormLabel("封面", true)
+                FormLabel(stringResource(R.string.recipe_edit_screen_cover), true)
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 CoverPicker(
                     imageUri = state.imageUri,
@@ -231,12 +234,12 @@ fun RecipeEditScreen(
                     },
                     onClear = { viewModel.setImageUri(null) },
                 )
-                if (state.imageError) ErrorText("请添加封面图")
+                if (state.imageError) ErrorText(stringResource(R.string.recipe_edit_screen_error_cover_required))
             }
             if (state.categories.isNotEmpty()) {
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    FormLabel("分类", true)
+                    FormLabel(stringResource(R.string.recipe_edit_screen_category), true)
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
 
                     FlowRow(
@@ -282,16 +285,16 @@ fun RecipeEditScreen(
                             }
                         }
                     }
-                    if (state.categoryError) ErrorText("请选择一个分类")
+                    if (state.categoryError) ErrorText(stringResource(R.string.recipe_edit_screen_error_category_required))
                 }
             }
 
             // ② 菜谱信息：难度 / 制作时间
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
-                SectionHeader(title = "菜谱信息")
+                SectionHeader(title = stringResource(R.string.recipe_edit_screen_recipe_info))
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
-                FormLabel("难度")
+                FormLabel(stringResource(R.string.recipe_edit_screen_difficulty))
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
                     Difficulty.entries.forEach { difficulty ->
@@ -334,12 +337,12 @@ fun RecipeEditScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-                FormLabel("制作时间（分钟）")
+                FormLabel(stringResource(R.string.recipe_edit_screen_cooking_time_minutes))
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 FoodTextField(
                     value = state.cookingTimeText,
                     onValueChange = viewModel::setCookingTime,
-                    placeholder = "如：15",
+                    placeholder = stringResource(R.string.recipe_edit_screen_cooking_time_hint),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     leadingIcon = Icons.Outlined.AccessTime
@@ -349,12 +352,12 @@ fun RecipeEditScreen(
             // ③ 用料：按食材种类分区（默认 食材/调料）
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
-                SectionTitle(text = "用料")
+                SectionTitle(text = stringResource(R.string.recipe_edit_screen_ingredients))
             }
             state.sections.forEach { section ->
                 item(key = "section_${section.typeKey}") {
                     IngredientSection(
-                        title = section.typeLabel,
+                        title = ingredientTypeDisplayLabel(storedLabel = section.typeLabel, key = section.typeKey),
                         lines = section.lines,
                         onUpdate = { index, value -> viewModel.updateLine(section.typeKey, index, value) },
                         onAdd = { viewModel.addLine(section.typeKey) },
@@ -366,7 +369,7 @@ fun RecipeEditScreen(
             // ④ 做法：步骤
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXxl))
-                SectionTitle(text = "做法步骤")
+                SectionTitle(text = stringResource(R.string.recipe_edit_screen_steps))
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
             }
             itemsIndexed(state.steps) { index, step ->
@@ -392,13 +395,13 @@ fun RecipeEditScreen(
                     FoodTextField(
                         value = step,
                         onValueChange = { viewModel.updateStep(index, it) },
-                        placeholder = "第 ${index + 1} 步做什么",
+                        placeholder = stringResource(R.string.recipe_edit_screen_step_placeholder, index + 1),
                         modifier = Modifier.weight(1f),
                     )
                     IconButton(onClick = { viewModel.removeStep(index) }) {
                         Icon(
                             imageVector = Icons.Outlined.Close,
-                            contentDescription = "删除步骤",
+                            contentDescription = stringResource(R.string.recipe_edit_screen_delete_step),
                             tint = FoodTheme.colors.textTertiary,
                         )
                     }
@@ -407,7 +410,7 @@ fun RecipeEditScreen(
             item {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 SecondaryButton(
-                    text = "＋ 添加步骤",
+                    text = stringResource(R.string.recipe_edit_screen_add_step),
                     onClick = viewModel::addStep,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -423,7 +426,7 @@ fun RecipeEditScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = "更多信息 · 可选",
+                        text = stringResource(R.string.recipe_edit_screen_more_info_optional),
                         style = MaterialTheme.typography.titleMedium,
                         color = FoodTheme.colors.textPrimary,
                     )
@@ -434,7 +437,7 @@ fun RecipeEditScreen(
                         } else {
                             Icons.Outlined.KeyboardArrowDown
                         },
-                        contentDescription = if (moreExpanded) "收起" else "展开",
+                        contentDescription = if (moreExpanded) stringResource(R.string.recipe_edit_screen_collapse) else stringResource(R.string.recipe_edit_screen_expand),
                         tint = FoodTheme.colors.textTertiary,
                     )
                 }
@@ -442,12 +445,12 @@ fun RecipeEditScreen(
             if (moreExpanded) {
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
-                    FormLabel("简介")
+                    FormLabel(stringResource(R.string.recipe_edit_screen_description))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     FoodTextField(
                         value = state.description,
                         onValueChange = viewModel::setDescription,
-                        placeholder = "一句话介绍这道菜",
+                        placeholder = stringResource(R.string.recipe_edit_screen_description_hint),
                         minLines = 2,
                         singleLine = false,
                         modifier = Modifier.fillMaxWidth(),
@@ -455,22 +458,22 @@ fun RecipeEditScreen(
                 }
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    FormLabel("备注")
+                    FormLabel(stringResource(R.string.recipe_edit_screen_note))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     FoodTextField(
                         value = state.note,
                         onValueChange = viewModel::setNote,
-                        placeholder = "小贴士、失败经验等",
+                        placeholder = stringResource(R.string.recipe_edit_screen_note_hint),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 item {
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                    FormLabel("标签")
+                    FormLabel(stringResource(R.string.recipe_edit_screen_tags))
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     if (selectedTags.isEmpty()) {
                         Text(
-                            text = "还没添加标签",
+                            text = stringResource(R.string.recipe_edit_screen_no_tags_yet),
                             style = MaterialTheme.typography.bodySmall,
                             color = FoodTheme.colors.textTertiary,
                         )
@@ -488,7 +491,7 @@ fun RecipeEditScreen(
                     }
                     Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                     SecondaryButton(
-                        text = "＋ 添加标签",
+                        text = stringResource(R.string.recipe_edit_screen_add_tag_button),
                         onClick = { showTagSheet = true },
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -525,13 +528,13 @@ fun RecipeEditScreen(
     if (showLeaveDialog) {
         AlertDialog(
             onDismissRequest = { showLeaveDialog = false },
-            title = { Text("确定离开？") },
-            text = { Text("当前内容尚未保存。") },
+            title = { Text(stringResource(R.string.recipe_edit_screen_dialog_leave_title)) },
+            text = { Text(stringResource(R.string.recipe_edit_screen_dialog_leave_text)) },
             confirmButton = {
-                TextButton(onClick = onDone) { Text("放弃") }
+                TextButton(onClick = onDone) { Text(stringResource(R.string.recipe_edit_screen_dialog_discard)) }
             },
             dismissButton = {
-                TextButton(onClick = { showLeaveDialog = false }) { Text("继续编辑") }
+                TextButton(onClick = { showLeaveDialog = false }) { Text(stringResource(R.string.recipe_edit_screen_dialog_keep_editing)) }
             },
         )
     }
@@ -540,10 +543,10 @@ fun RecipeEditScreen(
     if (state.showNameDuplicateDialog) {
         AlertDialog(
             onDismissRequest = viewModel::dismissNameDuplicateDialog,
-            title = { Text("菜谱已存在") },
-            text = { Text("已存在同名菜谱「${state.name.trim()}」，请换一个名称后再保存。") },
+            title = { Text(stringResource(R.string.recipe_edit_screen_dialog_name_duplicate_title)) },
+            text = { Text(stringResource(R.string.recipe_edit_screen_dialog_name_duplicate_text, state.name.trim())) },
             confirmButton = {
-                TextButton(onClick = viewModel::dismissNameDuplicateDialog) { Text("好的") }
+                TextButton(onClick = viewModel::dismissNameDuplicateDialog) { Text(stringResource(R.string.recipe_edit_screen_got_it)) }
             },
         )
     }
@@ -660,7 +663,7 @@ private fun GuideBanner(
                 )
         ) {
             Text(
-                text = "记录每一道",
+                text = stringResource(R.string.recipe_edit_screen_banner_line1),
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textSecondary,
                 maxLines = 1,
@@ -672,7 +675,7 @@ private fun GuideBanner(
             )
 
             Text(
-                text = "让你心动的味道",
+                text = stringResource(R.string.recipe_edit_screen_banner_line2),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = FoodTheme.colors.primary,
@@ -699,7 +702,7 @@ private fun RemovableTagChip(text: String, onRemove: () -> Unit) {
         )
         Icon(
             imageVector = Icons.Outlined.Close,
-            contentDescription = "删除标签",
+            contentDescription = stringResource(R.string.recipe_edit_screen_delete_tag),
             tint = FoodTheme.colors.primaryDark,
             modifier = Modifier
                 .padding(horizontal = 4.dp)
@@ -726,16 +729,16 @@ private fun AddTagSheet(
     if (pendingDelete != null) {
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
-            title = { Text("删除标签") },
-            text = { Text("确定删除标签「${pendingDelete?.name}」吗？所有选用该标签的菜谱都会移除该标签。") },
+            title = { Text(stringResource(R.string.recipe_edit_screen_delete_tag)) },
+            text = { Text(stringResource(R.string.recipe_edit_screen_dialog_delete_tag_text, pendingDelete?.name.orEmpty())) },
             confirmButton = {
                 TextButton(onClick = {
                     pendingDelete?.let(onDeleteTag)
                     pendingDelete = null
-                }) { Text("删除", color = FoodTheme.colors.danger) }
+                }) { Text(stringResource(R.string.common_delete), color = FoodTheme.colors.danger) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingDelete = null }) { Text("取消") }
+                TextButton(onClick = { pendingDelete = null }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -749,24 +752,24 @@ private fun AddTagSheet(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "添加标签",
+                    text = stringResource(R.string.recipe_edit_screen_add_tag_title),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = FoodTheme.colors.textPrimary,
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                TextButton(onClick = onDismiss) { Text("完成") }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_done)) }
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "系统标签",
+                    text = stringResource(R.string.recipe_edit_screen_system_tags),
                     style = MaterialTheme.typography.bodyMedium,
                     color = FoodTheme.colors.textSecondary,
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
-                    text = "点选使用，点 × 删除",
+                    text = stringResource(R.string.recipe_edit_screen_system_tags_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.textTertiary,
                 )
@@ -774,7 +777,7 @@ private fun AddTagSheet(
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
             if (availableTags.isEmpty()) {
                 Text(
-                    text = "暂无系统标签，可在下方添加",
+                    text = stringResource(R.string.recipe_edit_screen_no_system_tags),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.textTertiary,
                 )
@@ -794,7 +797,7 @@ private fun AddTagSheet(
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             Text(
-                text = "自定义标签",
+                text = stringResource(R.string.recipe_edit_screen_custom_tags),
                 style = MaterialTheme.typography.bodyMedium,
                 color = FoodTheme.colors.textSecondary,
             )
@@ -806,17 +809,17 @@ private fun AddTagSheet(
                 FoodTextField(
                     value = newTagText,
                     onValueChange = onNewTagTextChange,
-                    placeholder = "输入自定义标签",
+                    placeholder = stringResource(R.string.recipe_edit_screen_custom_tag_hint),
                     modifier = Modifier.weight(1f),
                 )
                 SecondaryButton(
-                    text = "＋",
+                    text = stringResource(R.string.recipe_edit_screen_add_symbol),
                     onClick = onAddNewTag,
                 )
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
             Text(
-                text = "添加后将成为系统标签，可供所有菜谱选用",
+                text = stringResource(R.string.recipe_edit_screen_custom_tag_note),
                 style = MaterialTheme.typography.bodySmall,
                 color = FoodTheme.colors.textTertiary,
             )
@@ -849,7 +852,7 @@ private fun DeletableTagChip(
         )
         Icon(
             imageVector = Icons.Outlined.Close,
-            contentDescription = "删除标签",
+            contentDescription = stringResource(R.string.recipe_edit_screen_delete_tag),
             tint = contentColor,
             modifier = Modifier
                 .clickable(onClick = onDelete)
@@ -877,7 +880,7 @@ private fun CoverPicker(
         if (imageUri != null) {
             AsyncImage(
                 model = imageUri,
-                contentDescription = "封面",
+                contentDescription = stringResource(R.string.recipe_edit_screen_cover),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -891,7 +894,7 @@ private fun CoverPicker(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "移除封面",
+                    contentDescription = stringResource(R.string.recipe_edit_screen_remove_cover),
                     tint = FoodTheme.colors.textSecondary,
                 )
             }
@@ -905,13 +908,13 @@ private fun CoverPicker(
                 )
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
                 Text(
-                    text = "添加菜品图片",
+                    text = stringResource(R.string.recipe_edit_screen_add_cover_image),
                     style = MaterialTheme.typography.bodyMedium,
                     color = FoodTheme.colors.textSecondary,
                 )
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXs))
                 Text(
-                    text = "一张好看的图片更诱人",
+                    text = stringResource(R.string.recipe_edit_screen_cover_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.textTertiary,
                 )
@@ -946,25 +949,25 @@ private fun IngredientSection(
                 FoodTextField(
                     value = line.name,
                     onValueChange = { onUpdate(index, line.copy(name = it)) },
-                    placeholder = "名称",
+                    placeholder = stringResource(R.string.recipe_edit_screen_line_name_hint),
                     modifier = Modifier.weight(1f),
                 )
                 FoodTextField(
                     value = line.quantity,
                     onValueChange = { onUpdate(index, line.copy(quantity = it)) },
-                    placeholder = "数量",
+                    placeholder = stringResource(R.string.recipe_edit_screen_line_quantity_hint),
                     modifier = Modifier.width(72.dp),
                 )
                 FoodTextField(
                     value = line.unit,
                     onValueChange = { onUpdate(index, line.copy(unit = it)) },
-                    placeholder = "单位",
+                    placeholder = stringResource(R.string.recipe_edit_screen_line_unit_hint),
                     modifier = Modifier.width(64.dp),
                 )
                 IconButton(onClick = { onRemove(index) }) {
                     Icon(
                         imageVector = Icons.Outlined.Close,
-                        contentDescription = "删除",
+                        contentDescription = stringResource(R.string.common_delete),
                         tint = FoodTheme.colors.textTertiary,
                     )
                 }
@@ -972,7 +975,7 @@ private fun IngredientSection(
         }
         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
         SecondaryButton(
-            text = "＋ 添加$title",
+            text = stringResource(R.string.recipe_edit_screen_add_section_line, title),
             onClick = onAdd,
             modifier = Modifier.fillMaxWidth(),
         )

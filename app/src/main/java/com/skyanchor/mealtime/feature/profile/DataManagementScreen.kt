@@ -38,10 +38,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.SectionTitle
@@ -104,19 +107,19 @@ fun DataManagementScreen(
     if (preview != null) {
         AlertDialog(
             onDismissRequest = { viewModel.cancelRestore() },
-            title = { Text("发现备份数据") },
+            title = { Text(stringResource(R.string.data_mgmt_screen_restore_found_title)) },
             text = {
                 Column {
-                    Text("备份日期：${formatBackupDate(preview.createdAt)}")
+                    Text(stringResource(R.string.data_mgmt_screen_backup_date, formatBackupDate(preview.createdAt)))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("菜谱：${preview.recipes} 道")
-                    Text("食材：${preview.ingredients} 项")
-                    Text("用餐记录：${preview.mealRecords} 条")
-                    Text("图片：${preview.images} 张")
-                    Text("备份大小：${formatFileSize(preview.zipSizeBytes)}")
+                    Text(stringResource(R.string.data_mgmt_screen_recipes_count, preview.recipes))
+                    Text(stringResource(R.string.data_mgmt_screen_ingredients_count, preview.ingredients))
+                    Text(stringResource(R.string.data_mgmt_screen_meal_records_count, preview.mealRecords))
+                    Text(stringResource(R.string.data_mgmt_screen_images_count, preview.images))
+                    Text(stringResource(R.string.data_mgmt_screen_backup_size, formatFileSize(preview.zipSizeBytes)))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "恢复将覆盖当前设备上的全部数据（菜谱、图片、库存、计划、记录、设置）。",
+                        text = stringResource(R.string.data_mgmt_screen_restore_warning),
                         style = MaterialTheme.typography.bodySmall,
                         color = FoodTheme.colors.danger,
                     )
@@ -124,11 +127,11 @@ fun DataManagementScreen(
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmRestore() }) {
-                    Text("开始恢复", color = FoodTheme.colors.danger)
+                    Text(stringResource(R.string.data_mgmt_screen_start_restore), color = FoodTheme.colors.danger)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.cancelRestore() }) { Text("取消") }
+                TextButton(onClick = { viewModel.cancelRestore() }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -145,13 +148,13 @@ fun DataManagementScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = stringResource(R.string.common_back),
                     tint = FoodTheme.colors.textPrimary,
                 )
             }
             Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceSm))
             Text(
-                text = "数据管理",
+                text = stringResource(R.string.data_mgmt_screen_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = FoodTheme.colors.textPrimary,
             )
@@ -167,16 +170,16 @@ fun DataManagementScreen(
                 ) {
                     ActionRow(
                         icon = Icons.Outlined.Backup,
-                        title = "数据备份",
-                        subtitle = "备份菜谱、图片、食材和用餐记录",
+                        title = stringResource(R.string.data_mgmt_screen_backup_title),
+                        subtitle = stringResource(R.string.data_mgmt_screen_backup_subtitle),
                         enabled = !state.busy,
                     ) {
-                        backupLauncher.launch("饭点_backup_${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"))}.zip")
+                        backupLauncher.launch("${AppStrings.get(R.string.app_name)}_backup_${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm"))}.zip")
                     }
                     ActionRow(
                         icon = Icons.Outlined.Restore,
-                        title = "恢复数据",
-                        subtitle = "从备份文件恢复到当前设备",
+                        title = stringResource(R.string.data_mgmt_screen_restore_title),
+                        subtitle = stringResource(R.string.data_mgmt_screen_restore_subtitle),
                         enabled = !state.busy,
                     ) {
                         restoreLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
@@ -185,7 +188,7 @@ fun DataManagementScreen(
             }
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "高级")
+            SectionTitle(text = stringResource(R.string.data_mgmt_screen_section_advanced))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Column(
@@ -193,8 +196,8 @@ fun DataManagementScreen(
                 ) {
                     ActionRow(
                         icon = Icons.Outlined.Code,
-                        title = "导出 JSON",
-                        subtitle = "仅导出结构化数据，不含图片",
+                        title = stringResource(R.string.data_mgmt_screen_export_json_title),
+                        subtitle = stringResource(R.string.data_mgmt_screen_export_json_subtitle),
                         enabled = !state.busy,
                     ) {
                         viewModel.buildJsonExport { json ->
@@ -221,7 +224,7 @@ fun DataManagementScreen(
                     )
                     Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceMd))
                     Text(
-                        text = state.progressText ?: "处理中…",
+                        text = state.progressText ?: stringResource(R.string.data_mgmt_screen_processing),
                         style = MaterialTheme.typography.bodyMedium,
                         color = FoodTheme.colors.textSecondary,
                     )
@@ -294,7 +297,7 @@ private fun ActionRow(
 /** ISO 8601（如 2026-09-08T15:12:00+08:00）→ "2026-09-08 15:12" */
 private fun formatBackupDate(iso: String): String = runCatching {
     OffsetDateTime.parse(iso).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-}.getOrDefault(iso.ifBlank { "未知" })
+}.getOrDefault(iso.ifBlank { AppStrings.get(R.string.data_mgmt_screen_unknown) })
 
 private fun formatFileSize(bytes: Long): String = when {
     bytes >= 1024 * 1024 -> "%.1f MB".format(bytes / 1024f / 1024f)

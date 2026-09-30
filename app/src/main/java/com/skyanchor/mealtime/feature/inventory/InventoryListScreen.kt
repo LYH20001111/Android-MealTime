@@ -33,11 +33,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.common.ExpiryCalculator
 import com.skyanchor.mealtime.core.common.ExpiryStatus
@@ -51,6 +53,8 @@ import com.skyanchor.mealtime.core.ui.FoodFab
 import com.skyanchor.mealtime.core.ui.FoodSearchField
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.TagChip
+import com.skyanchor.mealtime.core.ui.expiryStatusLabel
+import com.skyanchor.mealtime.core.ui.ingredientTypeDisplayLabel
 import java.time.LocalDate
 
 /**
@@ -77,13 +81,13 @@ fun InventoryListScreen(
             FoodSearchField(
                 value = state.query,
                 onValueChange = viewModel::setQuery,
-                placeholder = "搜索食材...",
+                placeholder = stringResource(R.string.inventory_list_search_placeholder),
             )
 
             if (state.expiringCount > 0) {
                 Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
                 Text(
-                    text = "有 ${state.expiringCount} 批食材临近保质期，优先吃掉它们",
+                    text = stringResource(R.string.inventory_list_expiring_banner, state.expiringCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.warning,
                 )
@@ -93,7 +97,7 @@ fun InventoryListScreen(
             LazyRow(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
                 items(state.tabs, key = { it.key }) { tab ->
                     TagChip(
-                        text = tab.label,
+                        text = ingredientTypeDisplayLabel(storedLabel = tab.label, key = tab.key),
                         selected = state.selectedTabKey == tab.key,
                         onClick = { viewModel.selectTab(tab.key) },
                     )
@@ -117,8 +121,8 @@ fun InventoryListScreen(
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         EmptyState(
                             icon = Icons.Outlined.SearchOff,
-                            title = "没有找到相关食材",
-                            hint = "换个关键词试试",
+                            title = stringResource(R.string.inventory_list_search_empty_title),
+                            hint = stringResource(R.string.inventory_list_search_empty_hint),
                         )
                     }
                 }
@@ -127,8 +131,8 @@ fun InventoryListScreen(
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         EmptyState(
                             icon = Icons.Outlined.Eco,
-                            title = "没有临期食材",
-                            hint = "保质期临近的食材会出现在这里",
+                            title = stringResource(R.string.inventory_list_expiring_empty_title),
+                            hint = stringResource(R.string.inventory_list_expiring_empty_hint),
                         )
                     }
                 }
@@ -137,8 +141,8 @@ fun InventoryListScreen(
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         EmptyState(
                             icon = Icons.Outlined.ShoppingCart,
-                            title = "没有库存空的食材",
-                            hint = "录入库存时选择「库存空」，可记录需要购买的食材",
+                            title = stringResource(R.string.inventory_list_empty_stock_empty_title),
+                            hint = stringResource(R.string.inventory_list_empty_stock_empty_hint),
                         )
                     }
                 }
@@ -147,9 +151,9 @@ fun InventoryListScreen(
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         EmptyState(
                             icon = Icons.Outlined.Kitchen,
-                            title = "冰箱还是空的",
-                            hint = "录入食材和保质期，饭点会提醒你先吃什么",
-                            actionText = "录入食材",
+                            title = stringResource(R.string.inventory_list_empty_title),
+                            hint = stringResource(R.string.inventory_list_empty_hint),
+                            actionText = stringResource(R.string.inventory_list_add_ingredient),
                             onAction = onAddItem,
                         )
                     }
@@ -157,7 +161,8 @@ fun InventoryListScreen(
 
                 else -> {
                     // 列表末尾统计文案：显示当前 Tab 下的食材数量
-                    val footerLabel = state.tabs.firstOrNull { it.key == state.selectedTabKey }?.label ?: "全部"
+                    val footerLabel = state.tabs.firstOrNull { it.key == state.selectedTabKey }?.label
+                        ?: stringResource(R.string.inventory_list_all)
                     LazyColumn(
                         modifier = Modifier.weight(1f),
                         contentPadding = PaddingValues(top = FoodTheme.dimens.spaceMd),
@@ -192,7 +197,7 @@ fun InventoryListScreen(
 
         FoodFab(
             onClick = onAddItem,
-            contentDescription = "录入库存",
+            contentDescription = stringResource(R.string.inventory_list_add_inventory),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(FoodTheme.dimens.spaceXxl),
@@ -267,7 +272,7 @@ private fun InventoryCard(
                 val amount = item.quantity?.let { q ->
                     val quantityText = q.toString().removeSuffix(".0")
                     item.unit?.let { "$quantityText $it" } ?: quantityText
-                } ?: item.quantityLevel?.chineseLabel ?: "库存空"
+                } ?: item.quantityLevel?.chineseLabel ?: stringResource(R.string.inventory_list_empty_stock)
                 Text(
                     text = amount,
                     style = MaterialTheme.typography.bodySmall,
@@ -279,7 +284,7 @@ private fun InventoryCard(
                 )
             }
             Text(
-                text = ExpiryCalculator.label(status, days),
+                text = expiryStatusLabel(status, days),
                 style = MaterialTheme.typography.bodySmall,
                 color = statusColor,
             )

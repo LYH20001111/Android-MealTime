@@ -54,11 +54,15 @@ class ExpiryNotificationWorker(
         if (expiring.isEmpty()) return Result.success()
 
         val todayDate = LocalDate.now()
-        val names = expiring.take(3).joinToString("、") { item ->
+        val names = expiring.take(3).joinToString(applicationContext.getString(R.string.common_name_separator)) { item ->
             val days = item.expireDate?.let { ExpiryCalculator.daysUntil(it, todayDate) }
-            "${item.ingredient.name}${if (days != null) " ${days}天" else ""}"
+            if (days != null) {
+                applicationContext.getString(R.string.notification_expiry_item, item.ingredient.name, days)
+            } else {
+                item.ingredient.name
+            }
         }
-        val text = "$names 即将到期，打开饭点优先安排掉它们"
+        val text = applicationContext.getString(R.string.notification_expiry_text, names)
 
         showNotification(
             title = applicationContext.getString(R.string.notification_expiry_title),

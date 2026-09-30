@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.MealStatus
 import com.skyanchor.mealtime.core.model.MealType
@@ -181,9 +183,9 @@ class HomeViewModel(
                 ?.items?.firstOrNull { it.recipeId == recipeId }?.name.orEmpty()
             val added = createMealPlan(date = today, mealType = mealType, recipeId = recipeId)
             _addedNotice.value = if (added == null) {
-                "「$name」已经在今天${mealLabel(mealType)}菜单中"
+                AppStrings.get(R.string.home_notice_already_added, name, mealLabel(mealType))
             } else {
-                "已把「$name」加入今天${mealLabel(mealType)}"
+                AppStrings.get(R.string.home_notice_added, name, mealLabel(mealType))
             }
         }
     }
@@ -205,15 +207,15 @@ class HomeViewModel(
         val category = recipe.categoryId?.let { categoryNames[it] }
         val parts = buildList {
             category?.let(::add)
-            recipe.cookingTimeMin?.let { add("$it 分钟") }
+            recipe.cookingTimeMin?.let { add(AppStrings.get(R.string.home_meta_minutes, it)) }
         }
         return if (parts.isEmpty()) recipe.difficulty.chineseLabel else parts.joinToString(" · ")
     }
 
     private fun mealLabel(type: MealType): String = when (type) {
-        MealType.BREAKFAST -> "早餐"
-        MealType.LUNCH -> "午餐"
-        MealType.DINNER -> "晚餐"
+        MealType.BREAKFAST -> AppStrings.get(R.string.meal_type_breakfast)
+        MealType.LUNCH -> AppStrings.get(R.string.meal_type_lunch)
+        MealType.DINNER -> AppStrings.get(R.string.meal_type_dinner)
     }
 
     companion object {

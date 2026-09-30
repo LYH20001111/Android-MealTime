@@ -35,7 +35,7 @@ import java.time.LocalDate
  * 库存不足、无明细菜（R10）、用户调整（R05）、归档后记录保留（R07）。
  */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [34], qualifiers = "zh")
 class CompleteMealTest {
 
     private lateinit var db: MealTimeDatabase

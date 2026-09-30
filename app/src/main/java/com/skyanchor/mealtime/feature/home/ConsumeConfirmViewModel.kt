@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.domain.repository.MealRepository
 import com.skyanchor.mealtime.domain.repository.SettingsKeys
@@ -145,7 +147,7 @@ class ConsumeConfirmViewModel(
             } catch (e: IllegalStateException) {
                 _uiState.update { it.copy(isSaving = false, saveError = e.message) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isSaving = false, saveError = "确认失败，请重试") }
+                _uiState.update { it.copy(isSaving = false, saveError = AppStrings.get(R.string.consume_confirm_failed)) }
             }
         }
     }

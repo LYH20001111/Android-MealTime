@@ -45,14 +45,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.chineseLabel
-import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.RecipeDetail
 import com.skyanchor.mealtime.core.ui.FoodCard
@@ -60,6 +62,7 @@ import com.skyanchor.mealtime.core.ui.FoodImagePreviewDialog
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.SectionTitle
 import com.skyanchor.mealtime.core.ui.TagChip
+import com.skyanchor.mealtime.core.ui.ingredientTypeLabel
 
 /**
  * 菜谱详情：封面、基本信息、食材/调料、步骤、备注，
@@ -84,9 +87,9 @@ fun RecipeDetailScreen(
         state.addResult?.let { result ->
             snackbarHostState.showSnackbar(
                 if (result.isDuplicate) {
-                    "该菜品已在今日${mealLabel(result.mealType)}菜单中"
+                    AppStrings.get(R.string.recipe_detail_already_in_meal, mealLabel(result.mealType))
                 } else {
-                    "已加入今日${mealLabel(result.mealType)}"
+                    AppStrings.get(R.string.recipe_detail_added_to_meal, mealLabel(result.mealType))
                 }
             )
             viewModel.consumeAddResult()
@@ -96,16 +99,16 @@ fun RecipeDetailScreen(
     if (showArchiveDialog) {
         AlertDialog(
             onDismissRequest = { showArchiveDialog = false },
-            title = { Text("删除菜谱") },
-            text = { Text("菜谱会归档保留，历史用餐记录不受影响。确定删除吗？") },
+            title = { Text(stringResource(R.string.recipe_detail_delete_title)) },
+            text = { Text(stringResource(R.string.recipe_detail_delete_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showArchiveDialog = false
                     viewModel.archive(onArchived = onBack)
-                }) { Text("删除", color = FoodTheme.colors.danger) }
+                }) { Text(stringResource(R.string.common_delete), color = FoodTheme.colors.danger) }
             },
             dismissButton = {
-                TextButton(onClick = { showArchiveDialog = false }) { Text("取消") }
+                TextButton(onClick = { showArchiveDialog = false }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -138,7 +141,7 @@ fun RecipeDetailScreen(
                             MealType.DINNER,
                         ).forEach { type ->
                             com.skyanchor.mealtime.core.ui.SecondaryButton(
-                                text = "加入${mealLabel(type)}",
+                                text = stringResource(R.string.recipe_detail_add_to_meal, mealLabel(type)),
                                 onClick = { viewModel.addToMeal(type) },
                                 modifier = Modifier.weight(1f),
                             )
@@ -166,7 +169,7 @@ fun RecipeDetailScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = stringResource(R.string.common_back),
                         tint = FoodTheme.colors.textPrimary,
                     )
                 }
@@ -175,14 +178,14 @@ fun RecipeDetailScreen(
                     IconButton(onClick = onEdit) {
                         Icon(
                             imageVector = Icons.Outlined.Edit,
-                            contentDescription = "编辑",
+                            contentDescription = stringResource(R.string.common_edit),
                             tint = FoodTheme.colors.textSecondary,
                         )
                     }
                     IconButton(onClick = { showArchiveDialog = true }) {
                         Icon(
                             imageVector = Icons.Outlined.Delete,
-                            contentDescription = "删除",
+                            contentDescription = stringResource(R.string.common_delete),
                             tint = FoodTheme.colors.textSecondary,
                         )
                     }
@@ -193,7 +196,7 @@ fun RecipeDetailScreen(
                             } else {
                                 Icons.Outlined.StarBorder
                             },
-                            contentDescription = "收藏",
+                            contentDescription = stringResource(R.string.recipe_detail_favorite),
                             tint = FoodTheme.colors.primary,
                         )
                     }
@@ -220,7 +223,7 @@ fun RecipeDetailScreen(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = "菜谱不存在或已删除",
+                            text = stringResource(R.string.recipe_detail_not_found),
                             style = MaterialTheme.typography.bodyMedium,
                             color = FoodTheme.colors.textTertiary,
                         )
@@ -249,7 +252,7 @@ private fun RecipeDetailContent(
         if (recipe.imageUri != null) {
             AsyncImage(
                 model = recipe.imageUri,
-                contentDescription = "菜谱图片，点击查看大图",
+                contentDescription = stringResource(R.string.recipe_detail_image_preview),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -268,13 +271,13 @@ private fun RecipeDetailContent(
         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
         Row(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
             TagChip(text = recipe.difficulty.chineseLabel)
-            recipe.cookingTimeMin?.let { TagChip(text = "$it 分钟") }
+            recipe.cookingTimeMin?.let { TagChip(text = stringResource(R.string.recipe_detail_cooking_minutes, it)) }
         }
 
         // 按种类分区展示（默认 食材/调料），分区顺序即配料行顺序
         detail.ingredients.groupBy { it.type }.forEach { (typeKey, lines) ->
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = IngredientTypes.label(typeKey))
+            SectionTitle(text = ingredientTypeLabel(typeKey))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Column(
@@ -293,7 +296,7 @@ private fun RecipeDetailContent(
 
         if (recipe.steps.isNotEmpty()) {
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "做法步骤")
+            SectionTitle(text = stringResource(R.string.recipe_detail_steps_title))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             Column(verticalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceMd)) {
                 recipe.steps.forEachIndexed { index, step ->
@@ -327,7 +330,7 @@ private fun RecipeDetailContent(
 
         if (!recipe.description.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "简介")
+            SectionTitle(text = stringResource(R.string.recipe_detail_description_title))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Text(
@@ -341,7 +344,7 @@ private fun RecipeDetailContent(
 
         if (!recipe.note.isNullOrBlank()) {
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-            SectionTitle(text = "备注")
+            SectionTitle(text = stringResource(R.string.recipe_detail_note_title))
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
             FoodCard {
                 Text(
@@ -380,12 +383,12 @@ private fun IngredientRow(name: String, amount: String) {
 }
 
 private fun formatAmount(quantity: Double?, unit: String?): String {
-    val quantityText = quantity?.toString()?.removeSuffix(".0") ?: "适量"
+    val quantityText = quantity?.toString()?.removeSuffix(".0") ?: AppStrings.get(R.string.recipe_detail_amount_as_needed)
     return if (unit.isNullOrBlank()) quantityText else "$quantityText $unit"
 }
 
 internal fun mealLabel(type: MealType): String = when (type) {
-    MealType.BREAKFAST -> "早餐"
-    MealType.LUNCH -> "午餐"
-    MealType.DINNER -> "晚餐"
+    MealType.BREAKFAST -> AppStrings.get(R.string.meal_type_breakfast)
+    MealType.LUNCH -> AppStrings.get(R.string.meal_type_lunch)
+    MealType.DINNER -> AppStrings.get(R.string.meal_type_dinner)
 }

@@ -39,12 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
 import com.skyanchor.mealtime.core.model.chineseLabel
 import com.skyanchor.mealtime.core.model.Recipe
@@ -76,14 +78,14 @@ fun RecipeListScreen(
             FoodSearchField(
                 value = state.query,
                 onValueChange = viewModel::setQuery,
-                placeholder = "搜索菜谱、食材...",
+                placeholder = stringResource(R.string.recipe_list_search_placeholder),
             )
 
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceLg))
             LazyRow(horizontalArrangement = Arrangement.spacedBy(FoodTheme.dimens.spaceSm)) {
                 item {
                     TagChip(
-                        text = "全部",
+                        text = stringResource(R.string.recipe_list_all),
                         selected = state.selectedCategoryId == null && !state.favoritesOnly,
                         onClick = {
                             viewModel.selectCategory(null)
@@ -100,7 +102,7 @@ fun RecipeListScreen(
                 }
                 item {
                     TagChip(
-                        text = "收藏",
+                        text = stringResource(R.string.recipe_list_favorites),
                         selected = state.favoritesOnly,
                         onClick = { viewModel.toggleFavoritesOnly() },
                     )
@@ -124,8 +126,8 @@ fun RecipeListScreen(
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         EmptyState(
                             icon = Icons.Outlined.SearchOff,
-                            title = "没有找到相关菜谱",
-                            hint = "换个关键词试试",
+                            title = stringResource(R.string.recipe_list_search_empty_title),
+                            hint = stringResource(R.string.recipe_list_search_empty_hint),
                         )
                     }
                 }
@@ -134,9 +136,9 @@ fun RecipeListScreen(
                     Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                         EmptyState(
                             icon = Icons.AutoMirrored.Outlined.MenuBook,
-                            title = "还没有菜谱",
-                            hint = "创建你的第一道菜，点菜时就能直接选用",
-                            actionText = "创建菜谱",
+                            title = stringResource(R.string.recipe_list_empty_title),
+                            hint = stringResource(R.string.recipe_list_empty_hint),
+                            actionText = stringResource(R.string.recipe_list_create_recipe),
                             onAction = onAddRecipe,
                         )
                     }
@@ -146,9 +148,10 @@ fun RecipeListScreen(
                     // 列表末尾统计文案：显示当前分类下的菜谱数量
                     val footerLabel = when {
                         state.selectedCategoryId != null ->
-                            state.categories.firstOrNull { it.id == state.selectedCategoryId }?.name ?: "全部"
-                        state.favoritesOnly -> "收藏"
-                        else -> "全部"
+                            state.categories.firstOrNull { it.id == state.selectedCategoryId }?.name
+                                ?: stringResource(R.string.recipe_list_all)
+                        state.favoritesOnly -> stringResource(R.string.recipe_list_favorites)
+                        else -> stringResource(R.string.recipe_list_all)
                     }
                     LazyVerticalGrid(
                         columns = GridCells.Fixed(2),
@@ -262,7 +265,7 @@ private fun RecipeCard(
                 recipe.cookingTimeMin?.let { minutes ->
                     Spacer(modifier = Modifier.width(FoodTheme.dimens.spaceSm))
                     Text(
-                        text = "$minutes 分钟",
+                        text = stringResource(R.string.recipe_list_cooking_minutes, minutes),
                         style = MaterialTheme.typography.labelSmall,
                         color = FoodTheme.colors.textTertiary,
                     )
@@ -276,7 +279,11 @@ private fun RecipeCard(
                 ) {
                     Icon(
                         imageVector = if (recipe.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                        contentDescription = if (recipe.isFavorite) "取消收藏" else "收藏",
+                        contentDescription = if (recipe.isFavorite) {
+                            stringResource(R.string.recipe_list_unfavorite)
+                        } else {
+                            stringResource(R.string.recipe_list_favorite)
+                        },
                         tint = if (recipe.isFavorite) FoodTheme.colors.primary else FoodTheme.colors.textTertiary,
                         modifier = Modifier.size(16.dp),
                     )
@@ -298,7 +305,7 @@ private fun AddRecipeFab(modifier: Modifier = Modifier, onClick: () -> Unit) {
     ) {
         Icon(
             imageVector = Icons.Outlined.Add,
-            contentDescription = "新增菜谱",
+            contentDescription = stringResource(R.string.recipe_list_add_recipe),
             tint = FoodTheme.colors.surface,
         )
     }

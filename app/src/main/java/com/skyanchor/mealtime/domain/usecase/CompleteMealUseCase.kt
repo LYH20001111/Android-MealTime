@@ -1,5 +1,7 @@
 package com.skyanchor.mealtime.domain.usecase
 
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.ConsumptionDeduction
 import com.skyanchor.mealtime.core.model.IngredientTypes
 import com.skyanchor.mealtime.core.model.MealStatus
@@ -34,8 +36,8 @@ class CompleteMealUseCase(
     ): Int {
         val plans = mealRepository.getPlans(date, mealType)
         val pending = plans.filter { it.status == MealStatus.PLANNED }
-        if (plans.isEmpty()) throw IllegalStateException("该餐次还没有安排菜品")
-        if (pending.isEmpty()) throw IllegalStateException("这餐已经完成过了，不用重复确认")
+        if (plans.isEmpty()) throw IllegalStateException(AppStrings.get(R.string.complete_meal_error_empty))
+        if (pending.isEmpty()) throw IllegalStateException(AppStrings.get(R.string.complete_meal_error_already_done))
 
         val aggregated = LinkedHashMap<Long, ConsumptionDeduction>()
         val stockedIdByName = HashMap<String, Long>()

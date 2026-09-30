@@ -1,5 +1,7 @@
 package com.skyanchor.mealtime.core.model
 
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import java.time.LocalDate
 
 /** 半精确库存：数字数量与模糊数量级别二选一或并存（PRD §7.3） */
@@ -11,9 +13,9 @@ enum class QuantityLevel {
 
 val QuantityLevel.chineseLabel: String
     get() = when (this) {
-        QuantityLevel.LOW -> "少量"
-        QuantityLevel.MODERATE -> "适量"
-        QuantityLevel.PLENTY -> "充足"
+        QuantityLevel.LOW -> AppStrings.get(R.string.quantity_level_low)
+        QuantityLevel.MODERATE -> AppStrings.get(R.string.quantity_level_moderate)
+        QuantityLevel.PLENTY -> AppStrings.get(R.string.quantity_level_plenty)
     }
 
 /** 库存变化类型：入库 / 完成用餐消耗 / 人工调整 */

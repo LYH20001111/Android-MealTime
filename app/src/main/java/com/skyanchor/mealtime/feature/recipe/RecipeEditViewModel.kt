@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.Category
 import com.skyanchor.mealtime.core.model.Difficulty
 import com.skyanchor.mealtime.core.model.IngredientTypeInfo
@@ -359,7 +361,7 @@ class RecipeEditViewModel(
             } catch (e: IllegalArgumentException) {
                 _uiState.update { it.copy(isSaving = false, saveError = e.message) }
             } catch (e: Exception) {
-                _uiState.update { it.copy(isSaving = false, saveError = "保存失败，请重试") }
+                _uiState.update { it.copy(isSaving = false, saveError = AppStrings.get(R.string.common_save_failed)) }
             }
         }
     }

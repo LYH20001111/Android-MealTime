@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.Category
 import com.skyanchor.mealtime.core.model.FALLBACK_CATEGORY_NAME
 import com.skyanchor.mealtime.core.model.IngredientTypeInfo
@@ -91,10 +93,10 @@ class SettingsViewModel(
         viewModelScope.launch {
             runCatching { recipeRepository.addCategory(name) }
                 .onSuccess { added ->
-                    _uiState.update { it.copy(newCategoryName = "", message = "✓ 已添加分类「${added.name}」") }
+                    _uiState.update { it.copy(newCategoryName = "", message = AppStrings.get(R.string.settings_category_added, added.name)) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(message = "✗ ${e.message ?: "添加失败"}") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_failed_prefix, e.message ?: AppStrings.get(R.string.settings_error_add_failed))) }
                 }
         }
     }
@@ -103,10 +105,10 @@ class SettingsViewModel(
         viewModelScope.launch {
             runCatching { recipeRepository.deleteCategory(id) }
                 .onSuccess {
-                    _uiState.update { it.copy(message = "✓ 分类已删除，其中的菜谱已归入「$FALLBACK_CATEGORY_NAME」") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_category_deleted, FALLBACK_CATEGORY_NAME)) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(message = "✗ ${e.message ?: "删除失败"}") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_failed_prefix, e.message ?: AppStrings.get(R.string.settings_error_delete_failed))) }
                 }
         }
     }
@@ -115,7 +117,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             runCatching { recipeRepository.moveCategory(id, up) }
                 .onFailure { e ->
-                    _uiState.update { it.copy(message = "✗ ${e.message ?: "排序失败"}") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_failed_prefix, e.message ?: AppStrings.get(R.string.settings_error_move_failed))) }
                 }
         }
     }
@@ -124,10 +126,10 @@ class SettingsViewModel(
         viewModelScope.launch {
             runCatching { recipeRepository.renameCategory(id, newName) }
                 .onSuccess { renamed ->
-                    _uiState.update { it.copy(message = "✓ 分类已重命名为「${renamed.name}」") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_category_renamed, renamed.name)) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(message = "✗ ${e.message ?: "重命名失败"}") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_failed_prefix, e.message ?: AppStrings.get(R.string.settings_error_rename_failed))) }
                 }
         }
     }
@@ -139,10 +141,10 @@ class SettingsViewModel(
         viewModelScope.launch {
             runCatching { ingredientRepository.addType(name) }
                 .onSuccess { added ->
-                    _uiState.update { it.copy(newTypeName = "", message = "✓ 已添加种类「${added.label}」") }
+                    _uiState.update { it.copy(newTypeName = "", message = AppStrings.get(R.string.settings_type_added, added.label)) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(message = "✗ ${e.message ?: "添加失败"}") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_failed_prefix, e.message ?: AppStrings.get(R.string.settings_error_add_failed))) }
                 }
         }
     }
@@ -151,10 +153,10 @@ class SettingsViewModel(
         viewModelScope.launch {
             runCatching { ingredientRepository.deleteType(key) }
                 .onSuccess {
-                    _uiState.update { it.copy(message = "✓ 种类已删除，其中的食材已归入「其他」") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_type_deleted, AppStrings.get(R.string.ingredient_type_other))) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(message = "✗ ${e.message ?: "删除失败"}") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_failed_prefix, e.message ?: AppStrings.get(R.string.settings_error_delete_failed))) }
                 }
         }
     }
@@ -163,7 +165,7 @@ class SettingsViewModel(
         viewModelScope.launch {
             runCatching { ingredientRepository.moveType(key, up) }
                 .onFailure { e ->
-                    _uiState.update { it.copy(message = "✗ ${e.message ?: "排序失败"}") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_failed_prefix, e.message ?: AppStrings.get(R.string.settings_error_move_failed))) }
                 }
         }
     }
@@ -172,10 +174,10 @@ class SettingsViewModel(
         viewModelScope.launch {
             runCatching { ingredientRepository.renameType(key, newLabel) }
                 .onSuccess { renamed ->
-                    _uiState.update { it.copy(message = "✓ 种类已重命名为「${renamed.label}」") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_type_renamed, renamed.label)) }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(message = "✗ ${e.message ?: "重命名失败"}") }
+                    _uiState.update { it.copy(message = AppStrings.get(R.string.settings_failed_prefix, e.message ?: AppStrings.get(R.string.settings_error_rename_failed))) }
                 }
         }
     }

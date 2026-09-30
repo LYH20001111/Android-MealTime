@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.model.Recipe
 import com.skyanchor.mealtime.domain.repository.MealRepository
@@ -87,7 +89,7 @@ class MealPlanViewModel(
         viewModelScope.launch {
             val added = createMealPlan(date = date, mealType = mealType, recipeId = recipeId)
             if (added == null) {
-                notice.value = "「${recipeNameOf(recipeId)}」已在本餐菜单中"
+                notice.value = AppStrings.get(R.string.meal_plan_notice_already_added, recipeNameOf(recipeId))
             }
         }
     }
@@ -96,7 +98,7 @@ class MealPlanViewModel(
         viewModelScope.launch {
             val replaced = mealRepository.replacePlan(planId, newRecipeId)
             if (!replaced) {
-                notice.value = "「${recipeNameOf(newRecipeId)}」已在本餐菜单中"
+                notice.value = AppStrings.get(R.string.meal_plan_notice_already_added, recipeNameOf(newRecipeId))
             }
         }
     }
@@ -108,7 +110,7 @@ class MealPlanViewModel(
     private fun recipeNameOf(recipeId: Long): String =
         uiState.value.pickerRecipes.firstOrNull { it.id == recipeId }?.name
             ?: uiState.value.dishes.firstOrNull { it.recipeId == recipeId }?.name
-            ?: "该菜品"
+            ?: AppStrings.get(R.string.meal_plan_fallback_dish_name)
 
     fun removeDish(planId: Long) {
         viewModelScope.launch {

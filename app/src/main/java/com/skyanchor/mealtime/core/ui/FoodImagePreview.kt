@@ -17,11 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import coil3.compose.AsyncImage
+import com.skyanchor.mealtime.R
 
 /**
  * 全屏大图预览：黑底完整展示图片（ContentScale.Fit，不裁剪），
@@ -54,7 +56,7 @@ fun FoodImagePreviewDialog(
         ) {
             AsyncImage(
                 model = imageUri,
-                contentDescription = "完整图片",
+                contentDescription = stringResource(R.string.components_full_image),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -67,7 +69,7 @@ fun FoodImagePreviewDialog(
             ) {
                 Icon(
                     imageVector = Icons.Outlined.Close,
-                    contentDescription = "关闭",
+                    contentDescription = stringResource(R.string.common_close),
                     tint = Color.White,
                 )
             }

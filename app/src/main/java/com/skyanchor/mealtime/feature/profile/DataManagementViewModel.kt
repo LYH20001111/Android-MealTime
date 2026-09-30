@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.domain.repository.BackupPreview
 import com.skyanchor.mealtime.domain.usecase.BackupDataUseCase
 import com.skyanchor.mealtime.domain.usecase.ExportJsonUseCase
@@ -49,13 +51,13 @@ class DataManagementViewModel(
     /** 生成完整备份 ZIP 并写入 SAF URI */
     fun backupTo(context: Context, uri: Uri) {
         viewModelScope.launch {
-            _uiState.update { it.copy(busy = true, message = null, progressText = "正在备份数据…") }
+            _uiState.update { it.copy(busy = true, message = null, progressText = AppStrings.get(R.string.data_mgmt_backing_up)) }
             val result = runCatching {
                 val output = context.contentResolver.openOutputStream(uri)
-                    ?: error("无法写入所选位置")
+                    ?: error(AppStrings.get(R.string.data_mgmt_error_write_location))
                 backupData(output) { processed, total ->
                     if (total > 0) {
-                        _uiState.update { it.copy(progressText = "正在备份图片 $processed/$total") }
+                        _uiState.update { it.copy(progressText = AppStrings.get(R.string.data_mgmt_backing_up_images, processed, total)) }
                     }
                 }
             }
@@ -64,12 +66,12 @@ class DataManagementViewModel(
                     onSuccess = { s ->
                         state.copy(
                             busy = false, progressText = null,
-                            message = "✓ 备份完成：菜谱 ${s.recipes}、食材 ${s.ingredients}、图片 ${s.images}" +
-                                if (s.imageFailures > 0) "（${s.imageFailures} 张图片未能备份）" else "",
+                            message = AppStrings.get(R.string.data_mgmt_backup_done, s.recipes, s.ingredients, s.images) +
+                                if (s.imageFailures > 0) AppStrings.get(R.string.data_mgmt_backup_image_failures, s.imageFailures) else "",
                         )
                     },
                     onFailure = { e ->
-                        state.copy(busy = false, progressText = null, message = "✗ 备份失败：${e.message ?: "请重试"}")
+                        state.copy(busy = false, progressText = null, message = AppStrings.get(R.string.data_mgmt_backup_failed, e.message ?: AppStrings.get(R.string.common_retry)))
                     },
                 )
             }
@@ -79,13 +81,13 @@ class DataManagementViewModel(
     /** 读取所选备份文件并校验，成功后进入恢复预览 */
     fun previewRestore(context: Context, uri: Uri) {
         viewModelScope.launch {
-            _uiState.update { it.copy(busy = true, message = null, progressText = "正在读取备份…") }
+            _uiState.update { it.copy(busy = true, message = null, progressText = AppStrings.get(R.string.data_mgmt_reading_backup)) }
             val preview = withContext(Dispatchers.IO) {
                 runCatching {
                     val temp = File(context.cacheDir, PENDING_ZIP_NAME)
                     context.contentResolver.openInputStream(uri)?.use { input ->
                         temp.outputStream().use { output -> input.copyTo(output) }
-                    } ?: error("无法读取所选文件")
+                    } ?: error(AppStrings.get(R.string.data_mgmt_error_read_file))
                     pendingZip = temp
                     validateBackup(temp)
                 }
@@ -95,7 +97,7 @@ class DataManagementViewModel(
                 preview.fold(
                     onSuccess = { p -> state.copy(busy = false, progressText = null, preview = p) },
                     onFailure = { e ->
-                        state.copy(busy = false, progressText = null, message = "✗ ${e.message ?: "备份文件读取失败"}")
+                        state.copy(busy = false, progressText = null, message = AppStrings.get(R.string.data_mgmt_failed_prefix, e.message ?: AppStrings.get(R.string.data_mgmt_error_read_backup)))
                     },
                 )
             }
@@ -114,7 +116,7 @@ class DataManagementViewModel(
             return
         }
         viewModelScope.launch {
-            _uiState.update { it.copy(busy = true, preview = null, progressText = "正在恢复数据…") }
+            _uiState.update { it.copy(busy = true, preview = null, progressText = AppStrings.get(R.string.data_mgmt_restoring)) }
             val result = runCatching { restoreData(zip) }
             result.onSuccess { discardPending() }
             _uiState.update { state ->
@@ -122,12 +124,14 @@ class DataManagementViewModel(
                     onSuccess = { s ->
                         state.copy(
                             busy = false, progressText = null,
-                            message = "✓ 恢复完成：${s.recipes} 道菜谱、${s.ingredients} 项食材、" +
-                                "${s.images} 张图片、${s.mealRecords} 条用餐记录",
+                            message = AppStrings.get(
+                                R.string.data_mgmt_restore_done,
+                                s.recipes, s.ingredients, s.images, s.mealRecords,
+                            ),
                         )
                     },
                     onFailure = { e ->
-                        state.copy(busy = false, progressText = null, message = "✗ 恢复失败：${e.message ?: "备份文件不完整"}")
+                        state.copy(busy = false, progressText = null, message = AppStrings.get(R.string.data_mgmt_restore_failed, e.message ?: AppStrings.get(R.string.data_mgmt_error_backup_incomplete)))
                     },
                 )
             }
@@ -138,7 +142,7 @@ class DataManagementViewModel(
         viewModelScope.launch {
             val json = runCatching { exportJson() }.getOrNull()
             _uiState.update {
-                it.copy(message = if (json != null) null else "✗ 备份生成失败，请重试")
+                it.copy(message = if (json != null) null else AppStrings.get(R.string.data_mgmt_json_build_failed))
             }
             onReady(json)
         }
@@ -146,7 +150,7 @@ class DataManagementViewModel(
 
     fun notifyExportDone(success: Boolean) {
         _uiState.update {
-            it.copy(message = if (success) "✓ JSON 已导出（不含图片）" else "✗ 导出失败，请重试")
+            it.copy(message = if (success) AppStrings.get(R.string.data_mgmt_json_exported) else AppStrings.get(R.string.data_mgmt_export_failed))
         }
     }
 

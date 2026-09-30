@@ -31,7 +31,7 @@ import java.time.LocalDate
 
 /** Phase 6：规则推荐评分与排序（PRD §13） */
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [34])
+@Config(sdk = [34], qualifiers = "zh")
 class RecommendRecipesUseCaseTest {
 
     private lateinit var db: MealTimeDatabase

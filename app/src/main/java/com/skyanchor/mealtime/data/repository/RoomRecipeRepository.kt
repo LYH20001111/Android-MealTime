@@ -1,6 +1,8 @@
 package com.skyanchor.mealtime.data.repository
 
 import androidx.room.withTransaction
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.Category
 import com.skyanchor.mealtime.core.model.FALLBACK_CATEGORY_NAME
 import com.skyanchor.mealtime.core.model.Recipe
@@ -91,9 +93,9 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
 
     override suspend fun addCategory(name: String): Category {
         val trimmed = name.trim()
-        require(trimmed.isNotEmpty()) { "分类名不能为空" }
+        require(trimmed.isNotEmpty()) { AppStrings.get(R.string.recipe_category_error_name_empty) }
         return db.withTransaction {
-            require(db.categoryDao().getByName(trimmed) == null) { "分类「$trimmed」已存在" }
+            require(db.categoryDao().getByName(trimmed) == null) { AppStrings.get(R.string.recipe_category_error_duplicate, trimmed) }
             val sortOrder = (db.categoryDao().maxSortOrder() ?: -1) + 1
             val id = db.categoryDao().insert(CategoryEntity(name = trimmed, sortOrder = sortOrder))
             Category(id = id, name = trimmed, sortOrder = sortOrder)
@@ -103,7 +105,7 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
     override suspend fun deleteCategory(id: Long) = db.withTransaction {
         val dao = db.categoryDao()
         val category = dao.getById(id) ?: return@withTransaction
-        require(category.name != FALLBACK_CATEGORY_NAME) { "「${FALLBACK_CATEGORY_NAME}」分类不能删除" }
+        require(category.name != FALLBACK_CATEGORY_NAME) { AppStrings.get(R.string.recipe_category_error_cannot_delete, FALLBACK_CATEGORY_NAME) }
         // 兜底分类被误删过时自动补建
         val fallback = dao.getByName(FALLBACK_CATEGORY_NAME)
             ?: CategoryEntity(
@@ -130,12 +132,12 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
 
     override suspend fun renameCategory(id: Long, newName: String): Category = db.withTransaction {
         val dao = db.categoryDao()
-        val category = dao.getById(id) ?: throw IllegalArgumentException("分类不存在")
+        val category = dao.getById(id) ?: throw IllegalArgumentException(AppStrings.get(R.string.recipe_category_error_not_found))
         val trimmed = newName.trim()
-        require(trimmed.isNotEmpty()) { "分类名不能为空" }
-        require(category.name != FALLBACK_CATEGORY_NAME) { "「${FALLBACK_CATEGORY_NAME}」分类不能重命名" }
+        require(trimmed.isNotEmpty()) { AppStrings.get(R.string.recipe_category_error_name_empty) }
+        require(category.name != FALLBACK_CATEGORY_NAME) { AppStrings.get(R.string.recipe_category_error_cannot_rename, FALLBACK_CATEGORY_NAME) }
         val existing = dao.getByName(trimmed)
-        require(existing == null || existing.id == id) { "分类「$trimmed」已存在" }
+        require(existing == null || existing.id == id) { AppStrings.get(R.string.recipe_category_error_duplicate, trimmed) }
         dao.rename(id, trimmed)
         category.copy(name = trimmed).toDomain()
     }
@@ -145,7 +147,7 @@ class RoomRecipeRepository(private val db: MealTimeDatabase) : RecipeRepository 
 
     override suspend fun getOrCreateTag(name: String): Tag {
         val trimmed = name.trim()
-        require(trimmed.isNotEmpty()) { "标签名不能为空" }
+        require(trimmed.isNotEmpty()) { AppStrings.get(R.string.recipe_tag_error_name_empty) }
         return db.withTransaction {
             tagDao.getByName(trimmed)?.toDomain() ?: run {
                 val id = tagDao.insert(TagEntity(name = trimmed, sortOrder = 0))

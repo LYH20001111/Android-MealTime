@@ -21,16 +21,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.MealHistoryItem
 import com.skyanchor.mealtime.core.model.MealType
 import com.skyanchor.mealtime.core.ui.EmptyState
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 /** 历史用餐记录：按日期倒序，显示已完成菜品名（菜谱归档后仍可见，R07）。 */
 @Composable
@@ -54,13 +58,13 @@ fun HistoryScreen(
             IconButton(onClick = onBack) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "返回",
+                    contentDescription = stringResource(R.string.common_back),
                     tint = FoodTheme.colors.textPrimary,
                 )
             }
             Spacer(modifier = Modifier.padding(horizontal = FoodTheme.dimens.spaceSm))
             Text(
-                text = "历史记录",
+                text = stringResource(R.string.history_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = FoodTheme.colors.textPrimary,
             )
@@ -69,8 +73,8 @@ fun HistoryScreen(
         if (items.isEmpty()) {
             EmptyState(
                 icon = Icons.Outlined.History,
-                title = "还没有用餐记录",
-                hint = "完成一餐后，这里会留下记录",
+                title = stringResource(R.string.history_empty_title),
+                hint = stringResource(R.string.history_empty_hint),
             )
         } else {
             LazyColumn(
@@ -97,7 +101,12 @@ private fun HistoryCard(item: MealHistoryItem) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = item.date.format(DateTimeFormatter.ofPattern("M月d日 EEEE")),
+                    text = item.date.format(
+                        DateTimeFormatter.ofPattern(
+                            AppStrings.get(R.string.date_pattern_medium_weekday_compact),
+                            Locale.getDefault(),
+                        ),
+                    ),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = FoodTheme.colors.textPrimary,
@@ -110,16 +119,16 @@ private fun HistoryCard(item: MealHistoryItem) {
                 )
             }
             Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceSm))
-            val servingsText = item.servings?.let { " · $it 人" } ?: ""
+            val servingsText = item.servings?.let { stringResource(R.string.history_servings_suffix, it) } ?: ""
             if (item.dishes.isNotEmpty()) {
                 Text(
-                    text = item.dishes.joinToString("、") + servingsText,
+                    text = item.dishes.joinToString(stringResource(R.string.history_dish_separator)) + servingsText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = FoodTheme.colors.textSecondary,
                 )
             } else {
                 Text(
-                    text = "完成用餐$servingsText",
+                    text = stringResource(R.string.history_completed_meal, servingsText),
                     style = MaterialTheme.typography.bodyMedium,
                     color = FoodTheme.colors.textSecondary,
                 )
@@ -129,7 +138,7 @@ private fun HistoryCard(item: MealHistoryItem) {
 }
 
 private fun mealLabel(type: MealType): String = when (type) {
-    MealType.BREAKFAST -> "早餐"
-    MealType.LUNCH -> "午餐"
-    MealType.DINNER -> "晚餐"
+    MealType.BREAKFAST -> AppStrings.get(R.string.meal_type_breakfast)
+    MealType.LUNCH -> AppStrings.get(R.string.meal_type_lunch)
+    MealType.DINNER -> AppStrings.get(R.string.meal_type_dinner)
 }

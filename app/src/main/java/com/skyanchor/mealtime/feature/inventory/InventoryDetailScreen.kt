@@ -41,12 +41,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.skyanchor.mealtime.R
 import com.skyanchor.mealtime.app.rememberAppContainer
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.common.ExpiryCalculator
 import com.skyanchor.mealtime.core.common.ExpiryStatus
 import com.skyanchor.mealtime.core.model.QuantityLevel
@@ -54,6 +57,9 @@ import com.skyanchor.mealtime.core.model.chineseLabel
 import com.skyanchor.mealtime.core.ui.FoodCard
 import com.skyanchor.mealtime.core.ui.FoodTheme
 import com.skyanchor.mealtime.core.ui.SectionTitle
+import com.skyanchor.mealtime.core.ui.expiryStatusLabel
+import com.skyanchor.mealtime.core.ui.ingredientTypeLabel
+import java.time.format.DateTimeFormatter
 import java.time.LocalDate
 
 /**
@@ -76,7 +82,7 @@ fun InventoryDetailScreen(
 
     LaunchedEffect(state.adjustDone) {
         if (state.adjustDone) {
-            snackbarHostState.showSnackbar("已调整数量，流水已记录")
+            snackbarHostState.showSnackbar(AppStrings.get(R.string.inventory_detail_quantity_adjusted))
             viewModel.consumeAdjustDone()
         }
     }
@@ -100,16 +106,16 @@ fun InventoryDetailScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("删除库存") },
-            text = { Text("批次会归档，相关流水会保留；若该食材没有其他库存，将一并从食材库移除。确定删除吗？") },
+            title = { Text(stringResource(R.string.inventory_detail_delete_title)) },
+            text = { Text(stringResource(R.string.inventory_detail_delete_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
                     viewModel.delete(onDeleted = onBack)
-                }) { Text("删除", color = FoodTheme.colors.danger) }
+                }) { Text(stringResource(R.string.common_delete), color = FoodTheme.colors.danger) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) { Text("取消") }
+                TextButton(onClick = { showDeleteDialog = false }) { Text(stringResource(R.string.common_cancel)) }
             },
         )
     }
@@ -130,7 +136,7 @@ fun InventoryDetailScreen(
                 IconButton(onClick = onBack) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "返回",
+                        contentDescription = stringResource(R.string.common_back),
                         tint = FoodTheme.colors.textPrimary,
                     )
                 }
@@ -139,14 +145,14 @@ fun InventoryDetailScreen(
                     IconButton(onClick = onEdit) {
                         Icon(
                             imageVector = Icons.Outlined.Edit,
-                            contentDescription = "编辑",
+                            contentDescription = stringResource(R.string.common_edit),
                             tint = FoodTheme.colors.textSecondary,
                         )
                     }
                     IconButton(onClick = { showDeleteDialog = true }) {
                         Icon(
                             imageVector = Icons.Outlined.Delete,
-                            contentDescription = "删除",
+                            contentDescription = stringResource(R.string.common_delete),
                             tint = FoodTheme.colors.textSecondary,
                         )
                     }
@@ -205,7 +211,7 @@ fun InventoryDetailScreen(
                             )
                         }
                         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                        SectionTitle(text = "库存信息")
+                        SectionTitle(text = stringResource(R.string.inventory_detail_section_stock_info))
                         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                         FoodCard {
                             Column(
@@ -214,17 +220,17 @@ fun InventoryDetailScreen(
                             ) {
                                 val quantityText = item.quantity?.toString()?.removeSuffix(".0")
                                     ?: item.quantityLevel?.chineseLabel
-                                    ?: "未设置"
-                                DetailRow("数量", if (item.unit != null) "$quantityText ${item.unit}" else quantityText)
-                                DetailRow("类型", com.skyanchor.mealtime.core.model.IngredientTypes.label(item.ingredient.type))
-                                item.purchaseDate?.let { DetailRow("购买日期", formatDate(it)) }
-                                item.productionDate?.let { DetailRow("生产日期", formatDate(it)) }
+                                    ?: stringResource(R.string.inventory_detail_not_set)
+                                DetailRow(stringResource(R.string.inventory_detail_label_quantity), if (item.unit != null) "$quantityText ${item.unit}" else quantityText)
+                                DetailRow(stringResource(R.string.inventory_detail_label_type), ingredientTypeLabel(item.ingredient.type))
+                                item.purchaseDate?.let { DetailRow(stringResource(R.string.inventory_detail_label_purchase_date), formatDate(it)) }
+                                item.productionDate?.let { DetailRow(stringResource(R.string.inventory_detail_label_production_date), formatDate(it)) }
                                 item.expireDate?.let { expire ->
                                     val status = ExpiryCalculator.status(expire, LocalDate.now())
                                     val days = ExpiryCalculator.daysUntil(expire, LocalDate.now())
                                     DetailRow(
-                                        label = "过期日期",
-                                        value = "${formatDate(expire)} · ${ExpiryCalculator.label(status, days)}",
+                                        label = stringResource(R.string.inventory_detail_label_expiry_date),
+                                        value = "${formatDate(expire)} · ${expiryStatusLabel(status, days)}",
                                         valueColor = when (status) {
                                             ExpiryStatus.EXPIRED -> FoodTheme.colors.danger
                                             ExpiryStatus.URGENT, ExpiryStatus.NEAR -> FoodTheme.colors.warning
@@ -232,21 +238,21 @@ fun InventoryDetailScreen(
                                         },
                                     )
                                 }
-                                    ?: DetailRow("过期日期", "未设置")
-                                item.location?.let { DetailRow("存放位置", it) }
-                                item.note?.let { DetailRow("备注", it) }
+                                    ?: DetailRow(stringResource(R.string.inventory_detail_label_expiry_date), stringResource(R.string.inventory_detail_not_set))
+                                item.location?.let { DetailRow(stringResource(R.string.inventory_detail_label_location), it) }
+                                item.note?.let { DetailRow(stringResource(R.string.inventory_detail_label_note), it) }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceXl))
-                        SectionTitle(text = "操作")
+                        SectionTitle(text = stringResource(R.string.inventory_detail_section_actions))
                         Spacer(modifier = Modifier.height(FoodTheme.dimens.spaceMd))
                         FoodCard {
                             Column(modifier = Modifier.padding(FoodTheme.dimens.spaceMd)) {
-                                ActionRow("调整数量", "手动修正实际库存，会记录流水") {
+                                ActionRow(stringResource(R.string.inventory_detail_action_adjust), stringResource(R.string.inventory_detail_action_adjust_subtitle)) {
                                     showAdjustDialog = true
                                 }
-                                ActionRow("编辑批次", "修改数量、日期、位置等信息") {
+                                ActionRow(stringResource(R.string.inventory_detail_action_edit), stringResource(R.string.inventory_detail_action_edit_subtitle)) {
                                     onEdit()
                                 }
                             }
@@ -297,7 +303,7 @@ private fun ActionRow(title: String, subtitle: String, onClick: () -> Unit) {
                 color = FoodTheme.colors.textTertiary,
             )
         }
-        TextButton(onClick = onClick) { Text("前往") }
+        TextButton(onClick = onClick) { Text(stringResource(R.string.inventory_detail_go)) }
     }
 }
 
@@ -310,11 +316,11 @@ private fun AdjustQuantityDialog(
     var text by remember { mutableStateOf(initial?.toString()?.removeSuffix(".0") ?: "") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("调整数量") },
+        title = { Text(stringResource(R.string.inventory_detail_action_adjust)) },
         text = {
             Column {
                 Text(
-                    "设置为新的实际数量；留空表示不确定数量。",
+                    stringResource(R.string.inventory_detail_adjust_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = FoodTheme.colors.textSecondary,
                 )
@@ -323,18 +329,18 @@ private fun AdjustQuantityDialog(
                     value = text,
                     onValueChange = { text = it.filter { c -> c.isDigit() || c == '.' }.take(7) },
                     singleLine = true,
-                    placeholder = { Text("例如：2") },
+                    placeholder = { Text(stringResource(R.string.inventory_detail_adjust_placeholder)) },
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(text.toDoubleOrNull()) }) { Text("确认") }
+            TextButton(onClick = { onConfirm(text.toDoubleOrNull()) }) { Text(stringResource(R.string.common_confirm)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("取消") }
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
 }
 
 private fun formatDate(date: LocalDate): String =
-    "${date.year}年${date.monthValue}月${date.dayOfMonth}日"
+    date.format(DateTimeFormatter.ofPattern(AppStrings.get(R.string.date_pattern_full)))

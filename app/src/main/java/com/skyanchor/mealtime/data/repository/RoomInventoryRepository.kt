@@ -1,6 +1,8 @@
 package com.skyanchor.mealtime.data.repository
 
 import androidx.room.withTransaction
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.ChangeSource
 import com.skyanchor.mealtime.core.model.InventoryChangeType
 import com.skyanchor.mealtime.core.model.InventoryItem
@@ -70,7 +72,7 @@ class RoomInventoryRepository(private val db: MealTimeDatabase) : InventoryRepos
                         type = InventoryChangeType.ADJUST.name,
                         sourceType = ChangeSource.MANUAL.name,
                         sourceId = null,
-                        note = "编辑库存",
+                        note = AppStrings.get(R.string.inventory_note_edit),
                         createdAt = now,
                     )
                 )
@@ -92,7 +94,7 @@ class RoomInventoryRepository(private val db: MealTimeDatabase) : InventoryRepos
                     type = InventoryChangeType.ADJUST.name,
                     sourceType = ChangeSource.MANUAL.name,
                     sourceId = null,
-                    note = "手动调整",
+                    note = AppStrings.get(R.string.inventory_note_manual_adjust),
                     createdAt = now,
                 )
             )

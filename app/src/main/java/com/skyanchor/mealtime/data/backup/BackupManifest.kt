@@ -1,5 +1,7 @@
 package com.skyanchor.mealtime.data.backup
 
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import org.json.JSONObject
 
 /** manifest.json：描述备份容器格式与版本（规格文档 §10/§11） */
@@ -34,11 +36,11 @@ internal data class BackupManifest(
         /** @throws IllegalArgumentException 格式不符 / 版本不支持 / 字段缺失 */
         fun parse(text: String): BackupManifest {
             val root = runCatching { JSONObject(text) }
-                .getOrElse { throw IllegalArgumentException("备份文件格式不正确") }
+                .getOrElse { throw IllegalArgumentException(AppStrings.get(R.string.backup_error_invalid_format)) }
             val format = root.optString("format")
-            require(format == BackupFormats.MANIFEST_FORMAT) { "不是有效的饭点备份文件" }
+            require(format == BackupFormats.MANIFEST_FORMAT) { AppStrings.get(R.string.backup_error_invalid) }
             val backupVersion = root.optInt("backupVersion", -1)
-            require(backupVersion in 1..BackupFormats.BACKUP_VERSION) { "备份版本过高，当前 App 暂不支持，请升级后再试" }
+            require(backupVersion in 1..BackupFormats.BACKUP_VERSION) { AppStrings.get(R.string.backup_error_backup_version_too_high) }
             return BackupManifest(
                 format = format,
                 backupVersion = backupVersion,

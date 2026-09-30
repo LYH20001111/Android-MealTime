@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.skyanchor.mealtime.app.AppContainer
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.core.model.InventoryItem
 import com.skyanchor.mealtime.core.model.isEmptyStock
 import com.skyanchor.mealtime.domain.repository.IngredientRepository
@@ -37,9 +39,9 @@ data class InventoryListUiState(
     val expiringCount: Int = 0,
     val query: String = "",
     val tabs: List<InventoryTabUi> = listOf(
-        InventoryTabUi(InventoryTabKeys.ALL, "全部"),
-        InventoryTabUi(InventoryTabKeys.EXPIRING, "临期"),
-        InventoryTabUi(InventoryTabKeys.EMPTY, "库存空"),
+        InventoryTabUi(InventoryTabKeys.ALL, AppStrings.get(R.string.inventory_tab_all)),
+        InventoryTabUi(InventoryTabKeys.EXPIRING, AppStrings.get(R.string.inventory_tab_expiring)),
+        InventoryTabUi(InventoryTabKeys.EMPTY, AppStrings.get(R.string.inventory_tab_empty)),
     ),
     val selectedTabKey: String = InventoryTabKeys.ALL,
 )
@@ -88,9 +90,9 @@ class InventoryListViewModel(
             expiringCount = expiring.size,
             query = q,
             tabs = listOf(
-                InventoryTabUi(InventoryTabKeys.ALL, "全部"),
-                InventoryTabUi(InventoryTabKeys.EXPIRING, "临期"),
-                InventoryTabUi(InventoryTabKeys.EMPTY, "库存空"),
+                InventoryTabUi(InventoryTabKeys.ALL, AppStrings.get(R.string.inventory_tab_all)),
+                InventoryTabUi(InventoryTabKeys.EXPIRING, AppStrings.get(R.string.inventory_tab_expiring)),
+                InventoryTabUi(InventoryTabKeys.EMPTY, AppStrings.get(R.string.inventory_tab_empty)),
             ) + types.map { InventoryTabUi(it.key, it.label) },
             selectedTabKey = effectiveTab,
         )

@@ -6,6 +6,7 @@ import androidx.work.Configuration
 import androidx.work.ListenableWorker
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.notification.ExpiryNotificationWorker
 
 class MealTimeApp : Application(), Configuration.Provider {
@@ -15,6 +16,7 @@ class MealTimeApp : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        AppStrings.init(this)
         container = AppContainer(this)
         ExpiryNotificationWorker.schedule(this)
     }

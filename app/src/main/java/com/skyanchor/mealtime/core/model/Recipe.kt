@@ -1,5 +1,8 @@
 package com.skyanchor.mealtime.core.model
 
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
+
 enum class Difficulty {
     EASY,
     MEDIUM,
@@ -8,9 +11,9 @@ enum class Difficulty {
 
 val Difficulty.chineseLabel: String
     get() = when (this) {
-        Difficulty.EASY -> "简单"
-        Difficulty.MEDIUM -> "中等"
-        Difficulty.HARD -> "困难"
+        Difficulty.EASY -> AppStrings.get(R.string.difficulty_easy)
+        Difficulty.MEDIUM -> AppStrings.get(R.string.difficulty_medium)
+        Difficulty.HARD -> AppStrings.get(R.string.difficulty_hard)
     }
 
 data class Recipe(

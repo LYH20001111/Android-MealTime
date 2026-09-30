@@ -1,6 +1,8 @@
 package com.skyanchor.mealtime.data.backup
 
 import androidx.room.withTransaction
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.data.local.database.MealTimeDatabase
 import com.skyanchor.mealtime.data.local.entity.AppSettingEntity
 import com.skyanchor.mealtime.data.local.entity.CategoryEntity
@@ -88,7 +90,7 @@ internal object BackupJsonCodec {
 
     /** 校验 data.json 根结构；失败抛 IllegalArgumentException */
     fun validateRoot(root: JSONObject) {
-        require(root.optInt("version", -1) == BackupFormats.DATA_VERSION) { "备份文件版本不支持" }
+        require(root.optInt("version", -1) == BackupFormats.DATA_VERSION) { AppStrings.get(R.string.backup_error_version_unsupported) }
     }
 
     /**

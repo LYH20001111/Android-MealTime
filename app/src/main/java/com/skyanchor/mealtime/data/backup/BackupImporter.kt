@@ -1,6 +1,8 @@
 package com.skyanchor.mealtime.data.backup
 
 import android.content.Context
+import com.skyanchor.mealtime.R
+import com.skyanchor.mealtime.core.common.AppStrings
 import com.skyanchor.mealtime.data.backup.BackupFormats.ENTRY_DATA
 import com.skyanchor.mealtime.data.backup.BackupFormats.ENTRY_MANIFEST
 import com.skyanchor.mealtime.data.backup.BackupFormats.LOCAL_INGREDIENT_IMAGES
@@ -49,7 +51,7 @@ internal class BackupImporter(
             ZipFile(zip).use { zf ->
                 val (manifest, root) = readAndValidate(zf)
                 require(manifest.databaseVersion <= db.openHelper.readableDatabase.version) {
-                    "备份的数据库版本过高，当前 App 暂不支持，请升级后再试"
+                    AppStrings.get(R.string.backup_error_db_version_too_high)
                 }
 
                 // 1. 图片恢复到临时目录（限制可恢复路径，防目录穿越）
@@ -84,14 +86,14 @@ internal class BackupImporter(
     /** 读取 manifest 与 data.json 并做格式/版本校验 */
     private fun readAndValidate(zf: ZipFile): Pair<BackupManifest, JSONObject> {
         val manifestEntry = zf.getEntry(ENTRY_MANIFEST)
-            ?: throw IllegalArgumentException("不是有效的饭点备份文件（缺少 manifest.json）")
+            ?: throw IllegalArgumentException(AppStrings.get(R.string.backup_error_missing_manifest))
         val manifest = BackupManifest.parse(zf.getInputStream(manifestEntry).readBytes().toString(Charsets.UTF_8))
 
         val dataEntry = zf.getEntry(ENTRY_DATA)
-            ?: throw IllegalArgumentException("备份文件不完整（缺少 data.json）")
+            ?: throw IllegalArgumentException(AppStrings.get(R.string.backup_error_missing_data))
         val root = runCatching {
             JSONObject(zf.getInputStream(dataEntry).readBytes().toString(Charsets.UTF_8))
-        }.getOrElse { throw IllegalArgumentException("备份文件格式不正确") }
+        }.getOrElse { throw IllegalArgumentException(AppStrings.get(R.string.backup_error_invalid_format)) }
         BackupJsonCodec.validateRoot(root)
         return manifest to root
     }
@@ -118,7 +120,7 @@ internal class BackupImporter(
             runCatching {
                 val target = File(tempDir, entry.name)
                 // 双重防护：规范化后必须仍在临时目录内
-                check(target.canonicalPath.startsWith(rootPath)) { "非法路径: ${entry.name}" }
+                check(target.canonicalPath.startsWith(rootPath)) { AppStrings.get(R.string.backup_error_illegal_path, entry.name) }
                 target.parentFile?.mkdirs()
                 zf.getInputStream(entry).use { input ->
                     target.outputStream().use { output -> input.copyTo(output) }
